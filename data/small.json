@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "parentId": "1",
+      "shortInfo": "Node 1",
+      "info": "Node 1\nThis is the root"
+    },
+    {
+      "id": "2",
+      "parentId": "1",
+      "shortInfo": "Node 2",
+      "info": "Node 2\nThis is the second node"
+    },
+    {
+      "id": "3",
+      "parentId": "2",
+      "shortInfo": "Node 3",
+      "info": "Node 3\nThis is the child of 2"
+    },
+    {
+      "id": "4",
+      "parentId": "1",
+      "shortInfo": "Node 4",
+      "info": "Node 4\nThis is the child of 1"
+    }
+  ]
+}

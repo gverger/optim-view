@@ -1,12 +1,17 @@
 {
-  "$schema":  "https://raw.githubusercontent.com/jetify-com/devbox/0.13.0/.schema/devbox.schema.json",
-  "packages": ["gcc@latest"],
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.0/.schema/devbox.schema.json",
+  "packages": [
+    "gcc@latest"
+  ],
   "env": {
-    "INSTALL_DIRECTORY": "/mnt/c/Users/gverger/documents/raylib/optim-view",
     "CGO_ENABLED": "0"
   },
   "shell": {
-    "init_hook": [],
+    "init_hook": [
+      "export UNAME=$(powershell.exe '$env:UserName')",
+      "export WIN_USER=${UNAME%%[[:cntrl:]]}",
+      "export INSTALL_DIRECTORY=\"/mnt/c/Users/$WIN_USER/documents/raylib/go\""
+    ],
     "scripts": {
       "build": [
         "GOOS=windows go build",

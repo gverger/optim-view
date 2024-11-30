@@ -6,21 +6,50 @@ import (
 	"strconv"
 )
 
-func GenerateInput(nbNodes int) Input {
+func GenerateLargeInput(nbNodes int) Input {
 	nodes := make([]Node, nbNodes)
 	for i := 0; i < nbNodes; i++ {
-		parentId := 0
+		parentIds := make([]string, 0)
 		if i > 0 {
-			parentId = rand.IntN(i)
+			parentIds = append(parentIds, strconv.Itoa(rand.IntN(i)))
 		}
 		n := Node{
 			Id:        strconv.Itoa(i),
-			ParentId:  strconv.Itoa(parentId),
-			Info:      fmt.Sprintf("Node %d\nIts parent is node %d", i, parentId),
+			ParentIds: parentIds,
+			Info:      fmt.Sprintf("Node %d\nIts parent is node %d", i, parentIds),
 			ShortInfo: fmt.Sprintf("Node %d", i),
 		}
 
 		nodes[i] = n
+	}
+
+	return Input{
+		Nodes: nodes,
+	}
+}
+
+func GenerateDeepInput(nbNodes int) Input {
+	nodes := make([]Node, nbNodes)
+	parentId := 0
+	for i := 0; i < nbNodes; i++ {
+		n := Node{
+			Id:        strconv.Itoa(i),
+			Info:      fmt.Sprintf("Node %d\nIts parent is node %d", i, parentId),
+			ShortInfo: fmt.Sprintf("Node %d", i),
+		}
+		if parentId != i {
+			n.ParentIds = []string{strconv.Itoa(parentId)}
+		}
+
+		if parentId != i && rand.Float32() > 0.1 {
+			parentId++
+		}
+		if parentId > 0 && parentId != i && rand.Float32() > 0.5 {
+			n.ParentIds = append(n.ParentIds, nodes[rand.IntN(parentId)].Id)
+			fmt.Println("2 parents: ", n.Id)
+		}
+		nodes[i] = n
+
 	}
 
 	return Input{

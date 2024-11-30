@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 
@@ -9,10 +12,10 @@ import (
 )
 
 type Node struct {
-	Id        string `json:"id"`
-	ParentId  string `json:"parentId"`
-	Info      string `json:"info"`
-	ShortInfo string `json:"shortInfo"`
+	Id        string   `json:"id"`
+	ParentIds []string `json:"parentId"`
+	Info      string   `json:"info"`
+	ShortInfo string   `json:"shortInfo"`
 }
 
 type Input struct {
@@ -30,6 +33,13 @@ func readInput(filename string) Input {
 	return input
 }
 
+func saveInput(filename string, input Input) {
+	file, _ := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	defer file.Close()
+	encoder := json.NewEncoder(file)
+	encoder.Encode(input)
+}
+
 func PlaceNodes(input Input) layout.Graph {
 	g := layout.Graph{
 		Edges: make(map[[2]uint64]layout.Edge),
@@ -42,27 +52,27 @@ func PlaceNodes(input Input) layout.Graph {
 		index := uint64(i)
 		indices[node.Id] = index
 		g.Nodes[index] = layout.Node{
-			W: 100,
+			W: 50,
 			H: 50,
 		}
 	}
 
 	for _, node := range input.Nodes {
-		if node.ParentId != node.Id {
-			g.Edges[[2]uint64{indices[node.ParentId], indices[node.Id]}] = layout.Edge{}
+		for _, pId := range node.ParentIds {
+			g.Edges[[2]uint64{indices[pId], indices[node.Id]}] = layout.Edge{}
 		}
 	}
 
 	gl := layout.SugiyamaLayersStrategyGraphLayout{
-		CycleRemover:     layout.NewSimpleCycleRemover(),
-		LevelsAssigner:   layout.NewLayeredGraph,
+		CycleRemover:   layout.NewSimpleCycleRemover(),
+		LevelsAssigner: layout.NewLayeredGraph,
 		OrderingAssigner: layout.WarfieldOrderingOptimizer{
-			Epochs:                   10,
+			Epochs:                   500,
 			LayerOrderingInitializer: layout.BFSOrderingInitializer{},
 			LayerOrderingOptimizer: layout.CompositeLayerOrderingOptimizer{
 				Optimizers: []layout.LayerOrderingOptimizer{
 					// layout.WMedianOrderingOptimizer{},
-					// layout.SwitchAdjacentOrderingOptimizer{},
+					layout.SwitchAdjacentOrderingOptimizer{},
 				},
 			},
 		}.Optimize,
@@ -71,7 +81,7 @@ func PlaceNodes(input Input) layout.Graph {
 		},
 		NodesVerticalCoordinatesAssigner: layout.BasicNodesVerticalCoordinatesAssigner{
 			MarginLayers:   125,
-			FakeNodeHeight: 125,
+			FakeNodeHeight: 50,
 		},
 		EdgePathAssigner: layout.StraightEdgePathAssigner{}.UpdateGraphLayout,
 	}
@@ -80,9 +90,61 @@ func PlaceNodes(input Input) layout.Graph {
 	return g
 }
 
+type JsonEdge struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
+func readJsonL(filename string) (Input, error) {
+	jsonFile := Must(os.Open(filename))
+	defer jsonFile.Close()
+
+	nodes := make([]Node, 0)
+	nodeIds := make(map[string]bool)
+	scanner := bufio.NewScanner(io.Reader(jsonFile))
+	for scanner.Scan() {
+		decoder := json.NewDecoder(bytes.NewReader(scanner.Bytes()))
+		var edge JsonEdge
+		decoder.Decode(&edge)
+
+		if !nodeIds[edge.From] {
+			nodes = append(nodes, Node{
+				Id:        edge.From,
+				ParentIds: make([]string, 0),
+				Info:      fmt.Sprintf("Node %s", edge.From),
+				ShortInfo: fmt.Sprintf("Node %s", edge.From),
+			})
+			nodeIds[edge.From] = true
+		}
+
+		if !nodeIds[edge.To] {
+			nodes = append(nodes, Node{
+				Id:        edge.To,
+				ParentIds: []string{edge.From},
+				Info:      fmt.Sprintf("Node %s", edge.To),
+				ShortInfo: fmt.Sprintf("Node %s", edge.To),
+			})
+			nodeIds[edge.To] = true
+		} else {
+			for _, v := range nodes {
+				if v.Id == edge.To {
+					v.ParentIds = append(v.ParentIds, edge.From)
+				}
+			}
+		}
+
+	}
+	return Input{Nodes: nodes}, scanner.Err()
+
+}
+
 func main() {
 	// input := readInput("./data/small.json")
-	input := GenerateInput(3000)
+	// input := readInput("/tmp/input.json")
+	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
+	// fmt.Println("Generating input")
+	input := GenerateDeepInput(50)
+	saveInput("/tmp/input.json", input)
 	g := PlaceNodes(input)
 
 	// fmt.Printf("Input: %#+v\n", input)

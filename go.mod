@@ -16,5 +16,5 @@ require (
 )
 
 replace (
-  github.com/nikolaydubina/go-graph-layout v0.0.0-20240509045315-dafeb51fdd74 => ../go-graph-layout
+    github.com/nikolaydubina/go-graph-layout v0.0.0-20240509045315-dafeb51fdd74 => ../go-graph-layout
 )

@@ -41,13 +41,13 @@ func GenerateDeepInput(nbNodes int) Input {
 			n.ParentIds = []string{strconv.Itoa(parentId)}
 		}
 
-		if parentId != i && rand.Float32() > 0.1 {
+		if parentId != i && rand.Float32() > 0.3 {
 			parentId++
 		}
-		if parentId > 0 && parentId != i && rand.Float32() > 0.5 {
-			n.ParentIds = append(n.ParentIds, nodes[rand.IntN(parentId)].Id)
-			fmt.Println("2 parents: ", n.Id)
-		}
+		// if parentId > 0 && parentId != i && rand.Float32() > 0.3 {
+		// 	n.ParentIds = append(n.ParentIds, nodes[rand.IntN(parentId)].Id)
+		// 	fmt.Println("2 parents: ", n.Id)
+		// }
 		nodes[i] = n
 
 	}

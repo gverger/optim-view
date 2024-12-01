@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/nikolaydubina/go-graph-layout/layout"
 )
@@ -71,8 +72,8 @@ func PlaceNodes(input Input) layout.Graph {
 			LayerOrderingInitializer: layout.BFSOrderingInitializer{},
 			LayerOrderingOptimizer: layout.CompositeLayerOrderingOptimizer{
 				Optimizers: []layout.LayerOrderingOptimizer{
-					// layout.WMedianOrderingOptimizer{},
-					layout.SwitchAdjacentOrderingOptimizer{},
+					layout.WMedianOrderingOptimizer{},
+					// layout.SwitchAdjacentOrderingOptimizer{},
 				},
 			},
 		}.Optimize,
@@ -93,6 +94,21 @@ func PlaceNodes(input Input) layout.Graph {
 type JsonEdge struct {
 	From string `json:"from"`
 	To   string `json:"to"`
+}
+
+func saveJsonL(filename string, input Input) {
+	file, _ := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	defer file.Close()
+	encoder := json.NewEncoder(file)
+	for _, n := range input.Nodes {
+		for _, pId := range n.ParentIds {
+			edge := JsonEdge{
+				From: pId,
+				To:   n.Id,
+			}
+			encoder.Encode(edge)
+		}
+	}
 }
 
 func readJsonL(filename string) (Input, error) {
@@ -141,11 +157,18 @@ func readJsonL(filename string) (Input, error) {
 func main() {
 	// input := readInput("./data/small.json")
 	// input := readInput("/tmp/input.json")
+	// input := Must(readJsonL("/tmp/input.jsonl.json"))
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
 	// fmt.Println("Generating input")
-	input := GenerateDeepInput(50)
+	input := GenerateDeepInput(10000)
+
+	// input.Nodes[2].ParentIds = append(input.Nodes[2].ParentIds, input.Nodes[7].Id)
 	saveInput("/tmp/input.json", input)
+	saveJsonL("/tmp/input.jsonl", input)
+	// g := PlaceNodes(input)
+	start := time.Now()
 	g := PlaceNodes(input)
+	fmt.Println("Total =", time.Since(start))
 
 	// fmt.Printf("Input: %#+v\n", input)
 	// fmt.Printf("Graph: %#+v\n", g)

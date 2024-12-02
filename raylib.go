@@ -1,12 +1,16 @@
 package main
 
 import (
+	"embed"
 	"math"
 
 	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/nikolaydubina/go-graph-layout/layout"
 )
+
+//go:embed data/Roboto.ttf
+var f embed.FS
 
 type CameraHandler struct {
 	Camera *rl.Camera2D
@@ -56,6 +60,15 @@ func runVisu(input Input, g layout.Graph) {
 	rl.InitWindow(1600, 1000, "Graph Visualization")
 	defer rl.CloseWindow()
 
+	// rl.SetConfigFlags(rl.FlagFullscreenMode)
+	// rl.ToggleFullscreen()
+
+	fontData := Must(f.ReadFile("data/Roboto.ttf"))
+	font := rl.LoadFontFromMemory(".ttf", fontData, 96, nil)
+
+	rl.SetTextureFilter(font.Texture, rl.FilterBilinear)
+	rl.GenTextureMipmaps(&font.Texture)
+
 	camera := NewCameraHandler()
 
 	rl.SetTargetFPS(60)
@@ -82,9 +95,9 @@ func runVisu(input Input, g layout.Graph) {
 				if lastSelected != int(i) {
 					// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
 					rl.UnloadTexture(selectionTexture)
-					if img, ok := ImageFromSVG(selected.SvgImage); ok {
-						selectionTexture = rl.LoadTextureFromImage(img)
-					}
+					// if img, ok := ImageFromSVG(selected.SvgImage); ok {
+					// 	selectionTexture = rl.LoadTextureFromImage(img)
+					// }
 					// rl.UnloadImage(image)
 					lastSelected = int(i)
 				}
@@ -117,7 +130,7 @@ func runVisu(input Input, g layout.Graph) {
 
 			rl.DrawRectangle(int32(n.XY[0]), int32(n.XY[1]), int32(n.W), int32(n.H), color)
 			// rl.DrawCircle(int32(n.XY[0]), int32(n.XY[1]), float32(n.H/2), rl.Maroon)
-			rl.DrawText(input.Nodes[i].ShortInfo, int32(n.XY[0]), int32(n.XY[1]), 16, rl.Black)
+			rl.DrawTextEx(font, input.Nodes[i].ShortInfo, rl.NewVector2(float32(n.XY[0]), float32(n.XY[1])), 11, 0, rl.Black)
 		}
 		rl.EndMode2D()
 
@@ -145,7 +158,7 @@ func runVisu(input Input, g layout.Graph) {
 			savedBackgroundColor := gui.GetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR)
 			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDDD)
 			gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
-			rl.DrawText(selected.Info, int32(offsetX+10), int32(offsetY+24), 32, rl.Black)
+			rl.DrawTextEx(font, selected.Info, rl.NewVector2(offsetX+10, offsetY+24), 32, 0, rl.Black)
 
 			rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
 

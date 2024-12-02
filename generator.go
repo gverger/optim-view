@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func GenerateLargeInput(nbNodes int) Input {
+func GenerateLargeInput(nbNodes int) InputTree {
 	nodes := make([]Node, nbNodes)
 	for i := 0; i < nbNodes; i++ {
 		parentIds := make([]string, 0)
@@ -23,12 +23,12 @@ func GenerateLargeInput(nbNodes int) Input {
 		nodes[i] = n
 	}
 
-	return Input{
+	return InputTree{
 		Nodes: nodes,
 	}
 }
 
-func GenerateDeepInput(nbNodes int) Input {
+func GenerateDeepInput(nbNodes int) InputTree {
 	nodes := make([]Node, nbNodes)
 	parentId := 0
 	for i := 0; i < nbNodes; i++ {
@@ -52,7 +52,7 @@ func GenerateDeepInput(nbNodes int) Input {
 
 	}
 
-	return Input{
+	return InputTree{
 		Nodes: nodes,
 	}
 }

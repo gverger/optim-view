@@ -3,10 +3,13 @@ package main
 import (
 	"embed"
 	"math"
+	"sort"
+	"strings"
 
 	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/nikolaydubina/go-graph-layout/layout"
+	"github.com/phuslu/log"
 )
 
 //go:embed data/Roboto.ttf
@@ -53,7 +56,26 @@ func (h CameraHandler) Update() {
 	}
 }
 
-func runVisu(input Input, g layout.Graph) {
+func runSingleVisu(tree InputTree, g layout.Graph) {
+	runVisu(Input{
+		Trees:   map[string]InputTree{"Graph": tree},
+		Layouts: map[string]layout.Graph{"Graph": g},
+	})
+}
+
+func runVisu(input Input) {
+
+	inputKeys := Keys(input.Trees)
+	sort.Strings(inputKeys)
+	keys := strings.Join(inputKeys, ";")
+	log.Info().Msg(keys)
+
+	activeTree := int32(0)
+	editMode := false
+
+	currentTree := input.Trees[inputKeys[activeTree]]
+	currentLayout := input.Layouts[inputKeys[activeTree]]
+
 	rl.SetConfigFlags(rl.FlagMsaa4xHint)
 	// rl.SetConfigFlags(rl.TextureFilterNearestMipLinear)
 
@@ -72,8 +94,8 @@ func runVisu(input Input, g layout.Graph) {
 	camera := NewCameraHandler()
 
 	rl.SetTargetFPS(60)
-	nbChildren := make(map[string]int, len(input.Nodes))
-	for _, n := range input.Nodes {
+	nbChildren := make(map[string]int, len(currentTree.Nodes))
+	for _, n := range currentTree.Nodes {
 		for _, p := range n.ParentIds {
 			nbChildren[p]++
 		}
@@ -89,9 +111,9 @@ func runVisu(input Input, g layout.Graph) {
 		mousePos := rl.GetMousePosition()
 		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
 		selected = nil
-		for i, n := range g.Nodes {
+		for i, n := range currentLayout.Nodes {
 			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
-				selected = &input.Nodes[i]
+				selected = &currentTree.Nodes[i]
 				if lastSelected != int(i) {
 					// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
 					rl.UnloadTexture(selectionTexture)
@@ -110,7 +132,7 @@ func runVisu(input Input, g layout.Graph) {
 		rl.ClearBackground(rl.RayWhite)
 		rl.BeginMode2D(*camera.Camera)
 
-		for _, e := range g.Edges {
+		for _, e := range currentLayout.Edges {
 			for i := 0; i < len(e.Path)-1; i++ {
 				rl.DrawLine(
 					int32(e.Path[i][0]), int32(e.Path[i][1]),
@@ -119,25 +141,25 @@ func runVisu(input Input, g layout.Graph) {
 			}
 		}
 
-		for i, n := range g.Nodes {
+		for i, n := range currentLayout.Nodes {
 			color := rl.Maroon
-			if nbChildren[input.Nodes[i].Id] > 0 {
+			if nbChildren[currentTree.Nodes[i].Id] > 0 {
 				color = rl.DarkGreen
 			}
-			if selected != nil && selected.Id == input.Nodes[i].Id {
+			if selected != nil && selected.Id == currentTree.Nodes[i].Id {
 				color = rl.DarkBlue
 			}
 
 			rl.DrawRectangle(int32(n.XY[0]), int32(n.XY[1]), int32(n.W), int32(n.H), color)
 			// rl.DrawCircle(int32(n.XY[0]), int32(n.XY[1]), float32(n.H/2), rl.Maroon)
-			rl.DrawTextEx(font, input.Nodes[i].ShortInfo, rl.NewVector2(float32(n.XY[0]), float32(n.XY[1])), 11, 0, rl.Black)
+			rl.DrawTextEx(font, currentTree.Nodes[i].ShortInfo, rl.NewVector2(float32(n.XY[0]), float32(n.XY[1])), 11, 0, rl.Black)
 		}
 		rl.EndMode2D()
 
-		if selected != nil {
+		if selected != nil && !editMode {
 			txtDims := rl.MeasureTextEx(rl.GetFontDefault(), selected.Info, 32, 4)
 
-			shape := g.Nodes[uint64(lastSelected)]
+			shape := currentLayout.Nodes[uint64(lastSelected)]
 			corner := rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]+shape.W), float32(shape.XY[1])), *camera.Camera)
 
 			distX := float32(50)
@@ -164,6 +186,29 @@ func runVisu(input Input, g layout.Graph) {
 
 			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
 		}
+
+		if editMode {
+			gui.Lock()
+		}
+		if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), keys, &activeTree, editMode) {
+			log.Info().Int("active", int(activeTree)).Msg("DropdownBox")
+			if editMode {
+				currentTree = input.Trees[inputKeys[activeTree]]
+				currentLayout = input.Layouts[inputKeys[activeTree]]
+
+				nbChildren = make(map[string]int, len(currentTree.Nodes))
+				for _, n := range currentTree.Nodes {
+					for _, p := range n.ParentIds {
+						nbChildren[p]++
+					}
+				}
+
+				selected = nil
+				lastSelected = -1
+			}
+			editMode = !editMode
+		}
+		gui.Unlock()
 
 		rl.EndDrawing()
 	}

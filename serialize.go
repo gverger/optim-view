@@ -10,18 +10,18 @@ import (
 	"strconv"
 )
 
-func readInput(filename string) Input {
+func readInput(filename string) InputTree {
 	jsonFile := Must(os.Open(filename))
 	defer jsonFile.Close()
 
 	content := Must(io.ReadAll(jsonFile))
-	var input Input
+	var input InputTree
 	json.Unmarshal(content, &input)
 
 	return input
 }
 
-func saveInput(filename string, input Input) {
+func saveInput(filename string, input InputTree) {
 	fmt.Println("SAVING INPUT", filename)
 	file, _ := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	defer file.Close()
@@ -34,7 +34,7 @@ type JsonEdge struct {
 	To   string `json:"to"`
 }
 
-func saveJsonL(filename string, input Input) {
+func saveJsonL(filename string, input InputTree) {
 	file, _ := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	defer file.Close()
 	encoder := json.NewEncoder(file)
@@ -49,7 +49,7 @@ func saveJsonL(filename string, input Input) {
 	}
 }
 
-func readJsonL(filename string) (Input, error) {
+func readJsonL(filename string) (InputTree, error) {
 	jsonFile := Must(os.Open(filename))
 	defer jsonFile.Close()
 
@@ -88,7 +88,7 @@ func readJsonL(filename string) (Input, error) {
 		}
 
 	}
-	return Input{Nodes: nodes}, scanner.Err()
+	return InputTree{Nodes: nodes}, scanner.Err()
 
 }
 
@@ -96,7 +96,7 @@ type Trace struct {
 	Nodes []TreeNode
 }
 
-func (s Trace) ToInput() Input {
+func (s Trace) ToInput() InputTree {
 	nodes := make([]Node, 0, len(s.Nodes)+1)
 	nodes = append(nodes, Node{
 		Id:        "0",
@@ -112,7 +112,7 @@ func (s Trace) ToInput() Input {
 		}
 		nodes = append(nodes, node)
 	}
-	return Input{
+	return InputTree{
 		Nodes: nodes,
 	}
 }

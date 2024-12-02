@@ -16,10 +16,15 @@ type Node struct {
 }
 
 type Input struct {
+	Trees   map[string]InputTree
+	Layouts map[string]layout.Graph
+}
+
+type InputTree struct {
 	Nodes []Node `json:"nodes"`
 }
 
-func PlaceNodes(input Input) layout.Graph {
+func PlaceNodes(input InputTree) layout.Graph {
 	g := layout.Graph{
 		Edges: make(map[[2]uint64]layout.Edge),
 		Nodes: make(map[uint64]layout.Node),
@@ -69,21 +74,35 @@ func PlaceNodes(input Input) layout.Graph {
 	return g
 }
 
+func runSearchTrees() {
+	searches := loadSearchTree("search_tree.json")
+
+	trees := make(map[string]InputTree)
+	for key, tree := range searches {
+		trees[key] = tree.ToInput()
+	}
+
+	start := time.Now()
+	layouts := make(map[string]layout.Graph)
+	for k, t := range trees {
+		layouts[k] = PlaceNodes(t)
+	}
+	fmt.Println("Total =", time.Since(start))
+	runVisu(Input{Trees: trees, Layouts: layouts})
+}
+
 func main() {
 	// input := readInput("./data/small.json")
 	// input := readInput("/tmp/input.json")
 	// input := Must(readJsonL("/tmp/input.jsonl.json"))
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
-	searches := loadSearchTree("search_tree.json")
-	input := searches["guide_0_d_0"].ToInput()
 
-	// fmt.Println("Generating input")
-	// input := GenerateDeepInput(10000)
+	fmt.Println("Generating input")
+	input := GenerateDeepInput(1000)
 	//
 	// // input.Nodes[2].ParentIds = append(input.Nodes[2].ParentIds, input.Nodes[7].Id)
-	saveInput("input-trees.json", input)
-	saveJsonL("input.jsonl", input)
-	// // g := PlaceNodes(input)
+	// saveInput("input-trees.json", input)
+	// saveJsonL("input.jsonl", input)
 	start := time.Now()
 	g := PlaceNodes(input)
 	fmt.Println("Total =", time.Since(start))
@@ -91,5 +110,5 @@ func main() {
 	// // fmt.Printf("Input: %#+v\n", input)
 	// // fmt.Printf("Graph: %#+v\n", g)
 	//
-	runVisu(input, g)
+	runSingleVisu(input, g)
 }

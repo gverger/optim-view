@@ -1,10 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.0/.schema/devbox.schema.json",
   "packages": [
-    "gcc@latest"
+    "pkgsCross.mingwW64.buildPackages.gcc"
   ],
   "env": {
-    "CGO_ENABLED": "0"
+    "CGO_ENABLED": "1"
   },
   "shell": {
     "init_hook": [
@@ -14,10 +14,9 @@
     ],
     "scripts": {
       "build": [
-        "GOOS=windows go build",
+        "GOOS=windows CC=x86_64-w64-mingw32-gcc go build .",
         "rm -rf $INSTALL_DIRECTORY",
         "mkdir -p $INSTALL_DIRECTORY",
-        "cp external/raylib.dll $INSTALL_DIRECTORY/",
         "mv optimview.exe $INSTALL_DIRECTORY/",
         "cp data/search_tree.json $INSTALL_DIRECTORY/",
         "echo Installed in \"$INSTALL_DIRECTORY\"",

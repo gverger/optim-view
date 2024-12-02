@@ -10,6 +10,8 @@ github.com/ebitengine/purego v0.8.1/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/fogleman/gg v1.3.0 h1:/7zJX8F6AaYQc57WQCyN9cAIz+4bCJGO9B+dyW29am8=
 github.com/fogleman/gg v1.3.0/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
+github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849 h1:cKx247upqhrJN+XKXRKCq1d4G2WiqbQev2J1R2xl8UE=
+github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849/go.mod h1:Ra1zgJP7vnGst+STvzPPiVJhjicklFWONCz5nu6MnOM=
 github.com/gen2brain/raylib-go/raylib v0.0.0-20241117153000-01864c04b849 h1:7gRYddv1r8PrmQUmbWWD3GCbuYmo9JJ/UUBQlDRUIwg=
 github.com/gen2brain/raylib-go/raylib v0.0.0-20241117153000-01864c04b849/go.mod h1:BaY76bZk7nw1/kVOSQObPY1v1iwVE1KHAGMfvI6oK1Q=
 github.com/go-fonts/dejavu v0.1.0/go.mod h1:4Wt4I4OU2Nq9asgDCteaAaWZOV24E+0/Pwo0gppep4g=
@@ -24,8 +26,6 @@ github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 h1:DACJavvAHhabrF0
 github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGwJL78qG/PmXZO1EjYhfJinVAhrmmHX6Z8B9k=
 github.com/jung-kurt/gofpdf v1.0.0/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
-github.com/nikolaydubina/go-graph-layout v0.0.0-20240509045315-dafeb51fdd74 h1:uHZ2nMTvlCuhLaC80+UbVr0wIIJtVqCjM0qf/26+Spk=
-github.com/nikolaydubina/go-graph-layout v0.0.0-20240509045315-dafeb51fdd74/go.mod h1:YynPb2eLeLp0L1WKLw/am/Kr0HCcBjGw5B//Znqzsog=
 github.com/nikolaydubina/jsonl-graph v1.1.0 h1:hxU2EFe0keB47tekjkDMGO2+DDbZvcfz21CvlV5Uv9A=
 github.com/nikolaydubina/jsonl-graph v1.1.0/go.mod h1:wQZL4BSABkCzcN3ual9qJ1AFE6wQSDJAbIZEmuYL1eY=
 github.com/nikolaydubina/multiline-jsonl v1.0.3 h1:rzfukoRroxvBorDgrtAjIcBasBpKQstqaOk9VfBPz70=

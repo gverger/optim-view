@@ -3,6 +3,7 @@ package main
 import (
 	"math"
 
+	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/nikolaydubina/go-graph-layout/layout"
 )
@@ -49,9 +50,8 @@ func (h CameraHandler) Update() {
 }
 
 func runVisu(input Input, g layout.Graph) {
-	// rl.SetConfigFlags(rl.FlagWindowMaximized)
 	rl.SetConfigFlags(rl.FlagMsaa4xHint)
-	rl.SetConfigFlags(rl.TextureFilterNearestMipLinear)
+	// rl.SetConfigFlags(rl.TextureFilterNearestMipLinear)
 
 	rl.InitWindow(1600, 1000, "Graph Visualization")
 	defer rl.CloseWindow()
@@ -59,6 +59,8 @@ func runVisu(input Input, g layout.Graph) {
 	camera := NewCameraHandler()
 
 	rl.SetTargetFPS(60)
+
+	menuTexture := rl.LoadRenderTexture(1600, 1000)
 
 	nbChildren := make(map[string]int, len(input.Nodes))
 	for _, n := range input.Nodes {
@@ -69,6 +71,16 @@ func runVisu(input Input, g layout.Graph) {
 
 	for !rl.WindowShouldClose() {
 		camera.Update()
+
+		mousePos := rl.GetMousePosition()
+		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
+		var selected *Node
+		for i, n := range g.Nodes {
+			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
+				selected = &input.Nodes[i]
+				break
+			}
+		}
 
 		rl.BeginDrawing()
 
@@ -89,12 +101,32 @@ func runVisu(input Input, g layout.Graph) {
 			if nbChildren[input.Nodes[i].Id] > 0 {
 				color = rl.DarkGreen
 			}
+			if selected != nil && selected.Id == input.Nodes[i].Id {
+				color = rl.DarkBlue
+			}
 
 			rl.DrawRectangle(int32(n.XY[0]), int32(n.XY[1]), int32(n.W), int32(n.H), color)
 			// rl.DrawCircle(int32(n.XY[0]), int32(n.XY[1]), float32(n.H/2), rl.Maroon)
 			rl.DrawText(input.Nodes[i].ShortInfo, int32(n.XY[0]), int32(n.XY[1]), 16, rl.Black)
 		}
 		rl.EndMode2D()
+
+		if selected != nil {
+			offset := 800
+			if mousePos.X > 800 {
+				offset = 0
+			}
+			col := gui.GetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR)
+			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDCC)
+			gui.WindowBox(rl.NewRectangle(float32(offset+100), 100, 600, 800), "Properties")
+
+			rl.DrawText(selected.Info, int32(offset+150), 150, 32, rl.Black)
+
+			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, col)
+		}
+
 		rl.EndDrawing()
 	}
+
+	rl.UnloadRenderTexture(menuTexture)
 }

@@ -80,10 +80,12 @@ func runVisu(input Input, g layout.Graph) {
 			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
 				selected = &input.Nodes[i]
 				if lastSelected != int(i) {
-					image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
+					// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
 					rl.UnloadTexture(selectionTexture)
-					selectionTexture = rl.LoadTextureFromImage(image)
-					rl.UnloadImage(image)
+					if img, ok := ImageFromSVG(selected.SvgImage); ok {
+						selectionTexture = rl.LoadTextureFromImage(img)
+					}
+					// rl.UnloadImage(image)
 					lastSelected = int(i)
 				}
 				break
@@ -144,6 +146,8 @@ func runVisu(input Input, g layout.Graph) {
 			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDDD)
 			gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
 			rl.DrawText(selected.Info, int32(offsetX+10), int32(offsetY+24), 32, rl.Black)
+
+			rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
 
 			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
 		}

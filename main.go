@@ -12,6 +12,7 @@ type Node struct {
 	ParentIds []string `json:"parentId"`
 	Info      string   `json:"info"`
 	ShortInfo string   `json:"shortInfo"`
+	SvgImage  string   `json:"svg"`
 }
 
 type Input struct {

@@ -59,9 +59,6 @@ func runVisu(input Input, g layout.Graph) {
 	camera := NewCameraHandler()
 
 	rl.SetTargetFPS(60)
-
-	menuTexture := rl.LoadRenderTexture(1600, 1000)
-
 	nbChildren := make(map[string]int, len(input.Nodes))
 	for _, n := range input.Nodes {
 		for _, p := range n.ParentIds {
@@ -69,15 +66,26 @@ func runVisu(input Input, g layout.Graph) {
 		}
 	}
 
+	var selected *Node
+	lastSelected := -1
+	var selectionTexture rl.Texture2D
+
 	for !rl.WindowShouldClose() {
 		camera.Update()
 
 		mousePos := rl.GetMousePosition()
 		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
-		var selected *Node
+		selected = nil
 		for i, n := range g.Nodes {
 			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
 				selected = &input.Nodes[i]
+				if lastSelected != int(i) {
+					image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
+					rl.UnloadTexture(selectionTexture)
+					selectionTexture = rl.LoadTextureFromImage(image)
+					rl.UnloadImage(image)
+					lastSelected = int(i)
+				}
 				break
 			}
 		}
@@ -112,21 +120,36 @@ func runVisu(input Input, g layout.Graph) {
 		rl.EndMode2D()
 
 		if selected != nil {
-			offset := 800
-			if mousePos.X > 800 {
-				offset = 0
+			txtDims := rl.MeasureTextEx(rl.GetFontDefault(), selected.Info, 32, 4)
+
+			shape := g.Nodes[uint64(lastSelected)]
+			corner := rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]+shape.W), float32(shape.XY[1])), *camera.Camera)
+
+			distX := float32(50)
+			distY := -float32(60)
+
+			rightmostPointX := corner.X + txtDims.X + 20
+
+			if rightmostPointX > float32(rl.GetScreenWidth()-10) {
+				distX = -50 - txtDims.X - 20
+				corner.X = rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]), 0), *camera.Camera).X
+			} else if rightmostPointX+distX > float32(rl.GetScreenWidth()-10) {
+				distX = float32(rl.GetScreenWidth()-10) - (corner.X + txtDims.X + 20)
 			}
-			col := gui.GetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR)
-			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDCC)
-			gui.WindowBox(rl.NewRectangle(float32(offset+100), 100, 600, 800), "Properties")
 
-			rl.DrawText(selected.Info, int32(offset+150), 150, 32, rl.Black)
+			offsetX := rl.Clamp(corner.X+distX, 10, float32(rl.GetScreenWidth())-10-txtDims.X-20)
+			offsetY := rl.Clamp(corner.Y-distY, 10, float32(rl.GetScreenHeight())-10-txtDims.Y-20)
 
-			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, col)
+			savedBackgroundColor := gui.GetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR)
+			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDDD)
+			gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
+			rl.DrawText(selected.Info, int32(offsetX+10), int32(offsetY+24), 32, rl.Black)
+
+			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
 		}
 
 		rl.EndDrawing()
 	}
 
-	rl.UnloadRenderTexture(menuTexture)
+	rl.UnloadTexture(selectionTexture)
 }

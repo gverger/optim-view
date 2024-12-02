@@ -155,6 +155,7 @@ func (s TreeNode) ToNode() Node {
 		ParentIds: parentIds,
 		Info:      info,
 		ShortInfo: short,
+		SvgImage:  s.SVG,
 	}
 }
 

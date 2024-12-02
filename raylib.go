@@ -49,15 +49,23 @@ func (h CameraHandler) Update() {
 }
 
 func runVisu(input Input, g layout.Graph) {
-	rl.SetConfigFlags(rl.FlagWindowMaximized)
+	// rl.SetConfigFlags(rl.FlagWindowMaximized)
 	rl.SetConfigFlags(rl.FlagMsaa4xHint)
+	rl.SetConfigFlags(rl.TextureFilterNearestMipLinear)
 
-	rl.InitWindow(1200, 800, "Graph Visualization")
+	rl.InitWindow(1600, 1000, "Graph Visualization")
 	defer rl.CloseWindow()
 
 	camera := NewCameraHandler()
 
 	rl.SetTargetFPS(60)
+
+	nbChildren := make(map[string]int, len(input.Nodes))
+	for _, n := range input.Nodes {
+		for _, p := range n.ParentIds {
+			nbChildren[p]++
+		}
+	}
 
 	for !rl.WindowShouldClose() {
 		camera.Update()
@@ -72,12 +80,17 @@ func runVisu(input Input, g layout.Graph) {
 				rl.DrawLine(
 					int32(e.Path[i][0]), int32(e.Path[i][1]),
 					int32(e.Path[i+1][0]), int32(e.Path[i+1][1]),
-					rl.Blue)
+					rl.DarkBlue)
 			}
 		}
 
 		for i, n := range g.Nodes {
-			rl.DrawRectangle(int32(n.XY[0]), int32(n.XY[1]), int32(n.W), int32(n.H), rl.Maroon)
+			color := rl.Maroon
+			if nbChildren[input.Nodes[i].Id] > 0 {
+				color = rl.DarkGreen
+			}
+
+			rl.DrawRectangle(int32(n.XY[0]), int32(n.XY[1]), int32(n.W), int32(n.H), color)
 			// rl.DrawCircle(int32(n.XY[0]), int32(n.XY[1]), float32(n.H/2), rl.Maroon)
 			rl.DrawText(input.Nodes[i].ShortInfo, int32(n.XY[0]), int32(n.XY[1]), 16, rl.Black)
 		}

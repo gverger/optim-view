@@ -1,12 +1,7 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 	"time"
 
 	"github.com/nikolaydubina/go-graph-layout/layout"
@@ -21,24 +16,6 @@ type Node struct {
 
 type Input struct {
 	Nodes []Node `json:"nodes"`
-}
-
-func readInput(filename string) Input {
-	jsonFile := Must(os.Open(filename))
-	defer jsonFile.Close()
-
-	content := Must(io.ReadAll(jsonFile))
-	var input Input
-	json.Unmarshal(content, &input)
-
-	return input
-}
-
-func saveInput(filename string, input Input) {
-	file, _ := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC, os.ModePerm)
-	defer file.Close()
-	encoder := json.NewEncoder(file)
-	encoder.Encode(input)
 }
 
 func PlaceNodes(input Input) layout.Graph {
@@ -91,87 +68,27 @@ func PlaceNodes(input Input) layout.Graph {
 	return g
 }
 
-type JsonEdge struct {
-	From string `json:"from"`
-	To   string `json:"to"`
-}
-
-func saveJsonL(filename string, input Input) {
-	file, _ := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC, os.ModePerm)
-	defer file.Close()
-	encoder := json.NewEncoder(file)
-	for _, n := range input.Nodes {
-		for _, pId := range n.ParentIds {
-			edge := JsonEdge{
-				From: pId,
-				To:   n.Id,
-			}
-			encoder.Encode(edge)
-		}
-	}
-}
-
-func readJsonL(filename string) (Input, error) {
-	jsonFile := Must(os.Open(filename))
-	defer jsonFile.Close()
-
-	nodes := make([]Node, 0)
-	nodeIds := make(map[string]bool)
-	scanner := bufio.NewScanner(io.Reader(jsonFile))
-	for scanner.Scan() {
-		decoder := json.NewDecoder(bytes.NewReader(scanner.Bytes()))
-		var edge JsonEdge
-		decoder.Decode(&edge)
-
-		if !nodeIds[edge.From] {
-			nodes = append(nodes, Node{
-				Id:        edge.From,
-				ParentIds: make([]string, 0),
-				Info:      fmt.Sprintf("Node %s", edge.From),
-				ShortInfo: fmt.Sprintf("Node %s", edge.From),
-			})
-			nodeIds[edge.From] = true
-		}
-
-		if !nodeIds[edge.To] {
-			nodes = append(nodes, Node{
-				Id:        edge.To,
-				ParentIds: []string{edge.From},
-				Info:      fmt.Sprintf("Node %s", edge.To),
-				ShortInfo: fmt.Sprintf("Node %s", edge.To),
-			})
-			nodeIds[edge.To] = true
-		} else {
-			for _, v := range nodes {
-				if v.Id == edge.To {
-					v.ParentIds = append(v.ParentIds, edge.From)
-				}
-			}
-		}
-
-	}
-	return Input{Nodes: nodes}, scanner.Err()
-
-}
-
 func main() {
 	// input := readInput("./data/small.json")
 	// input := readInput("/tmp/input.json")
 	// input := Must(readJsonL("/tmp/input.jsonl.json"))
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
-	// fmt.Println("Generating input")
-	input := GenerateDeepInput(10000)
+	searches := loadSearchTree("search_tree.json")
+	input := searches["guide_0_d_0"].ToInput()
 
-	// input.Nodes[2].ParentIds = append(input.Nodes[2].ParentIds, input.Nodes[7].Id)
-	saveInput("/tmp/input.json", input)
-	saveJsonL("/tmp/input.jsonl", input)
-	// g := PlaceNodes(input)
+	// fmt.Println("Generating input")
+	// input := GenerateDeepInput(10000)
+	//
+	// // input.Nodes[2].ParentIds = append(input.Nodes[2].ParentIds, input.Nodes[7].Id)
+	saveInput("input-trees.json", input)
+	saveJsonL("input.jsonl", input)
+	// // g := PlaceNodes(input)
 	start := time.Now()
 	g := PlaceNodes(input)
 	fmt.Println("Total =", time.Since(start))
-
-	// fmt.Printf("Input: %#+v\n", input)
-	// fmt.Printf("Graph: %#+v\n", g)
-
+	//
+	// // fmt.Printf("Input: %#+v\n", input)
+	// // fmt.Printf("Graph: %#+v\n", g)
+	//
 	runVisu(input, g)
 }

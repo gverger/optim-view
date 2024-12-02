@@ -18,12 +18,14 @@
         "rm -rf $INSTALL_DIRECTORY",
         "mkdir -p $INSTALL_DIRECTORY",
         "cp external/raylib.dll $INSTALL_DIRECTORY/",
-        "cp optimview.exe $INSTALL_DIRECTORY/",
+        "mv optimview.exe $INSTALL_DIRECTORY/",
+        "cp data/search_tree.json $INSTALL_DIRECTORY/",
         "echo Installed in \"$INSTALL_DIRECTORY\"",
         "echo run $INSTALL_DIRECTORY/optimview.exe"
       ],
       "run": [
-        "$INSTALL_DIRECTORY/optimview.exe"
+        "cd $INSTALL_DIRECTORY",
+        "./optimview.exe"
       ],
       "test": [
         "echo \"Error: no test specified\" && exit 1"

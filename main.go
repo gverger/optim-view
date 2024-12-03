@@ -92,17 +92,20 @@ func runSearchTrees() {
 }
 
 func main() {
+	// runSearchTrees()
+	// return
 	// input := readInput("./data/small.json")
 	// input := readInput("/tmp/input.json")
-	// input := Must(readJsonL("/tmp/input.jsonl.json"))
+	input := Must(readJsonL("input.jsonl"))
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
 
 	fmt.Println("Generating input")
-	input := GenerateDeepInput(1000)
+	fmt.Println("input node", len(input.Nodes))
+	// input := GenerateDeepInput(100)
 	//
-	// // input.Nodes[2].ParentIds = append(input.Nodes[2].ParentIds, input.Nodes[7].Id)
+	input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
 	// saveInput("input-trees.json", input)
-	// saveJsonL("input.jsonl", input)
+	saveJsonL("input.jsonl", input)
 	start := time.Now()
 	g := PlaceNodes(input)
 	fmt.Println("Total =", time.Since(start))

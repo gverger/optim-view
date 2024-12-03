@@ -133,11 +133,13 @@ func runVisu(input Input) {
 		rl.BeginMode2D(*camera.Camera)
 
 		for _, e := range currentLayout.Edges {
-			for i := 0; i < len(e.Path)-1; i++ {
-				rl.DrawLine(
-					int32(e.Path[i][0]), int32(e.Path[i][1]),
-					int32(e.Path[i+1][0]), int32(e.Path[i+1][1]),
-					rl.DarkBlue)
+			for i := 1; i < len(e.Path); i++ {
+				src := rl.NewVector2(float32(e.Path[i-1][0]), float32(e.Path[i-1][1]))
+				ctrlA := rl.NewVector2(float32(e.Path[i-1][0]), float32(e.Path[i-1][1]+50))
+				ctrlB := rl.NewVector2(float32(e.Path[i][0]), float32(e.Path[i][1]-50))
+				dst := rl.NewVector2(float32(e.Path[i][0]), float32(e.Path[i][1]))
+
+				rl.DrawSplineSegmentBezierCubic(src, ctrlA, ctrlB, dst, 1, rl.Blue)
 			}
 		}
 
@@ -182,36 +184,40 @@ func runVisu(input Input) {
 			gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
 			rl.DrawTextEx(font, selected.Info, rl.NewVector2(offsetX+10, offsetY+24), 32, 0, rl.Black)
 
-			rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
+			// rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
 
 			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
 		}
 
-		if editMode {
-			gui.Lock()
-		}
-		if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), keys, &activeTree, editMode) {
-			log.Info().Int("active", int(activeTree)).Msg("DropdownBox")
-			if editMode {
-				currentTree = input.Trees[inputKeys[activeTree]]
-				currentLayout = input.Layouts[inputKeys[activeTree]]
-
-				nbChildren = make(map[string]int, len(currentTree.Nodes))
-				for _, n := range currentTree.Nodes {
-					for _, p := range n.ParentIds {
-						nbChildren[p]++
-					}
-				}
-
-				selected = nil
-				lastSelected = -1
-			}
-			editMode = !editMode
-		}
-		gui.Unlock()
+		displayProperties(editMode, keys, activeTree, currentTree, input, inputKeys, currentLayout, nbChildren, selected, lastSelected)
 
 		rl.EndDrawing()
 	}
 
 	rl.UnloadTexture(selectionTexture)
+}
+
+func displayProperties(editMode bool, keys string, activeTree int32, currentTree InputTree, input Input, inputKeys []string, currentLayout layout.Graph, nbChildren map[string]int, selected *Node, lastSelected int) {
+	if editMode {
+		gui.Lock()
+	}
+	if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), keys, &activeTree, editMode) {
+		log.Info().Int("active", int(activeTree)).Msg("DropdownBox")
+		if editMode {
+			currentTree = input.Trees[inputKeys[activeTree]]
+			currentLayout = input.Layouts[inputKeys[activeTree]]
+
+			nbChildren = make(map[string]int, len(currentTree.Nodes))
+			for _, n := range currentTree.Nodes {
+				for _, p := range n.ParentIds {
+					nbChildren[p]++
+				}
+			}
+
+			selected = nil
+			lastSelected = -1
+		}
+		editMode = !editMode
+	}
+	gui.Unlock()
 }

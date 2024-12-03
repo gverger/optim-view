@@ -44,7 +44,7 @@ func GenerateDeepInput(nbNodes int) InputTree {
 		if parentId != i && rand.Float32() > 0.3 {
 			parentId++
 		}
-		// if parentId > 0 && parentId != i && rand.Float32() > 0.3 {
+		// if parentId > 0 && parentId != i && rand.Float32() > 0.9 {
 		// 	n.ParentIds = append(n.ParentIds, nodes[rand.IntN(parentId)].Id)
 		// 	fmt.Println("2 parents: ", n.Id)
 		// }

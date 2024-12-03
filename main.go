@@ -9,10 +9,11 @@ import (
 
 type Node struct {
 	Id        string   `json:"id"`
-	ParentIds []string `json:"parentId"`
+	ParentIds []string `json:"parentIds"`
 	Info      string   `json:"info"`
 	ShortInfo string   `json:"shortInfo"`
 	SvgImage  string   `json:"svg"`
+	Hidden    bool     `json:"hidden"`
 }
 
 type Input struct {
@@ -92,15 +93,17 @@ func runSearchTrees() {
 }
 
 func main() {
+	runSearchTrees()
+	return
 	// input := readInput("./data/small.json")
-	// input := readInput("/tmp/input.json")
-	// input := Must(readJsonL("/tmp/input.jsonl.json"))
+	input := readInput("brandeskopf.json")
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
 
 	fmt.Println("Generating input")
-	input := GenerateDeepInput(1000)
+	// fmt.Println("input node", len(input.Nodes))
+	// input := GenerateDeepInput(10000)
 	//
-	// // input.Nodes[2].ParentIds = append(input.Nodes[2].ParentIds, input.Nodes[7].Id)
+	// input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
 	// saveInput("input-trees.json", input)
 	// saveJsonL("input.jsonl", input)
 	start := time.Now()

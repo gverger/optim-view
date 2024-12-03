@@ -10,15 +10,16 @@
     "init_hook": [
       "export UNAME=$(powershell.exe '$env:UserName')",
       "export WIN_USER=${UNAME%%[[:cntrl:]]}",
-      "export INSTALL_DIRECTORY=\"/mnt/c/Users/$WIN_USER/documents/raylib/go\""
+      "export INSTALL_DIRECTORY=\"/mnt/c/Users/$WIN_USER/Documents/raylib/optim-view\""
     ],
     "scripts": {
       "build": [
         "GOOS=windows CC=x86_64-w64-mingw32-gcc go build -ldflags '-s -w' .",
-        "rm -rf $INSTALL_DIRECTORY",
+        "rm -rf $INSTALL_DIRECTORY/optimview.exe",
         "mkdir -p $INSTALL_DIRECTORY",
         "mv optimview.exe $INSTALL_DIRECTORY/",
-        "cp data/search_tree.json $INSTALL_DIRECTORY/",
+        "test ! -e $INSTALL_DIRECTORY/search_tree.json && cp data/search_tree.json $INSTALL_DIRECTORY/",
+        "cp data/brandeskopf.json $INSTALL_DIRECTORY/",
         "echo Installed in \"$INSTALL_DIRECTORY\"",
         "echo run $INSTALL_DIRECTORY/optimview.exe"
       ],

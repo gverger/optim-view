@@ -133,11 +133,13 @@ func runVisu(input Input) {
 		rl.BeginMode2D(*camera.Camera)
 
 		for _, e := range currentLayout.Edges {
-			for i := 0; i < len(e.Path)-1; i++ {
-				rl.DrawLine(
-					int32(e.Path[i][0]), int32(e.Path[i][1]),
-					int32(e.Path[i+1][0]), int32(e.Path[i+1][1]),
-					rl.DarkBlue)
+			for i := 1; i < len(e.Path); i++ {
+				src := rl.NewVector2(float32(e.Path[i-1][0]), float32(e.Path[i-1][1]))
+				ctrlA := rl.NewVector2(float32(e.Path[i-1][0]), float32(e.Path[i-1][1]+50))
+				ctrlB := rl.NewVector2(float32(e.Path[i][0]), float32(e.Path[i][1]-50))
+				dst := rl.NewVector2(float32(e.Path[i][0]), float32(e.Path[i][1]))
+
+				rl.DrawSplineSegmentBezierCubic(src, ctrlA, ctrlB, dst, 1, rl.Blue)
 			}
 		}
 
@@ -182,7 +184,7 @@ func runVisu(input Input) {
 			gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
 			rl.DrawTextEx(font, selected.Info, rl.NewVector2(offsetX+10, offsetY+24), 32, 0, rl.Black)
 
-			rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
+			// rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
 
 			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
 		}
@@ -215,3 +217,4 @@ func runVisu(input Input) {
 
 	rl.UnloadTexture(selectionTexture)
 }
+

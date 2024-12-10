@@ -20,6 +20,7 @@
         "mv optimview.exe $INSTALL_DIRECTORY/",
         "test ! -e $INSTALL_DIRECTORY/search_tree.json && cp data/search_tree.json $INSTALL_DIRECTORY/",
         "cp data/brandeskopf.json $INSTALL_DIRECTORY/",
+        "cp data/small.json $INSTALL_DIRECTORY/",
         "echo Installed in \"$INSTALL_DIRECTORY\"",
         "echo run $INSTALL_DIRECTORY/optimview.exe"
       ],

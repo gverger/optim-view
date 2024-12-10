@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gverger/optimview/graph"
 	"github.com/nikolaydubina/go-graph-layout/layout"
+	"github.com/phuslu/log"
 )
 
 type GraphView = graph.Graph[*Node, string]
@@ -98,6 +100,7 @@ func PlaceNodes(input *GraphView) (layout.LayeredGraph, layout.Graph) {
 	}
 	gl.UpdateGraphLayout(g)
 
+	log.Warn().Interface("layer", layeredGraph).Msg("empty?")
 	return layeredGraph, g
 }
 
@@ -120,9 +123,20 @@ func runSearchTrees() {
 }
 
 func main() {
+	if log.IsTerminal(os.Stderr.Fd()) {
+		log.DefaultLogger = log.Logger{
+			TimeFormat: "15:04:05",
+			Writer: &log.ConsoleWriter{
+				ColorOutput:    true,
+				QuoteString:    true,
+				EndWithMessage: false,
+			},
+		}
+	}
+
 	// runSearchTrees()
 	// return
-	// input := readInput("./data/small.json")
+	// input := readInput("./small.json")
 	input := readInput("brandeskopf.json")
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
 

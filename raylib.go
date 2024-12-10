@@ -8,7 +8,6 @@ import (
 
 	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/gverger/optimview/graph"
 	"github.com/nikolaydubina/go-graph-layout/layout"
 	"github.com/phuslu/log"
 )
@@ -65,6 +64,7 @@ func runSingleVisu(tree *GraphView, layer layout.LayeredGraph, g layout.Graph) {
 	runVisu(Input{
 		Trees:   map[string]*GraphView{"Graph": tree},
 		Layouts: map[string]layout.Graph{"Graph": g},
+		Layers:  map[string]layout.LayeredGraph{"Graph": layer},
 	})
 }
 
@@ -138,8 +138,15 @@ func runVisu(input Input) {
 
 		hovered = nil
 		for i, n := range currentLayout.Nodes {
+			if int(i) >= len(currentTree.Nodes) {
+				log.Info().Int("i", int(i)).Int("tree nodes", len(currentTree.Nodes)).Interface("node", n).Msg("crash")
+			}
+			node := currentTree.Nodes[i]
+			if node.Hidden {
+				continue
+			}
 			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
-				hovered = currentTree.Nodes[i]
+				hovered = node
 				if lastHovered != int(i) {
 					// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
 					rl.UnloadTexture(selectionTexture)
@@ -163,7 +170,12 @@ func runVisu(input Input) {
 		rl.ClearBackground(rl.RayWhite)
 		rl.BeginMode2D(*camera.Camera)
 
-		for _, e := range currentLayout.Edges {
+		for n, e := range currentLayout.Edges {
+			n1 := currentTree.Nodes[n[0]]
+			n2 := currentTree.Nodes[n[1]]
+			if n1.Hidden || n2.Hidden {
+				continue
+			}
 			for i := 1; i < len(e.Path); i++ {
 				src := rl.NewVector2(float32(e.Path[i-1][0]), float32(e.Path[i-1][1]))
 				ctrlA := rl.NewVector2(float32(e.Path[i-1][0]), float32(e.Path[i-1][1]+50))
@@ -175,20 +187,21 @@ func runVisu(input Input) {
 		}
 
 		for i, n := range currentLayout.Nodes {
+			node := currentTree.Nodes[i]
+			if node.Hidden {
+				continue
+			}
 			color := rl.Maroon
-			if nbChildren[currentTree.Nodes[i].Id] > 0 {
+			if nbChildren[node.Id] > 0 {
 				color = rl.DarkGreen
 			}
-			if currentTree.Nodes[i].Hidden {
-				color = rl.Gray
-			}
-			if hovered != nil && hovered.Id == currentTree.Nodes[i].Id {
+			if hovered != nil && hovered.Id == node.Id {
 				color = rl.DarkBlue
 			}
 
 			rl.DrawRectangle(int32(n.XY[0]), int32(n.XY[1]), int32(n.W), int32(n.H), color)
 			// rl.DrawCircle(int32(n.XY[0]), int32(n.XY[1]), float32(n.H/2), rl.Maroon)
-			rl.DrawTextEx(font, currentTree.Nodes[i].ShortInfo, rl.NewVector2(float32(n.XY[0]), float32(n.XY[1])), 11, 0, rl.Black)
+			rl.DrawTextEx(font, node.ShortInfo, rl.NewVector2(float32(n.XY[0]), float32(n.XY[1])), 11, 0, rl.Black)
 		}
 		rl.EndMode2D()
 
@@ -260,8 +273,6 @@ type NewGraph struct {
 }
 
 func HideChildren(tree *GraphView, oldG layout.Graph, oldL layout.LayeredGraph, nodeId string, events chan<- Event) {
-	g := graph.NewGraph[*Node, string](tree.NodeID)
-
 	nodes := make([]*Node, 0, len(tree.Nodes))
 	nodes = append(nodes, tree.NodeForId(nodeId))
 	idx := 0
@@ -272,72 +283,59 @@ func HideChildren(tree *GraphView, oldG layout.Graph, oldL layout.LayeredGraph, 
 			if !c.Hidden {
 				nodes = append(nodes, c)
 				c.Hidden = true
+				log.Debug().Str("node", c.Id).Msg("hide")
 			}
 		}
 	}
 
-	for _, n := range tree.Nodes {
-		if !n.Hidden {
-			g.AddNode(n)
+	indices := make([]uint64, 0, len(nodes[1:]))
+	for _, node := range nodes[1:] {
+		idx := uint64(tree.Lookup[tree.NodeID(node)])
+		log.Debug().Str("node", tree.NodeID(node)).Uint64("indice", idx).Msg("mapping")
+		indices = append(indices, idx)
+	}
+
+	newL := Delete(&oldL, indices)
+
+	g := oldG.Copy()
+
+	newX := layout.
+		BrandesKopfLayersNodesHorizontalAssigner{Delta: 150}.
+		NodesHorizontalCoordinates(g, *newL)
+
+	newY := layout.BasicNodesVerticalCoordinatesAssigner{
+		MarginLayers:   125,
+		FakeNodeHeight: 50,
+	}.NodesVerticalCoordinates(g, *newL)
+
+	nodeIdx := uint64(tree.Lookup[nodeId])
+	offset := [2]int{
+		oldG.Nodes[nodeIdx].XY[0] - (newX[nodeIdx] - g.Nodes[nodeIdx].W/2),
+		oldG.Nodes[nodeIdx].XY[1] - (newY[nodeIdx] - g.Nodes[nodeIdx].H/2),
+	}
+
+	allNodesXY := make(map[uint64][2]int, len(g.Nodes))
+	for n := range newL.NodeYX {
+		allNodesXY[n] = [2]int{newX[n] + offset[0], newY[n] + offset[1]}
+	}
+
+	for e, nodes := range newL.Edges {
+		path := make([][2]int, len(nodes))
+		for i, n := range nodes {
+			xy := allNodesXY[n]
+			path[i] = [2]int{xy[0], xy[1]}
 		}
-	}
-	for n, children := range tree.Edges {
-		n1 := tree.Nodes[n]
-		if n1.Hidden {
-			continue
-		}
-		for c := range children {
-			n2 := tree.Nodes[c]
-			if n2.Hidden {
-				continue
-			}
 
-			g.AddEdge(n1, n2)
-		}
+		g.Edges[e] = layout.Edge{Path: path}
 	}
 
-	l := layout.Graph{
-		Edges: make(map[[2]uint64]layout.Edge),
-		Nodes: make(map[uint64]layout.Node),
-	}
-
-	indices := make(map[string]uint64)
-
-	for i, node := range g.Nodes {
-		index := uint64(i)
-		indices[node.Id] = index
-		l.Nodes[index] = layout.Node{
-			W: 50,
-			H: 50,
-		}
-	}
-
-	for _, node := range g.Nodes {
-		for _, pId := range node.ParentIds {
-			l.Edges[[2]uint64{indices[pId], indices[node.Id]}] = layout.Edge{}
-		}
-	}
-
-	newL := layout.NewLayeredGraph(l)
-
-	for k := range l.Nodes {
-		node := g.Nodes[k]
-
-		oldIdx := uint64(tree.Lookup[tree.NodeID(node)])
-		newL.NodeYX[k] = oldL.NodeYX[oldIdx]
-	}
-
-	newX := layout.BrandesKopfLayersNodesHorizontalAssigner{Delta: 150}.NodesHorizontalCoordinates(l, newL)
-	for k, x := range newX {
-		oldIdx := uint64(tree.Lookup[tree.NodeID(g.Nodes[k])])
-		l.Nodes[k] = layout.Node{
-			XY: [2]int{x, oldG.Nodes[oldIdx].XY[1]},
-			W:  l.Nodes[k].W,
-			H:  l.Nodes[k].H,
+	for k := range g.Nodes {
+		g.Nodes[k] = layout.Node{
+			XY: [2]int{newX[k] - g.Nodes[k].W/2 + offset[0], newY[k] - g.Nodes[k].H/2 + offset[1]},
+			W:  g.Nodes[k].W,
+			H:  g.Nodes[k].H,
 		}
 	}
 
-	// l := PlaceNodes(g)
-
-	events <- NewGraph{Tree: g, Layout: l}
+	events <- NewGraph{Tree: tree, Layout: g}
 }

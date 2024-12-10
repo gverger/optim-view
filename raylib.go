@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 
 	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -14,6 +15,10 @@ import (
 
 //go:embed data/Roboto.ttf
 var f embed.FS
+
+type MouseHandler struct {
+	LastClick int
+}
 
 type CameraHandler struct {
 	Camera *rl.Camera2D
@@ -56,14 +61,15 @@ func (h CameraHandler) Update() {
 	}
 }
 
-func runSingleVisu(tree InputTree, g layout.Graph) {
+func runSingleVisu(tree *GraphView, g layout.Graph) {
 	runVisu(Input{
-		Trees:   map[string]InputTree{"Graph": tree},
+		Trees:   map[string]*GraphView{"Graph": tree},
 		Layouts: map[string]layout.Graph{"Graph": g},
 	})
 }
 
 func runVisu(input Input) {
+	events := make(chan Event, 1)
 
 	inputKeys := Keys(input.Trees)
 	sort.Strings(inputKeys)
@@ -101,30 +107,52 @@ func runVisu(input Input) {
 		}
 	}
 
-	var selected *Node
-	lastSelected := -1
+	var hovered *Node
+	lastHovered := -1
 	var selectionTexture rl.Texture2D
 
 	for !rl.WindowShouldClose() {
+		found := true
+		for found {
+			select {
+			case event := <-events:
+				log.Info().Interface("event", event).Msg("event received")
+				switch e := event.(type) {
+				case NewGraph:
+					log.Info().Msgf("new graph %d nodes", len(e.Tree.Nodes))
+				}
+			default:
+				found = false
+			}
+		}
+
 		camera.Update()
+
+		gesture := rl.GetGestureDetected()
 
 		mousePos := rl.GetMousePosition()
 		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
-		selected = nil
+
+		hovered = nil
 		for i, n := range currentLayout.Nodes {
 			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
-				selected = &currentTree.Nodes[i]
-				if lastSelected != int(i) {
+				hovered = &currentTree.Nodes[i]
+				if lastHovered != int(i) {
 					// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
 					rl.UnloadTexture(selectionTexture)
 					// if img, ok := ImageFromSVG(selected.SvgImage); ok {
 					// 	selectionTexture = rl.LoadTextureFromImage(img)
 					// }
 					// rl.UnloadImage(image)
-					lastSelected = int(i)
+					lastHovered = int(i)
 				}
 				break
 			}
+		}
+
+		if hovered != nil && rl.IsMouseButtonPressed(rl.MouseLeftButton) && gesture == rl.GestureDoubletap {
+			log.Info().Msg("clicked")
+			go HideChildren(currentTree, currentLayout, events)
 		}
 
 		rl.BeginDrawing()
@@ -148,7 +176,7 @@ func runVisu(input Input) {
 			if nbChildren[currentTree.Nodes[i].Id] > 0 {
 				color = rl.DarkGreen
 			}
-			if selected != nil && selected.Id == currentTree.Nodes[i].Id {
+			if hovered != nil && hovered.Id == currentTree.Nodes[i].Id {
 				color = rl.DarkBlue
 			}
 
@@ -158,10 +186,10 @@ func runVisu(input Input) {
 		}
 		rl.EndMode2D()
 
-		if selected != nil && !editMode {
-			txtDims := rl.MeasureTextEx(rl.GetFontDefault(), selected.Info, 32, 4)
+		if hovered != nil && !editMode {
+			txtDims := rl.MeasureTextEx(rl.GetFontDefault(), hovered.Info, 32, 4)
 
-			shape := currentLayout.Nodes[uint64(lastSelected)]
+			shape := currentLayout.Nodes[uint64(lastHovered)]
 			corner := rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]+shape.W), float32(shape.XY[1])), *camera.Camera)
 
 			distX := float32(50)
@@ -182,7 +210,7 @@ func runVisu(input Input) {
 			savedBackgroundColor := gui.GetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR)
 			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDDD)
 			gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
-			rl.DrawTextEx(font, selected.Info, rl.NewVector2(offsetX+10, offsetY+24), 32, 0, rl.Black)
+			rl.DrawTextEx(font, hovered.Info, rl.NewVector2(offsetX+10, offsetY+24), 32, 0, rl.Black)
 
 			// rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
 
@@ -205,8 +233,8 @@ func runVisu(input Input) {
 					}
 				}
 
-				selected = nil
-				lastSelected = -1
+				hovered = nil
+				lastHovered = -1
 			}
 			editMode = !editMode
 		}
@@ -218,3 +246,15 @@ func runVisu(input Input) {
 	rl.UnloadTexture(selectionTexture)
 }
 
+type Event any
+
+type NewGraph struct {
+	Tree   *GraphView
+	Layout layout.Graph
+}
+
+func HideChildren(tree *GraphView, layout layout.Graph, events chan<- Event) {
+	time.Sleep(2 * time.Second)
+
+	events <- NewGraph{Tree: tree, Layout: layout}
+}

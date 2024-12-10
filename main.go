@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gverger/optimview/graph"
 	"github.com/nikolaydubina/go-graph-layout/layout"
 )
+
+type GraphView = graph.Graph[Node, string]
 
 type Node struct {
 	Id        string   `json:"id"`
@@ -17,7 +20,7 @@ type Node struct {
 }
 
 type Input struct {
-	Trees   map[string]InputTree
+	Trees   map[string]*GraphView
 	Layouts map[string]layout.Graph
 }
 
@@ -25,7 +28,22 @@ type InputTree struct {
 	Nodes []Node `json:"nodes"`
 }
 
-func PlaceNodes(input InputTree) layout.Graph {
+func (t InputTree) ToGraph() *GraphView {
+	g := graph.NewGraph[Node, string](func(n Node) string { return n.Id })
+	for _, n := range t.Nodes {
+		g.AddNode(n)
+	}
+
+	for _, n := range t.Nodes {
+		for _, pId := range n.ParentIds {
+			g.AddEdgeId(pId, n.Id)
+		}
+	}
+
+	return g
+}
+
+func PlaceNodes(input *GraphView) layout.Graph {
 	g := layout.Graph{
 		Edges: make(map[[2]uint64]layout.Edge),
 		Nodes: make(map[uint64]layout.Node),
@@ -78,9 +96,9 @@ func PlaceNodes(input InputTree) layout.Graph {
 func runSearchTrees() {
 	searches := loadSearchTree("search_tree.json")
 
-	trees := make(map[string]InputTree)
+	trees := make(map[string]*GraphView)
 	for key, tree := range searches {
-		trees[key] = tree.ToInput()
+		trees[key] = tree.ToInput().ToGraph()
 	}
 
 	start := time.Now()
@@ -93,8 +111,8 @@ func runSearchTrees() {
 }
 
 func main() {
-	runSearchTrees()
-	return
+	// runSearchTrees()
+	// return
 	// input := readInput("./data/small.json")
 	input := readInput("brandeskopf.json")
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
@@ -106,12 +124,13 @@ func main() {
 	// input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
 	// saveInput("input-trees.json", input)
 	// saveJsonL("input.jsonl", input)
+	g := input.ToGraph()
 	start := time.Now()
-	g := PlaceNodes(input)
+	layout := PlaceNodes(g)
 	fmt.Println("Total =", time.Since(start))
 	//
 	// // fmt.Printf("Input: %#+v\n", input)
 	// // fmt.Printf("Graph: %#+v\n", g)
 	//
-	runSingleVisu(input, g)
+	runSingleVisu(g, layout)
 }

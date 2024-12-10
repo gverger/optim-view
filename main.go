@@ -9,10 +9,11 @@ import (
 
 type Node struct {
 	Id        string   `json:"id"`
-	ParentIds []string `json:"parentId"`
+	ParentIds []string `json:"parentIds"`
 	Info      string   `json:"info"`
 	ShortInfo string   `json:"shortInfo"`
 	SvgImage  string   `json:"svg"`
+	Hidden    bool     `json:"hidden"`
 }
 
 type Input struct {
@@ -92,20 +93,19 @@ func runSearchTrees() {
 }
 
 func main() {
-	// runSearchTrees()
-	// return
+	runSearchTrees()
+	return
 	// input := readInput("./data/small.json")
-	// input := readInput("/tmp/input.json")
-	input := Must(readJsonL("input.jsonl"))
+	input := readInput("brandeskopf.json")
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
 
 	fmt.Println("Generating input")
-	fmt.Println("input node", len(input.Nodes))
-	// input := GenerateDeepInput(100)
+	// fmt.Println("input node", len(input.Nodes))
+	// input := GenerateDeepInput(10000)
 	//
-	input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
+	// input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
 	// saveInput("input-trees.json", input)
-	saveJsonL("input.jsonl", input)
+	// saveJsonL("input.jsonl", input)
 	start := time.Now()
 	g := PlaceNodes(input)
 	fmt.Println("Total =", time.Since(start))

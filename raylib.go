@@ -189,7 +189,28 @@ func runVisu(input Input) {
 			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
 		}
 
-		displayProperties(editMode, keys, activeTree, currentTree, input, inputKeys, currentLayout, nbChildren, selected, lastSelected)
+		if editMode {
+			gui.Lock()
+		}
+		if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), keys, &activeTree, editMode) {
+			log.Info().Int("active", int(activeTree)).Msg("DropdownBox")
+			if editMode {
+				currentTree = input.Trees[inputKeys[activeTree]]
+				currentLayout = input.Layouts[inputKeys[activeTree]]
+
+				nbChildren = make(map[string]int, len(currentTree.Nodes))
+				for _, n := range currentTree.Nodes {
+					for _, p := range n.ParentIds {
+						nbChildren[p]++
+					}
+				}
+
+				selected = nil
+				lastSelected = -1
+			}
+			editMode = !editMode
+		}
+		gui.Unlock()
 
 		rl.EndDrawing()
 	}
@@ -197,27 +218,3 @@ func runVisu(input Input) {
 	rl.UnloadTexture(selectionTexture)
 }
 
-func displayProperties(editMode bool, keys string, activeTree int32, currentTree InputTree, input Input, inputKeys []string, currentLayout layout.Graph, nbChildren map[string]int, selected *Node, lastSelected int) {
-	if editMode {
-		gui.Lock()
-	}
-	if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), keys, &activeTree, editMode) {
-		log.Info().Int("active", int(activeTree)).Msg("DropdownBox")
-		if editMode {
-			currentTree = input.Trees[inputKeys[activeTree]]
-			currentLayout = input.Layouts[inputKeys[activeTree]]
-
-			nbChildren = make(map[string]int, len(currentTree.Nodes))
-			for _, n := range currentTree.Nodes {
-				for _, p := range n.ParentIds {
-					nbChildren[p]++
-				}
-			}
-
-			selected = nil
-			lastSelected = -1
-		}
-		editMode = !editMode
-	}
-	gui.Unlock()
-}

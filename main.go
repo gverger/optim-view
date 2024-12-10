@@ -8,7 +8,7 @@ import (
 	"github.com/nikolaydubina/go-graph-layout/layout"
 )
 
-type GraphView = graph.Graph[Node, string]
+type GraphView = graph.Graph[*Node, string]
 
 type Node struct {
 	Id        string   `json:"id"`
@@ -22,6 +22,7 @@ type Node struct {
 type Input struct {
 	Trees   map[string]*GraphView
 	Layouts map[string]layout.Graph
+	Layers  map[string]layout.LayeredGraph
 }
 
 type InputTree struct {
@@ -29,9 +30,9 @@ type InputTree struct {
 }
 
 func (t InputTree) ToGraph() *GraphView {
-	g := graph.NewGraph[Node, string](func(n Node) string { return n.Id })
+	g := graph.NewGraph[*Node, string](func(n *Node) string { return n.Id })
 	for _, n := range t.Nodes {
-		g.AddNode(n)
+		g.AddNode(&n)
 	}
 
 	for _, n := range t.Nodes {
@@ -43,7 +44,7 @@ func (t InputTree) ToGraph() *GraphView {
 	return g
 }
 
-func PlaceNodes(input *GraphView) layout.Graph {
+func PlaceNodes(input *GraphView) (layout.LayeredGraph, layout.Graph) {
 	g := layout.Graph{
 		Edges: make(map[[2]uint64]layout.Edge),
 		Nodes: make(map[uint64]layout.Node),
@@ -66,9 +67,16 @@ func PlaceNodes(input *GraphView) layout.Graph {
 		}
 	}
 
+	var layeredGraph layout.LayeredGraph
+
+	var layerer = func(g layout.Graph) layout.LayeredGraph {
+		layeredGraph = layout.NewLayeredGraph(g)
+		return layeredGraph
+	}
+
 	gl := layout.SugiyamaLayersStrategyGraphLayout{
 		CycleRemover:   layout.NewSimpleCycleRemover(),
-		LevelsAssigner: layout.NewLayeredGraph,
+		LevelsAssigner: layerer,
 		OrderingAssigner: layout.WarfieldOrderingOptimizer{
 			Epochs:                   500,
 			LayerOrderingInitializer: layout.BFSOrderingInitializer{},
@@ -90,7 +98,7 @@ func PlaceNodes(input *GraphView) layout.Graph {
 	}
 	gl.UpdateGraphLayout(g)
 
-	return g
+	return layeredGraph, g
 }
 
 func runSearchTrees() {
@@ -103,11 +111,12 @@ func runSearchTrees() {
 
 	start := time.Now()
 	layouts := make(map[string]layout.Graph)
+	layers := make(map[string]layout.LayeredGraph)
 	for k, t := range trees {
-		layouts[k] = PlaceNodes(t)
+		layers[k], layouts[k] = PlaceNodes(t)
 	}
 	fmt.Println("Total =", time.Since(start))
-	runVisu(Input{Trees: trees, Layouts: layouts})
+	runVisu(Input{Trees: trees, Layouts: layouts, Layers: layers})
 }
 
 func main() {
@@ -126,11 +135,11 @@ func main() {
 	// saveJsonL("input.jsonl", input)
 	g := input.ToGraph()
 	start := time.Now()
-	layout := PlaceNodes(g)
+	layer, layout := PlaceNodes(g)
 	fmt.Println("Total =", time.Since(start))
 	//
 	// // fmt.Printf("Input: %#+v\n", input)
 	// // fmt.Printf("Graph: %#+v\n", g)
 	//
-	runSingleVisu(g, layout)
+	runSingleVisu(g, layer, layout)
 }

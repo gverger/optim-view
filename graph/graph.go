@@ -2,6 +2,7 @@ package graph
 
 import (
 	"fmt"
+	"iter"
 
 	"github.com/phuslu/log"
 )
@@ -16,6 +17,13 @@ type Graph[Node any, ID comparable] struct {
 
 func NewGraph[Node any, ID comparable](idMapper func(Node) ID) *Graph[Node, ID] {
 	return &Graph[Node, ID]{Lookup: make(map[ID]int), NodeID: idMapper}
+}
+
+func (g Graph[Node, ID]) NodeForId(id ID) Node {
+	_, ok := g.Lookup[id]
+	Assert(ok, "No node with id %v", id)
+
+	return g.Nodes[g.Lookup[id]]
 }
 
 func (g *Graph[Node, ID]) AddNode(n Node) {
@@ -43,6 +51,16 @@ func (g *Graph[Node, ID]) AddEdge(a, b Node) {
 	}
 	Assert(!g.HasEdge(a, b), "edge exists: %v->%v", a, b)
 	g.addEdge(a, b)
+}
+
+func (g *Graph[Node, ID]) Children(n Node) iter.Seq[Node] {
+	return func(yield func(Node) bool) {
+		for c := range g.Edges[g.lookup(n)] {
+			if !yield(g.Nodes[c]) {
+				return
+			}
+		}
+	}
 }
 
 func (g Graph[Node, ID]) lookup(n Node) int {

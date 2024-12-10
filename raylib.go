@@ -5,10 +5,10 @@ import (
 	"math"
 	"sort"
 	"strings"
-	"time"
 
 	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/gverger/optimview/graph"
 	"github.com/nikolaydubina/go-graph-layout/layout"
 	"github.com/phuslu/log"
 )
@@ -61,7 +61,7 @@ func (h CameraHandler) Update() {
 	}
 }
 
-func runSingleVisu(tree *GraphView, g layout.Graph) {
+func runSingleVisu(tree *GraphView, layer layout.LayeredGraph, g layout.Graph) {
 	runVisu(Input{
 		Trees:   map[string]*GraphView{"Graph": tree},
 		Layouts: map[string]layout.Graph{"Graph": g},
@@ -80,6 +80,7 @@ func runVisu(input Input) {
 	editMode := false
 
 	currentTree := input.Trees[inputKeys[activeTree]]
+	currentLayer := input.Layers[inputKeys[activeTree]]
 	currentLayout := input.Layouts[inputKeys[activeTree]]
 
 	rl.SetConfigFlags(rl.FlagMsaa4xHint)
@@ -120,6 +121,8 @@ func runVisu(input Input) {
 				switch e := event.(type) {
 				case NewGraph:
 					log.Info().Msgf("new graph %d nodes", len(e.Tree.Nodes))
+					currentTree = e.Tree
+					currentLayout = e.Layout
 				}
 			default:
 				found = false
@@ -136,7 +139,7 @@ func runVisu(input Input) {
 		hovered = nil
 		for i, n := range currentLayout.Nodes {
 			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
-				hovered = &currentTree.Nodes[i]
+				hovered = currentTree.Nodes[i]
 				if lastHovered != int(i) {
 					// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
 					rl.UnloadTexture(selectionTexture)
@@ -152,7 +155,7 @@ func runVisu(input Input) {
 
 		if hovered != nil && rl.IsMouseButtonPressed(rl.MouseLeftButton) && gesture == rl.GestureDoubletap {
 			log.Info().Msg("clicked")
-			go HideChildren(currentTree, currentLayout, events)
+			go HideChildren(currentTree, currentLayout, currentLayer, hovered.Id, events)
 		}
 
 		rl.BeginDrawing()
@@ -175,6 +178,9 @@ func runVisu(input Input) {
 			color := rl.Maroon
 			if nbChildren[currentTree.Nodes[i].Id] > 0 {
 				color = rl.DarkGreen
+			}
+			if currentTree.Nodes[i].Hidden {
+				color = rl.Gray
 			}
 			if hovered != nil && hovered.Id == currentTree.Nodes[i].Id {
 				color = rl.DarkBlue
@@ -253,8 +259,85 @@ type NewGraph struct {
 	Layout layout.Graph
 }
 
-func HideChildren(tree *GraphView, layout layout.Graph, events chan<- Event) {
-	time.Sleep(2 * time.Second)
+func HideChildren(tree *GraphView, oldG layout.Graph, oldL layout.LayeredGraph, nodeId string, events chan<- Event) {
+	g := graph.NewGraph[*Node, string](tree.NodeID)
 
-	events <- NewGraph{Tree: tree, Layout: layout}
+	nodes := make([]*Node, 0, len(tree.Nodes))
+	nodes = append(nodes, tree.NodeForId(nodeId))
+	idx := 0
+	for idx < len(nodes) {
+		current := nodes[idx]
+		idx++
+		for c := range tree.Children(current) {
+			if !c.Hidden {
+				nodes = append(nodes, c)
+				c.Hidden = true
+			}
+		}
+	}
+
+	for _, n := range tree.Nodes {
+		if !n.Hidden {
+			g.AddNode(n)
+		}
+	}
+	for n, children := range tree.Edges {
+		n1 := tree.Nodes[n]
+		if n1.Hidden {
+			continue
+		}
+		for c := range children {
+			n2 := tree.Nodes[c]
+			if n2.Hidden {
+				continue
+			}
+
+			g.AddEdge(n1, n2)
+		}
+	}
+
+	l := layout.Graph{
+		Edges: make(map[[2]uint64]layout.Edge),
+		Nodes: make(map[uint64]layout.Node),
+	}
+
+	indices := make(map[string]uint64)
+
+	for i, node := range g.Nodes {
+		index := uint64(i)
+		indices[node.Id] = index
+		l.Nodes[index] = layout.Node{
+			W: 50,
+			H: 50,
+		}
+	}
+
+	for _, node := range g.Nodes {
+		for _, pId := range node.ParentIds {
+			l.Edges[[2]uint64{indices[pId], indices[node.Id]}] = layout.Edge{}
+		}
+	}
+
+	newL := layout.NewLayeredGraph(l)
+
+	for k := range l.Nodes {
+		node := g.Nodes[k]
+
+		oldIdx := uint64(tree.Lookup[tree.NodeID(node)])
+		newL.NodeYX[k] = oldL.NodeYX[oldIdx]
+	}
+
+	newX := layout.BrandesKopfLayersNodesHorizontalAssigner{Delta: 150}.NodesHorizontalCoordinates(l, newL)
+	for k, x := range newX {
+		oldIdx := uint64(tree.Lookup[tree.NodeID(g.Nodes[k])])
+		l.Nodes[k] = layout.Node{
+			XY: [2]int{x, oldG.Nodes[oldIdx].XY[1]},
+			W:  l.Nodes[k].W,
+			H:  l.Nodes[k].H,
+		}
+	}
+
+	// l := PlaceNodes(g)
+
+	events <- NewGraph{Tree: g, Layout: l}
 }

@@ -45,6 +45,8 @@ github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGw
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/kolesa-team/go-webp v1.0.4 h1:wQvU4PLG/X7RS0vAeyhiivhLRoxfLVRlDq4I3frdxIQ=
 github.com/kolesa-team/go-webp v1.0.4/go.mod h1:oMvdivD6K+Q5qIIkVC2w4k2ZUnI1H+MyP7inwgWq9aA=
+github.com/nikolaydubina/go-graph-layout v0.2.0 h1:J8KpNqed9rKKS3npTWjHM1HIWUTvdrw2olReMSXSWvc=
+github.com/nikolaydubina/go-graph-layout v0.2.0/go.mod h1:YynPb2eLeLp0L1WKLw/am/Kr0HCcBjGw5B//Znqzsog=
 github.com/nikolaydubina/jsonl-graph v1.1.0 h1:hxU2EFe0keB47tekjkDMGO2+DDbZvcfz21CvlV5Uv9A=
 github.com/nikolaydubina/jsonl-graph v1.1.0/go.mod h1:wQZL4BSABkCzcN3ual9qJ1AFE6wQSDJAbIZEmuYL1eY=
 github.com/nikolaydubina/multiline-jsonl v1.0.3 h1:rzfukoRroxvBorDgrtAjIcBasBpKQstqaOk9VfBPz70=

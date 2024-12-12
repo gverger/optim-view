@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"sort"
+	"strconv"
 	"time"
 
 	"github.com/gverger/optimview/graph"
@@ -82,8 +84,8 @@ func PlaceNodes(input *GraphView) (layout.LayeredGraph, layout.Graph) {
 			LayerOrderingInitializer: layout.BFSOrderingInitializer{},
 			LayerOrderingOptimizer: layout.CompositeLayerOrderingOptimizer{
 				Optimizers: []layout.LayerOrderingOptimizer{
-					layout.WMedianOrderingOptimizer{},
-					// layout.SwitchAdjacentOrderingOptimizer{},
+					// layout.WMedianOrderingOptimizer{},
+					layout.SwitchAdjacentOrderingOptimizer{},
 				},
 			},
 		}.Optimize,
@@ -100,6 +102,21 @@ func PlaceNodes(input *GraphView) (layout.LayeredGraph, layout.Graph) {
 
 	return layeredGraph, g
 }
+
+type IdOrder struct {
+	g *GraphView
+}
+
+// Init implements layout.LayerOrderingInitializer.
+func (o IdOrder) Init(segments map[[2]uint64]bool, layers [][]uint64) {
+	for l := range layers {
+		sort.Slice(layers[l], func(i, j int) bool {
+			return Must(strconv.Atoi(o.g.Nodes[layers[l][i]].Id)) < Must(strconv.Atoi(o.g.Nodes[layers[l][j]].Id))
+		})
+	}
+}
+
+var _ layout.LayerOrderingInitializer = IdOrder{}
 
 func runSearchTrees() {
 	searches := loadSearchTree("search_tree.json")
@@ -123,12 +140,12 @@ func main() {
 	// runSearchTrees()
 	// return
 	// input := readInput("./data/small.json")
-	input := readInput("brandeskopf.json")
+	// input := readInput("brandeskopf.json")
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
 
 	fmt.Println("Generating input")
 	// fmt.Println("input node", len(input.Nodes))
-	// input := GenerateDeepInput(10000)
+	input := GenerateDeepInput(100)
 	//
 	// input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
 	// saveInput("input-trees.json", input)

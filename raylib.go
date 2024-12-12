@@ -32,7 +32,7 @@ func NewCameraHandler() CameraHandler {
 	}
 }
 
-func (h CameraHandler) Update() {
+func (h *CameraHandler) Update() {
 	camera := h.Camera
 	if rl.IsMouseButtonDown(rl.MouseButtonRight) {
 		delta := rl.GetMouseDelta()
@@ -326,16 +326,34 @@ func HideChildren(tree *GraphView, oldG layout.Graph, oldL layout.LayeredGraph, 
 		oldIdx := uint64(tree.Lookup[tree.NodeID(node)])
 		newL.NodeYX[k] = oldL.NodeYX[oldIdx]
 	}
+	layers := newL.Layers()
+	for k, l := range layers {
+		for i, n := range l {
+			newL.NodeYX[n] = [2]int{k, i}
+		}
+	}
 
 	newX := layout.BrandesKopfLayersNodesHorizontalAssigner{Delta: 150}.NodesHorizontalCoordinates(l, newL)
+	log.Info().Interface("x", newX).Msg("update")
+	newY := layout.BasicNodesVerticalCoordinatesAssigner{
+		MarginLayers:   25,
+		FakeNodeHeight: 25,
+	}.NodesVerticalCoordinates(l, newL)
+
 	for k, x := range newX {
-		oldIdx := uint64(tree.Lookup[tree.NodeID(g.Nodes[k])])
 		l.Nodes[k] = layout.Node{
-			XY: [2]int{x, oldG.Nodes[oldIdx].XY[1]},
+			XY: [2]int{x, newY[k]},
 			W:  l.Nodes[k].W,
 			H:  l.Nodes[k].H,
 		}
 	}
+	log.Info().Interface("y", newY).Msg("update")
+
+	allNodesXY := make(map[uint64][2]int, len(g.Nodes))
+	for n := range newL.NodeYX {
+		allNodesXY[n] = [2]int{newX[n], newY[n]}
+	}
+	layout.StraightEdgePathAssigner{}.UpdateGraphLayout(l, newL, allNodesXY)
 
 	// l := PlaceNodes(g)
 

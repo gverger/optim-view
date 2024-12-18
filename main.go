@@ -3,14 +3,16 @@ package main
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/gverger/optimview/graph"
+	"github.com/gverger/optimview/systems"
 	"github.com/nikolaydubina/go-graph-layout/layout"
 )
 
-type GraphView = graph.Graph[*Node, string]
+type DisplayableNode = systems.DisplayableNode
+
+type GraphView = graph.Graph[*DisplayableNode, uint64]
 
 type Node struct {
 	Id        string   `json:"id"`
@@ -32,14 +34,17 @@ type InputTree struct {
 }
 
 func (t InputTree) ToGraph() *GraphView {
-	g := graph.NewGraph[*Node, string](func(n *Node) string { return n.Id })
-	for _, n := range t.Nodes {
-		g.AddNode(&n)
+	g := graph.NewGraph[*DisplayableNode, uint64](func(n *DisplayableNode) uint64 { return n.Id })
+
+	mapper := make(map[string]uint64)
+	for i, n := range t.Nodes {
+		g.AddNode(&DisplayableNode{Id: uint64(i), Text: n.ShortInfo})
+		mapper[n.Id] = uint64(i)
 	}
 
 	for _, n := range t.Nodes {
 		for _, pId := range n.ParentIds {
-			g.AddEdgeId(pId, n.Id)
+			g.AddEdgeId(mapper[pId], mapper[n.Id])
 		}
 	}
 
@@ -52,20 +57,17 @@ func PlaceNodes(input *GraphView) (layout.LayeredGraph, layout.Graph) {
 		Nodes: make(map[uint64]layout.Node),
 	}
 
-	indices := make(map[string]uint64)
-
-	for i, node := range input.Nodes {
+	for i := range input.Nodes {
 		index := uint64(i)
-		indices[node.Id] = index
 		g.Nodes[index] = layout.Node{
 			W: 50,
 			H: 50,
 		}
 	}
 
-	for _, node := range input.Nodes {
-		for _, pId := range node.ParentIds {
-			g.Edges[[2]uint64{indices[pId], indices[node.Id]}] = layout.Edge{}
+	for a, dst := range input.Edges {
+		for b := range dst {
+			g.Edges[[2]uint64{input.Nodes[a].Id, input.Nodes[b].Id}] = layout.Edge{}
 		}
 	}
 
@@ -111,7 +113,7 @@ type IdOrder struct {
 func (o IdOrder) Init(segments map[[2]uint64]bool, layers [][]uint64) {
 	for l := range layers {
 		sort.Slice(layers[l], func(i, j int) bool {
-			return Must(strconv.Atoi(o.g.Nodes[layers[l][i]].Id)) < Must(strconv.Atoi(o.g.Nodes[layers[l][j]].Id))
+			return o.g.Nodes[layers[l][i]].Id < o.g.Nodes[layers[l][j]].Id
 		})
 	}
 }

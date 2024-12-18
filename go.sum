@@ -22,6 +22,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/ebitengine/purego v0.8.1 h1:sdRKd6plj7KYW33EH5As6YKfe8m9zbN9JMrOjNVF/BE=
 github.com/ebitengine/purego v0.8.1/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
+github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c h1:YzIeMRbEHJ6XbzQQrW17OVlO46ws7QjU2OzyKXDfsXE=
+github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c/go.mod h1:tvwfxDWbHojl/iRFMuBVhydd1IaObUiHpYyG1XKG5Po=
 github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849 h1:cKx247upqhrJN+XKXRKCq1d4G2WiqbQev2J1R2xl8UE=
 github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849/go.mod h1:Ra1zgJP7vnGst+STvzPPiVJhjicklFWONCz5nu6MnOM=
 github.com/gen2brain/raylib-go/raylib v0.0.0-20241117153000-01864c04b849 h1:7gRYddv1r8PrmQUmbWWD3GCbuYmo9JJ/UUBQlDRUIwg=
@@ -45,6 +47,8 @@ github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGw
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/kolesa-team/go-webp v1.0.4 h1:wQvU4PLG/X7RS0vAeyhiivhLRoxfLVRlDq4I3frdxIQ=
 github.com/kolesa-team/go-webp v1.0.4/go.mod h1:oMvdivD6K+Q5qIIkVC2w4k2ZUnI1H+MyP7inwgWq9aA=
+github.com/mlange-42/arche v0.13.3 h1:Z9Z4SQTGPl45oopCM9Krz/DiVg2M8CFq+5K/a4NQEo8=
+github.com/mlange-42/arche v0.13.3/go.mod h1:bFktKnvGDj2kP01xar79z0hKwGHdnoaEZR8HWmJkIyU=
 github.com/nikolaydubina/go-graph-layout v0.2.0 h1:J8KpNqed9rKKS3npTWjHM1HIWUTvdrw2olReMSXSWvc=
 github.com/nikolaydubina/go-graph-layout v0.2.0/go.mod h1:YynPb2eLeLp0L1WKLw/am/Kr0HCcBjGw5B//Znqzsog=
 github.com/nikolaydubina/jsonl-graph v1.1.0 h1:hxU2EFe0keB47tekjkDMGO2+DDbZvcfz21CvlV5Uv9A=

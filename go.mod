@@ -3,8 +3,10 @@ module github.com/gverger/optimview
 go 1.23.0
 
 require (
+	github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c
 	github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20241117153000-01864c04b849
+	github.com/mlange-42/arche v0.13.3
 	github.com/nikolaydubina/go-graph-layout v0.2.0
 	github.com/phuslu/log v1.0.113
 	github.com/tdewolff/canvas v0.0.0-20241202004848-95f003d9bc50

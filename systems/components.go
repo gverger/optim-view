@@ -20,8 +20,8 @@ type Node struct {
 }
 
 type Edge struct {
-	From   ecs.Entity
-	To     ecs.Entity
+	From ecs.Entity
+	To   ecs.Entity
 }
 
 type Velocity struct {
@@ -38,6 +38,7 @@ type Target struct {
 	StartY    float64
 }
 
-type BelongsTo struct {
+type JointOf struct {
 	ecs.Relation
+	Order int
 }

@@ -21,7 +21,7 @@ type Initializer struct {
 func (i *Initializer) Initialize(w *ecs.World) {
 	nodes := generic.NewMap3[Position, Node, Velocity](w)
 	edges := generic.NewMap1[Edge](w)
-	path := generic.NewMap3[Position, Velocity, BelongsTo](w, generic.T[BelongsTo]())
+	path := generic.NewMap3[Position, Velocity, JointOf](w, generic.T[JointOf]())
 
 	nodeLookup := make(map[uint64]ecs.Entity, 0)
 	edgesLookup := make(map[[2]uint64]ecs.Entity, 0)
@@ -52,10 +52,12 @@ func (i *Initializer) Initialize(w *ecs.World) {
 				To:   nodeLookup[id[1]],
 			},
 		)
-		points := make([]ecs.Entity, 0, len(e.Path))
 		pathQuery := path.NewBatchQ(len(e.Path), entity)
+		counter := 0
 		for pathQuery.Next() {
-			points = append(points, pathQuery.Entity())
+			_, _, c := pathQuery.Get()
+			c.Order = counter
+			counter++
 		}
 
 		edgesLookup[id] = entity

@@ -11,7 +11,7 @@ type Systems struct {
 	mappings generic.Resource[Mappings]
 
 	targetBuilder generic.Map1[Target]
-	edgeFilter    *generic.Filter1[BelongsTo]
+	edgeFilter    *generic.Filter1[JointOf]
 }
 
 func New() *Systems {
@@ -21,7 +21,7 @@ func New() *Systems {
 func (s *Systems) Initialize(w *ecs.World) {
 	s.mappings = generic.NewResource[Mappings](w)
 	s.targetBuilder = generic.NewMap1[Target](w)
-	s.edgeFilter = generic.NewFilter1[BelongsTo]().WithRelation(generic.T[BelongsTo]())
+	s.edgeFilter = generic.NewFilter1[JointOf]().WithRelation(generic.T[JointOf]())
 
 	for _, s := range s.systems {
 		s.Initialize(w)
@@ -54,14 +54,22 @@ func (s Systems) MoveNode(w *ecs.World, nodeId uint64, newX, newY int) {
 	}
 }
 
-func (s Systems) MoveEdge(w *ecs.World, edgeId [2]uint64, newX [][2]int) {
+func (s Systems) MoveEdge(w *ecs.World, edgeId [2]uint64, newPos [][2]int) {
 	e := s.mappings.Get().edgeLookup[edgeId]
 
 	query := s.edgeFilter.Query(w, e)
-	defer query.Close()
 
+	joints := make([]ecs.Entity, query.Count())
+	query.Count()
 	for query.Next() {
 		e := query.Entity()
+		joint := query.Get()
+		joints[joint.Order] = e
+	}
+
+	for i, e := range joints {
+		newX := newPos[i][0]
+		newY := newPos[i][1]
 		if t := s.targetBuilder.Get(e); t == nil {
 			s.targetBuilder.Assign(e, &Target{X: float64(newX), Y: float64(newY)})
 		} else {

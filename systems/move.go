@@ -8,7 +8,7 @@ import (
 
 func NewMover() *Mover {
 	return &Mover{
-		MaxSpeed: 100,
+		MaxSpeed: 10,
 		MaxAcc:   0.08,
 		Damp:     0.975,
 	}
@@ -32,14 +32,16 @@ func (m *Mover) Update(w *ecs.World) {
 	for query.Next() {
 		pos, vel, trg := query.Get()
 
-		acc := rl.Vector2Normalize(rl.NewVector2(float32(trg.X-pos.X), float32(trg.Y-pos.Y)))
-		if rl.Vector2Length(acc) < 1 {
+		dir := rl.NewVector2(float32(trg.X-pos.X), float32(trg.Y-pos.Y))
+		if rl.Vector2Length(dir) < 1 {
 			pos.X = trg.X
 			pos.Y = trg.Y
 			vel.Dx = 0
 			vel.Dy = 0
 			continue
 		}
+
+		acc := rl.Vector2Normalize(dir)
 
 		vel.Dx += float64(acc.X) * m.MaxAcc
 		vel.Dy += float64(acc.Y) * m.MaxAcc

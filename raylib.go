@@ -104,6 +104,7 @@ func runVisu(input Input) {
 	sys.Add(systems.NewInitializer(*currentTree, currentLayout))
 	// sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewMover())
+	sys.Add(systems.NewDrawEdges(font))
 	sys.Add(systems.NewDrawNodes(font))
 	w := ecs.NewWorld()
 	sys.Initialize(&w)
@@ -168,32 +169,8 @@ func runVisu(input Input) {
 		rl.ClearBackground(rl.RayWhite)
 		rl.BeginMode2D(*camera.Camera)
 
-		for _, e := range currentLayout.Edges {
-			for i := 1; i < len(e.Path); i++ {
-				src := rl.NewVector2(float32(e.Path[i-1][0]), float32(e.Path[i-1][1]))
-				ctrlA := rl.NewVector2(float32(e.Path[i-1][0]), float32(e.Path[i-1][1]+50))
-				ctrlB := rl.NewVector2(float32(e.Path[i][0]), float32(e.Path[i][1]-50))
-				dst := rl.NewVector2(float32(e.Path[i][0]), float32(e.Path[i][1]))
-
-				rl.DrawSplineSegmentBezierCubic(src, ctrlA, ctrlB, dst, 1, rl.Blue)
-			}
-		}
-
 		sys.Update(&w)
 
-		// for i, n := range currentLayout.Nodes {
-		// color := rl.Maroon
-		// if len(currentTree.Edges[currentTree.Nodes[i].Id]) > 0 {
-		// 	color = rl.DarkGreen
-		// }
-		// if hovered != nil && hovered.Id == currentTree.Nodes[i].Id {
-		// 	color = rl.DarkBlue
-		// }
-		//
-		// rl.DrawRectangle(int32(n.XY[0]), int32(n.XY[1]), int32(n.W), int32(n.H), color)
-		// // rl.DrawCircle(int32(n.XY[0]), int32(n.XY[1]), float32(n.H/2), rl.Maroon)
-		// rl.DrawTextEx(font, currentTree.Nodes[i].Text, rl.NewVector2(float32(n.XY[0]), float32(n.XY[1])), 11, 0, rl.Black)
-		// }
 		rl.EndMode2D()
 
 		if hovered != nil && !editMode {

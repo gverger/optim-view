@@ -8,6 +8,7 @@ import (
 
 	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/gverger/optimview/graph"
 	"github.com/gverger/optimview/systems"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/nikolaydubina/go-graph-layout/layout"
@@ -83,7 +84,7 @@ func runVisu(input Input) {
 
 	currentTree := input.Trees[inputKeys[activeTree]]
 	// currentLayer := input.Layers[inputKeys[activeTree]]
-	currentLayout := input.Layouts[inputKeys[activeTree]]
+	// currentLayout := input.Layouts[inputKeys[activeTree]]
 
 	rl.SetConfigFlags(rl.FlagMsaa4xHint)
 	// rl.SetConfigFlags(rl.TextureFilterNearestMipLinear)
@@ -101,7 +102,7 @@ func runVisu(input Input) {
 	rl.GenTextureMipmaps(&font.Texture)
 
 	sys := systems.New()
-	sys.Add(systems.NewInitializer(*currentTree, currentLayout))
+	sys.Add(systems.NewInitializer(*currentTree))
 	// sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewMover())
 	sys.Add(systems.NewDrawEdges(font))
@@ -109,12 +110,10 @@ func runVisu(input Input) {
 	w := ecs.NewWorld()
 	sys.Initialize(&w)
 
-	for nodeId, node := range currentLayout.Nodes {
-		sys.MoveNode(&w, nodeId, node.XY[0], node.XY[1])
-	}
+	positions := graph.ComputeLayeredCoordinates(*currentTree)
 
-	for edgeId, edge := range currentLayout.Edges {
-		sys.MoveEdge(&w, edgeId, edge.Path)
+	for _, node := range currentTree.Nodes {
+		sys.MoveNode(&w, node.Id, positions[node.Id].X, positions[node.Id].Y)
 	}
 
 	camera := NewCameraHandler()
@@ -144,7 +143,7 @@ func runVisu(input Input) {
 		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
 
 		hovered = nil
-		for i, n := range currentLayout.Nodes {
+		for i, n := range currentTree.Nodes {
 			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
 				hovered = currentTree.Nodes[i]
 				if lastHovered != int(i) {

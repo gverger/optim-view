@@ -82,12 +82,13 @@ func PlaceNodes(input *GraphView) (layout.LayeredGraph, layout.Graph) {
 		CycleRemover:   layout.NewSimpleCycleRemover(),
 		LevelsAssigner: layerer,
 		OrderingAssigner: layout.WarfieldOrderingOptimizer{
-			Epochs:                   500,
-			LayerOrderingInitializer: layout.BFSOrderingInitializer{},
+			Epochs:                   0,
+			// LayerOrderingInitializer: layout.BFSOrderingInitializer{},
+			LayerOrderingInitializer: IdOrder{input},
 			LayerOrderingOptimizer: layout.CompositeLayerOrderingOptimizer{
 				Optimizers: []layout.LayerOrderingOptimizer{
 					// layout.WMedianOrderingOptimizer{},
-					layout.SwitchAdjacentOrderingOptimizer{},
+					// layout.SwitchAdjacentOrderingOptimizer{},
 				},
 			},
 		}.Optimize,
@@ -139,8 +140,8 @@ func runSearchTrees() {
 }
 
 func main() {
-	// runSearchTrees()
-	// return
+	runSearchTrees()
+	return
 	// input := readInput("./data/small.json")
 	// input := readInput("brandeskopf.json")
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))

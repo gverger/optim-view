@@ -9,6 +9,7 @@ type Systems struct {
 	systems []System
 
 	mappings generic.Resource[Mappings]
+	mouse    generic.Resource[Mouse]
 
 	targetBuilder generic.Map1[Target]
 	edgeFilter    *generic.Filter1[JointOf]
@@ -20,6 +21,7 @@ func New() *Systems {
 
 func (s *Systems) Initialize(w *ecs.World) {
 	s.mappings = generic.NewResource[Mappings](w)
+	s.mouse = generic.NewResource[Mouse](w)
 	s.targetBuilder = generic.NewMap1[Target](w)
 	s.edgeFilter = generic.NewFilter1[JointOf]().WithRelation(generic.T[JointOf]())
 
@@ -41,6 +43,11 @@ func (s Systems) Update(w *ecs.World) {
 type System interface {
 	Initialize(w *ecs.World)
 	Update(w *ecs.World)
+}
+
+func (s Systems) SetMouse(windowX, windowY, worlX, worldY float64) {
+	s.mouse.Get().InWorld = Position{worlX, worldY}
+	s.mouse.Get().OnScreen = Position{windowX, windowY}
 }
 
 func (s Systems) MoveNode(w *ecs.World, nodeId uint64, newX, newY int) {

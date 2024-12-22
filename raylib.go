@@ -141,6 +141,7 @@ func runVisu(input Input) {
 
 		mousePos := rl.GetMousePosition()
 		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
+		sys.SetMouse(float64(mousePos.X), float64(mousePos.Y), float64(worldMousePos.X), float64(worldMousePos.Y))
 
 		hovered = nil
 		for i, n := range currentTree.Nodes {

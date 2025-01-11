@@ -1,6 +1,8 @@
 package graph
 
 import (
+	"sort"
+
 	"github.com/nikolaydubina/go-graph-layout/layout"
 )
 
@@ -18,7 +20,7 @@ type Position struct {
 func ComputeLayeredCoordinates[Node any, ID comparable](input Graph[Node, ID]) map[ID]Position {
 	c := ConvertToLayoutGraph(input)
 
-	x := layout.BrandesKopfLayersNodesHorizontalAssigner{Delta: 125}.NodesHorizontalCoordinates(c.LayoutGraph, c.Layers)
+	x := layout.BrandesKopfLayersNodesHorizontalAssigner{Delta: 30}.NodesHorizontalCoordinates(c.LayoutGraph, c.Layers)
 	y := layout.BasicNodesVerticalCoordinatesAssigner{
 		MarginLayers:   125,
 		FakeNodeHeight: 50,
@@ -52,15 +54,35 @@ func ConvertToLayoutGraph[Node any, ID comparable](input Graph[Node, ID]) Conver
 		}
 	}
 
+	parent := make(map[uint64]uint64, 0)
 	for a, dst := range input.Edges {
 		aId := input.NodeID(input.Nodes[a])
 		for b := range dst {
 			bId := input.NodeID(input.Nodes[b])
 			g.Edges[[2]uint64{mapping[aId], mapping[bId]}] = layout.Edge{}
+			parent[mapping[bId]] = mapping[aId]
 		}
 	}
 
 	layers := layout.NewLayeredGraph(g)
+
+	ll := layers.Layers()
+	for i := range ll {
+		sort.Slice(ll[i], func(a, b int) bool {
+			pa := layers.NodePosition[parent[ll[i][a]]].Order
+			pb := layers.NodePosition[parent[ll[i][b]]].Order
+			if pa < pb {
+				return true
+			}
+			if pa > pb {
+				return false
+			}
+			return ll[i][a] < ll[i][b]
+		})
+		for j, v := range ll[i] {
+			layers.NodePosition[v] = layout.LayerPosition{Layer: i, Order: j}
+		}
+	}
 
 	return ConvertedLayoutGraph[ID]{
 		Mappings:    mapping,

@@ -30,8 +30,8 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			}, &Node{
 				color: rl.Gray,
 				Text:  n.Text,
-				SizeX: 125,
-				SizeY: 125,
+				SizeX: 25,
+				SizeY: 25,
 			},
 			&Velocity{
 				Dx: 0,
@@ -48,6 +48,14 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			edges.NewWith(&Edge{From: src, To: dst})
 		}
 	}
+
+	mappings := generic.NewResource[Mappings](w)
+	mappings.Add(&Mappings{
+		nodeLookup: nodeLookup,
+	})
+
+	mouse := generic.NewResource[Mouse](w)
+	mouse.Add(&Mouse{})
 }
 
 func (i *Initializer) Update(w *ecs.World) {}

@@ -10,6 +10,10 @@ type Position struct {
 	Y float64
 }
 
+type Shape struct {
+	Points []Position
+}
+
 type Node struct {
 	SizeX float64
 	SizeY float64

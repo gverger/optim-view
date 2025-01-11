@@ -14,7 +14,7 @@
     ],
     "scripts": {
       "build": [
-        "GOOS=windows CC=x86_64-w64-mingw32-gcc go build -ldflags '-s -w' .",
+        "GOOS=windows CC=x86_64-w64-mingw32-gcc go build -ldflags '-s -w' -gcflags=all=-d=checkptr .",
         "rm -rf $INSTALL_DIRECTORY/optimview.exe",
         "mkdir -p $INSTALL_DIRECTORY",
         "mv optimview.exe $INSTALL_DIRECTORY/",

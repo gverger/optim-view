@@ -2,8 +2,10 @@ package graph
 
 import (
 	"sort"
+	"time"
 
 	"github.com/nikolaydubina/go-graph-layout/layout"
+	"github.com/phuslu/log"
 )
 
 type ConvertedLayoutGraph[ID comparable] struct {
@@ -18,13 +20,22 @@ type Position struct {
 }
 
 func ComputeLayeredCoordinates[Node any, ID comparable](input Graph[Node, ID]) map[ID]Position {
+	log.Info().Msg("Computing coordinates")
+	now := time.Now()
 	c := ConvertToLayoutGraph(input)
+	log.Info().Dur("duration", time.Since(now)).Msg("converted to layout")
+	now = time.Now()
 
 	x := layout.BrandesKopfLayersNodesHorizontalAssigner{Delta: 30}.NodesHorizontalCoordinates(c.LayoutGraph, c.Layers)
+	log.Info().Dur("duration", time.Since(now)).Msg("brandeskopf")
+	now = time.Now()
+
 	y := layout.BasicNodesVerticalCoordinatesAssigner{
 		MarginLayers:   125,
 		FakeNodeHeight: 50,
 	}.NodesVerticalCoordinates(c.LayoutGraph, c.Layers)
+	log.Info().Dur("duration", time.Since(now)).Msg("vertical")
+	now = time.Now()
 
 	positions := make(map[ID]Position, len(x))
 	for id, i := range c.Mappings {
@@ -34,13 +45,14 @@ func ComputeLayeredCoordinates[Node any, ID comparable](input Graph[Node, ID]) m
 		}
 	}
 
+	log.Info().Dur("duration", time.Since(now)).Msg("coordinates computed")
 	return positions
 }
 
 func ConvertToLayoutGraph[Node any, ID comparable](input Graph[Node, ID]) ConvertedLayoutGraph[ID] {
 	g := layout.Graph{
-		Edges: make(map[[2]uint64]layout.Edge),
-		Nodes: make(map[uint64]layout.Node),
+		Edges: make(map[[2]uint64]layout.Edge, len(input.Edges)),
+		Nodes: make(map[uint64]layout.Node, len(input.Nodes)),
 	}
 
 	mapping := make(map[ID]uint64, len(input.Nodes))

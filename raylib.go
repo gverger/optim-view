@@ -70,6 +70,18 @@ func runSingleVisu(tree *GraphView, layer layout.LayeredGraph, g layout.Graph) {
 	})
 }
 
+func computePositions(events chan<- Event, tree *GraphView) {
+	positions := graph.ComputeLayeredCoordinates(*tree)
+	offset := graph.Position{X: positions[0].X - rl.GetScreenWidth()/2, Y: positions[0].Y - rl.GetScreenHeight()/4}
+	for i, p := range positions {
+		positions[i] = graph.Position{
+			X: p.X - offset.X,
+			Y: p.Y - offset.Y,
+		}
+	}
+	events <- MoveNodes{positions: positions}
+}
+
 func runVisu(input Input) {
 
 	events := make(chan Event, 1)
@@ -92,6 +104,8 @@ func runVisu(input Input) {
 	rl.InitWindow(1600, 1000, "Graph Visualization")
 	defer rl.CloseWindow()
 
+	go computePositions(events, currentTree)
+
 	// rl.SetConfigFlags(rl.FlagFullscreenMode)
 	// rl.ToggleFullscreen()
 
@@ -113,12 +127,6 @@ func runVisu(input Input) {
 
 	camera := NewCameraHandler()
 
-	positions := graph.ComputeLayeredCoordinates(*currentTree)
-	offset := graph.Position{X: positions[0].X - rl.GetScreenWidth()/2, Y: positions[0].Y - rl.GetScreenHeight()/4}
-	for _, node := range currentTree.Nodes {
-		sys.MoveNode(&w, node.Id, positions[node.Id].X-offset.X, positions[node.Id].Y-offset.Y)
-	}
-
 	rl.SetTargetFPS(60)
 
 	var hovered *DisplayableNode
@@ -131,6 +139,13 @@ func runVisu(input Input) {
 			select {
 			case event := <-events:
 				log.Info().Interface("event", event).Msg("event received")
+				switch e := event.(type) {
+				case MoveNodes:
+					for _, node := range currentTree.Nodes {
+						sys.MoveNode(&w, node.Id, e.positions[node.Id].X, e.positions[node.Id].Y)
+					}
+				}
+
 			default:
 				found = false
 			}
@@ -171,7 +186,6 @@ func runVisu(input Input) {
 		rl.BeginMode2D(*camera.Camera)
 
 		sys.Update(&w)
-
 
 		rl.EndMode2D()
 
@@ -221,6 +235,7 @@ func runVisu(input Input) {
 			editMode = !editMode
 		}
 		gui.Unlock()
+		rl.DrawFPS(10, 10)
 
 		rl.EndDrawing()
 	}
@@ -229,3 +244,7 @@ func runVisu(input Input) {
 }
 
 type Event any
+
+type MoveNodes struct {
+	positions map[uint64]graph.Position
+}

@@ -148,10 +148,11 @@ func main() {
 
 	fmt.Println("Generating input")
 	// fmt.Println("input node", len(input.Nodes))
-	input := GenerateDeepInput(100)
+	input := GenerateDeepInput(10)
+	// input := readInput("input-trees.json")
 	//
 	// input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
-	// saveInput("input-trees.json", input)
+	saveInput("input-trees.json", input)
 	// saveJsonL("input.jsonl", input)
 	g := input.ToGraph()
 	start := time.Now()

@@ -31,6 +31,7 @@ func GenerateLargeInput(nbNodes int) InputTree {
 func GenerateDeepInput(nbNodes int) InputTree {
 	nodes := make([]Node, nbNodes)
 	parentId := 0
+	rate := float32(0.7)
 	for i := 0; i < nbNodes; i++ {
 		n := Node{
 			Id:        strconv.Itoa(i),
@@ -41,8 +42,9 @@ func GenerateDeepInput(nbNodes int) InputTree {
 			n.ParentIds = []string{strconv.Itoa(parentId)}
 		}
 
-		if parentId != i && rand.Float32() > 0.3 {
+		for parentId != i && rand.Float32() > rate {
 			parentId++
+			rate -= 1 / float32(nbNodes)
 		}
 		// if parentId > 0 && parentId != i && rand.Float32() > 0.9 {
 		// 	n.ParentIds = append(n.ParentIds, nodes[rand.IntN(parentId)].Id)

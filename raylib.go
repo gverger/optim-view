@@ -103,6 +103,7 @@ func runVisu(input Input) {
 
 	sys := systems.New()
 	sys.Add(systems.NewInitializer(*currentTree))
+	sys.Add(systems.NewMouseSelector())
 	// sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewMover())
 	sys.Add(systems.NewDrawEdges(font))
@@ -110,18 +111,18 @@ func runVisu(input Input) {
 	w := ecs.NewWorld()
 	sys.Initialize(&w)
 
-	positions := graph.ComputeLayeredCoordinates(*currentTree)
-
-	for _, node := range currentTree.Nodes {
-		sys.MoveNode(&w, node.Id, positions[node.Id].X, positions[node.Id].Y)
-	}
-
 	camera := NewCameraHandler()
+
+	positions := graph.ComputeLayeredCoordinates(*currentTree)
+	offset := graph.Position{X: positions[0].X - rl.GetScreenWidth()/2, Y: positions[0].Y - rl.GetScreenHeight()/4}
+	for _, node := range currentTree.Nodes {
+		sys.MoveNode(&w, node.Id, positions[node.Id].X-offset.X, positions[node.Id].Y-offset.Y)
+	}
 
 	rl.SetTargetFPS(60)
 
 	var hovered *DisplayableNode
-	lastHovered := -1
+	// lastHovered := -1
 	var selectionTexture rl.Texture2D
 
 	for !rl.WindowShouldClose() {
@@ -143,22 +144,22 @@ func runVisu(input Input) {
 		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
 		sys.SetMouse(float64(mousePos.X), float64(mousePos.Y), float64(worldMousePos.X), float64(worldMousePos.Y))
 
-		hovered = nil
-		for i, n := range currentTree.Nodes {
-			if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
-				hovered = currentTree.Nodes[i]
-				if lastHovered != int(i) {
-					// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
-					rl.UnloadTexture(selectionTexture)
-					// if img, ok := ImageFromSVG(selected.SvgImage); ok {
-					// 	selectionTexture = rl.LoadTextureFromImage(img)
-					// }
-					// rl.UnloadImage(image)
-					lastHovered = int(i)
-				}
-				break
-			}
-		}
+		// hovered = nil
+		// for i, n := range currentTree.Nodes {
+		// 	if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
+		// 		hovered = currentTree.Nodes[i]
+		// 		if lastHovered != int(i) {
+		// 			// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
+		// 			rl.UnloadTexture(selectionTexture)
+		// 			// if img, ok := ImageFromSVG(selected.SvgImage); ok {
+		// 			// 	selectionTexture = rl.LoadTextureFromImage(img)
+		// 			// }
+		// 			// rl.UnloadImage(image)
+		// 			lastHovered = int(i)
+		// 		}
+		// 		break
+		// 	}
+		// }
 
 		if hovered != nil && rl.IsMouseButtonPressed(rl.MouseLeftButton) && gesture == rl.GestureDoubletap {
 			log.Info().Msg("clicked")
@@ -171,39 +172,40 @@ func runVisu(input Input) {
 
 		sys.Update(&w)
 
+
 		rl.EndMode2D()
 
-		if hovered != nil && !editMode {
-			txtDims := rl.MeasureTextEx(rl.GetFontDefault(), hovered.Text, 32, 4)
-
-			shape := currentLayout.Nodes[uint64(lastHovered)]
-			corner := rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]+shape.W), float32(shape.XY[1])), *camera.Camera)
-
-			distX := float32(50)
-			distY := -float32(60)
-
-			rightmostPointX := corner.X + txtDims.X + 20
-
-			if rightmostPointX > float32(rl.GetScreenWidth()-10) {
-				distX = -50 - txtDims.X - 20
-				corner.X = rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]), 0), *camera.Camera).X
-			} else if rightmostPointX+distX > float32(rl.GetScreenWidth()-10) {
-				distX = float32(rl.GetScreenWidth()-10) - (corner.X + txtDims.X + 20)
-			}
-
-			offsetX := rl.Clamp(corner.X+distX, 10, float32(rl.GetScreenWidth())-10-txtDims.X-20)
-			offsetY := rl.Clamp(corner.Y-distY, 10, float32(rl.GetScreenHeight())-10-txtDims.Y-20)
-
-			savedBackgroundColor := gui.GetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR)
-			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDDD)
-			gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
-			rl.DrawTextEx(font, hovered.Text, rl.NewVector2(offsetX+10, offsetY+24), 32, 0, rl.Black)
-
-			// rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
-
-			gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
-		}
-
+		// if hovered != nil && !editMode {
+		// 	txtDims := rl.MeasureTextEx(rl.GetFontDefault(), hovered.Text, 32, 4)
+		//
+		// 	shape := currentLayout.Nodes[uint64(lastHovered)]
+		// 	corner := rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]+shape.W), float32(shape.XY[1])), *camera.Camera)
+		//
+		// 	distX := float32(50)
+		// 	distY := -float32(60)
+		//
+		// 	rightmostPointX := corner.X + txtDims.X + 20
+		//
+		// 	if rightmostPointX > float32(rl.GetScreenWidth()-10) {
+		// 		distX = -50 - txtDims.X - 20
+		// 		corner.X = rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]), 0), *camera.Camera).X
+		// 	} else if rightmostPointX+distX > float32(rl.GetScreenWidth()-10) {
+		// 		distX = float32(rl.GetScreenWidth()-10) - (corner.X + txtDims.X + 20)
+		// 	}
+		//
+		// 	offsetX := rl.Clamp(corner.X+distX, 10, float32(rl.GetScreenWidth())-10-txtDims.X-20)
+		// 	offsetY := rl.Clamp(corner.Y-distY, 10, float32(rl.GetScreenHeight())-10-txtDims.Y-20)
+		//
+		// 	savedBackgroundColor := gui.GetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR)
+		// 	gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDDD)
+		// 	gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
+		// 	rl.DrawTextEx(font, hovered.Text, rl.NewVector2(offsetX+10, offsetY+24), 32, 0, rl.Black)
+		//
+		// 	// rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
+		//
+		// 	gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
+		// }
+		//
 		if editMode {
 			gui.Lock()
 		}
@@ -211,10 +213,10 @@ func runVisu(input Input) {
 			log.Info().Int("active", int(activeTree)).Msg("DropdownBox")
 			if editMode {
 				currentTree = input.Trees[inputKeys[activeTree]]
-				currentLayout = input.Layouts[inputKeys[activeTree]]
+				// currentLayout = input.Layouts[inputKeys[activeTree]]
 
 				hovered = nil
-				lastHovered = -1
+				// lastHovered = -1
 			}
 			editMode = !editMode
 		}

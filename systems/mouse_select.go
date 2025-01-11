@@ -26,8 +26,6 @@ func (m *MouseSelector) Initialize(w *ecs.World) {
 }
 
 func (m *MouseSelector) Update(w *ecs.World) {
-	query := m.filter.Query(w)
-
 	mWorld := m.mouse.Get().InWorld
 	mouse := rl.NewVector2(float32(mWorld.X), float32(mWorld.Y))
 
@@ -43,6 +41,7 @@ func (m *MouseSelector) Update(w *ecs.World) {
 		m.hovered.Remove()
 	}
 
+	query := m.filter.Query(w)
 	for query.Next() {
 		pos, shape := query.Get()
 		points := make([]rl.Vector2, 0, len(shape.Points))

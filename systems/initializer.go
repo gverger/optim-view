@@ -17,7 +17,7 @@ type Initializer struct {
 
 // Initialize implements System.
 func (c *Initializer) Initialize(w *ecs.World) {
-	nodes := generic.NewMap3[Position, Node, Velocity](w)
+	nodes := generic.NewMap5[Position, Node, Velocity, Shape, Target](w)
 	edges := generic.NewMap1[Edge](w)
 
 	nodeLookup := make(map[uint64]ecs.Entity, 0)
@@ -37,6 +37,15 @@ func (c *Initializer) Initialize(w *ecs.World) {
 				Dx: 0,
 				Dy: 0,
 			},
+			&Shape{
+				Points: []Position{
+					{0, 0},
+					{25, 0},
+					{25, 25},
+					{0, 25},
+				},
+			},
+			&Target{},
 		)
 		nodeLookup[n.Id] = e
 	}

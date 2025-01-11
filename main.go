@@ -140,27 +140,26 @@ func runSearchTrees() {
 }
 
 func main() {
-	runSearchTrees()
-	return
+	// runSearchTrees()
+	// return
 	// input := readInput("./data/small.json")
 	// input := readInput("brandeskopf.json")
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
-
 	fmt.Println("Generating input")
 	// fmt.Println("input node", len(input.Nodes))
-	input := GenerateDeepInput(10)
+	input := GenerateDeepInput(10000)
 	// input := readInput("input-trees.json")
 	//
 	// input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
-	saveInput("input-trees.json", input)
+	// saveInput("input-trees.json", input)
 	// saveJsonL("input.jsonl", input)
 	g := input.ToGraph()
-	start := time.Now()
-	layer, layout := PlaceNodes(g)
-	fmt.Println("Total =", time.Since(start))
+	// start := time.Now()
+	// layer, layout := PlaceNodes(g)
+	// fmt.Println("Total =", time.Since(start))
 	//
 	// // fmt.Printf("Input: %#+v\n", input)
 	// // fmt.Printf("Graph: %#+v\n", g)
 	//
-	runSingleVisu(g, layer, layout)
+	runSingleVisu(g, layout.LayeredGraph{}, layout.Graph{})
 }

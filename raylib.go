@@ -159,6 +159,10 @@ func runVisu(input Input) {
 		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
 		sys.SetMouse(float64(mousePos.X), float64(mousePos.Y), float64(worldMousePos.X), float64(worldMousePos.Y))
 
+		topLeft := rl.GetScreenToWorld2D(rl.Vector2Zero(), *camera.Camera)
+		botRight := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), *camera.Camera)
+		sys.SetVisibleWorld(float64(topLeft.X), float64(topLeft.Y), float64(botRight.X), float64(botRight.Y))
+
 		// hovered = nil
 		// for i, n := range currentTree.Nodes {
 		// 	if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {

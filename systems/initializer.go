@@ -62,9 +62,6 @@ func (c *Initializer) Initialize(w *ecs.World) {
 	mappings.Add(&Mappings{
 		nodeLookup: nodeLookup,
 	})
-
-	mouse := generic.NewResource[Mouse](w)
-	mouse.Add(&Mouse{})
 }
 
 func (i *Initializer) Update(w *ecs.World) {}

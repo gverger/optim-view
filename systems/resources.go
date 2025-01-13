@@ -11,3 +11,10 @@ type Mouse struct {
 	OnScreen Position
 	InWorld  Position
 }
+
+type VisibleWorld struct {
+	X    float64
+	Y    float64
+	MaxX float64
+	MaxY float64
+}

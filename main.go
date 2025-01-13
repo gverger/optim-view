@@ -8,6 +8,7 @@ import (
 	"github.com/gverger/optimview/graph"
 	"github.com/gverger/optimview/systems"
 	"github.com/nikolaydubina/go-graph-layout/layout"
+	"github.com/phuslu/log"
 )
 
 type DisplayableNode = systems.DisplayableNode
@@ -82,7 +83,7 @@ func PlaceNodes(input *GraphView) (layout.LayeredGraph, layout.Graph) {
 		CycleRemover:   layout.NewSimpleCycleRemover(),
 		LevelsAssigner: layerer,
 		OrderingAssigner: layout.WarfieldOrderingOptimizer{
-			Epochs:                   0,
+			Epochs: 0,
 			// LayerOrderingInitializer: layout.BFSOrderingInitializer{},
 			LayerOrderingInitializer: IdOrder{input},
 			LayerOrderingOptimizer: layout.CompositeLayerOrderingOptimizer{
@@ -140,20 +141,28 @@ func runSearchTrees() {
 }
 
 func main() {
+
+	fmt.Println("Reading trees")
+	g := loadSearchTrees("tree.json")
+	// g := loadSearchTrees("search_tree_deer_2.json")
+	g = g.StripNodesWithoutChildren()
+	log.Info().Int("nodes", len(g.Nodes)).Msg("done")
+	// fmt.Printf("%+v\n",trees)
+	// return
 	// runSearchTrees()
 	// return
 	// input := readInput("./data/small.json")
 	// input := readInput("brandeskopf.json")
 	// input := Must(readJsonL("../go-graph-layout/layout/testdata/brandeskopf.jsonl"))
-	fmt.Println("Generating input")
+	// fmt.Println("Generating input")
 	// fmt.Println("input node", len(input.Nodes))
-	input := GenerateDeepInput(10000)
+	// input := GenerateDeepInput(10000)
 	// input := readInput("input-trees.json")
 	//
 	// input.Nodes[27].ParentIds = append(input.Nodes[27].ParentIds, input.Nodes[2].Id)
 	// saveInput("input-trees.json", input)
 	// saveJsonL("input.jsonl", input)
-	g := input.ToGraph()
+	// g := input.ToGraph()
 	// start := time.Now()
 	// layer, layout := PlaceNodes(g)
 	// fmt.Println("Total =", time.Since(start))

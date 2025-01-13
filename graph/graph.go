@@ -87,6 +87,26 @@ func (g *Graph[Node, ID]) HasEdge(a, b Node) bool {
 	return ok
 }
 
+func (g *Graph[Node, ID]) StripNodesWithoutChildren() *Graph[Node, ID] {
+	res := NewGraph(g.NodeID)
+
+	for _, v := range g.Nodes {
+		if len(g.Edges[g.lookup(v)]) > 0 {
+			res.addNode(v)
+		}
+	}
+
+	for _, v := range res.Nodes {
+		for n := range g.Children(v) {
+			if res.HasNode(n) {
+				res.addEdge(v, n)
+			}
+		}
+	}
+
+	return res
+}
+
 func Assert(condition bool, msg string, args ...any) {
 	if condition {
 		return

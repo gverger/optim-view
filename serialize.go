@@ -3,11 +3,18 @@ package main
 import (
 	"bufio"
 	"bytes"
+
 	"encoding/json"
+
 	"fmt"
 	"io"
 	"os"
 	"strconv"
+
+	// "github.com/goccy/go-json"
+	"github.com/gverger/optimview/graph"
+
+	"github.com/phuslu/log"
 )
 
 func readInput(filename string) InputTree {
@@ -212,4 +219,90 @@ func loadSearchTree(filename string) map[string]Trace {
 	defer file.Close()
 
 	return Must(decodeTreeNodes(bufio.NewReader(file)))
+}
+
+func loadSearchTrees(filename string) *GraphView {
+	file := Must(os.Open(filename))
+	defer file.Close()
+
+	log.Info().Str("file", filename).Msg("Opening file")
+
+	dec := json.NewDecoder(bufio.NewReader(file))
+
+	var st []Tree
+	MustSucceed(dec.Decode(&st))
+
+	if len(st) == 0 {
+		log.Fatal().Msg("no tree")
+	}
+	return st[0].ToGraph()
+}
+
+type SearchTrees struct {
+	Trees []Tree
+}
+
+type Position struct {
+	X float32 `json:"x"`
+	Y float32 `json:"y"`
+}
+
+type Edge struct {
+	Start Position `json:"start"`
+	End   Position `json:"end"`
+	Type  string   `json:"type"`
+}
+
+type ShapeList []ShapeDesc
+type ShapeDesc struct {
+	FillColor string
+	Shape     []Edge `json:"Shape"`
+}
+
+type TNode struct {
+	Id                 uint64
+	GuideArea          float32
+	ItemArea           float32
+	ItemConvexHullArea float32
+	NumberOfBins       uint32
+	NumberOfItems      uint32
+	ParentId           int64
+	Profit             float32
+	TrapezoidSetId     int
+	X                  float32
+	Y                  float32
+}
+
+type Tree struct {
+	Init  []ShapeList
+	Name  string `json:"Name"`
+	Nodes []*TNode
+}
+
+func (t Tree) ToGraph() *GraphView {
+	g := graph.NewGraph[*DisplayableNode, uint64](func(n *DisplayableNode) uint64 { return n.Id })
+
+	mapper := make(map[uint64]uint64)
+	for i, n := range t.Nodes {
+		if n == nil && i == 0 {
+			g.AddNode(&DisplayableNode{Id: uint64(i), Text: "root"})
+			mapper[0] = uint64(i)
+			continue
+		}
+		g.AddNode(&DisplayableNode{Id: uint64(i), Text: fmt.Sprintf("Profit=%v", n.Profit)})
+		mapper[n.Id] = uint64(i)
+	}
+
+	for _, n := range t.Nodes {
+		if n == nil {
+			continue
+		}
+		parent := uint64(n.ParentId)
+		if n.ParentId == -1 {
+			parent = 0
+		}
+		g.AddEdgeId(mapper[parent], mapper[n.Id])
+	}
+
+	return g
 }

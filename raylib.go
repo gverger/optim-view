@@ -11,6 +11,7 @@ import (
 	"github.com/gverger/optimview/graph"
 	"github.com/gverger/optimview/systems"
 	"github.com/mlange-42/arche/ecs"
+	"github.com/ncruces/zenity"
 	"github.com/nikolaydubina/go-graph-layout/layout"
 	"github.com/phuslu/log"
 )
@@ -69,6 +70,10 @@ func runSingleVisu(tree *GraphView, layer layout.LayeredGraph, g layout.Graph) {
 		Layouts: map[string]layout.Graph{"Graph": g},
 	})
 }
+func importFile(events chan<- Event, filename string) {
+	graphs := loadSearchTrees(filename)
+	events <- SwitchSearchTree{graphs: graphs}
+}
 
 func computePositions(events chan<- Event, tree *GraphView) {
 	positions := graph.ComputeLayeredCoordinates(*tree)
@@ -82,19 +87,79 @@ func computePositions(events chan<- Event, tree *GraphView) {
 	events <- MoveNodes{positions: positions}
 }
 
-func runVisu(input Input) {
+type scene struct {
+	sys    *systems.Systems
+	camera CameraHandler
+	world  ecs.World
+}
 
+func (a app) loadTree(font rl.Font) scene {
+	tree := a.trees[a.currentTree]
+	sys := systems.New()
+	sys.Add(systems.NewInitializer(*tree))
+	sys.Add(systems.NewMouseSelector())
+	sys.Add(systems.NewMover())
+	sys.Add(systems.NewDrawEdges(font))
+	sys.Add(systems.NewDrawNodes(font))
+	w := ecs.NewWorld()
+	sys.Initialize(&w)
+
+	go computePositions(a.events, tree)
+
+	camera := NewCameraHandler()
+
+	return scene{
+		sys:    sys,
+		camera: camera,
+		world:  w,
+	}
+}
+
+type app struct {
+	events      chan Event
+	treeNames   []string
+	trees       []*GraphView
+	currentTree int32
+}
+
+func newApp(trees map[string]*GraphView) app {
 	events := make(chan Event, 1)
 
-	inputKeys := Keys(input.Trees)
-	sort.Strings(inputKeys)
-	keys := strings.Join(inputKeys, ";")
-	log.Info().Msg(keys)
+	if len(trees) == 0 {
+		file, err := zenity.SelectFile(
+			zenity.Title("Search Tree Explorer"),
+			zenity.Filename(""),
+			zenity.FileFilters{
+				{Name: "Search Tree files", Patterns: []string{"*.json", "*.json.gz"}, CaseFold: true},
+			})
+		log.Info().Err(err).Str("file", file).Msg("Importing...")
+		if err == nil {
+			trees = loadSearchTrees(file)
+		}
+	}
 
-	activeTree := int32(0)
+	inputKeys := Keys(trees)
+	sort.Strings(inputKeys)
+
+	treeArray := make([]*GraphView, len(trees))
+	for i := 0; i < len(treeArray); i++ {
+		treeArray[i] = trees[inputKeys[i]]
+	}
+
+	return app{
+		events:      events,
+		treeNames:   inputKeys,
+		trees:       treeArray,
+		currentTree: 0,
+	}
+}
+
+func runVisu(input Input) {
+
+	app := newApp(input.Trees)
+
 	editMode := false
 
-	currentTree := input.Trees[inputKeys[activeTree]]
 	// currentLayer := input.Layers[inputKeys[activeTree]]
 	// currentLayout := input.Layouts[inputKeys[activeTree]]
 
@@ -103,8 +168,6 @@ func runVisu(input Input) {
 
 	rl.InitWindow(1600, 1000, "Graph Visualization")
 	defer rl.CloseWindow()
-
-	go computePositions(events, currentTree)
 
 	// rl.SetConfigFlags(rl.FlagFullscreenMode)
 	// rl.ToggleFullscreen()
@@ -115,21 +178,10 @@ func runVisu(input Input) {
 	rl.SetTextureFilter(font.Texture, rl.FilterBilinear)
 	rl.GenTextureMipmaps(&font.Texture)
 
-	sys := systems.New()
-	sys.Add(systems.NewInitializer(*currentTree))
-	sys.Add(systems.NewMouseSelector())
-	// sys.Add(systems.NewTargeter())
-	sys.Add(systems.NewMover())
-	sys.Add(systems.NewDrawEdges(font))
-	sys.Add(systems.NewDrawNodes(font))
-	w := ecs.NewWorld()
-	sys.Initialize(&w)
-
-	camera := NewCameraHandler()
+	scene := app.loadTree(font)
 
 	rl.SetTargetFPS(60)
 
-	var hovered *DisplayableNode
 	// lastHovered := -1
 	var selectionTexture rl.Texture2D
 
@@ -137,13 +189,17 @@ func runVisu(input Input) {
 		found := true
 		for found {
 			select {
-			case event := <-events:
+			case event := <-app.events:
 				log.Info().Interface("event", event).Msg("event received")
 				switch e := event.(type) {
 				case MoveNodes:
-					for _, node := range currentTree.Nodes {
-						sys.MoveNode(&w, node.Id, e.positions[node.Id].X, e.positions[node.Id].Y)
+					for _, node := range app.trees[app.currentTree].Nodes {
+						scene.sys.MoveNode(&scene.world, node.Id, e.positions[node.Id].X, e.positions[node.Id].Y)
 					}
+				case SwitchSearchTree:
+					close(app.events)
+					app = newApp(e.graphs)
+					scene = app.loadTree(font)
 				}
 
 			default:
@@ -151,17 +207,15 @@ func runVisu(input Input) {
 			}
 		}
 
-		camera.Update()
-
-		gesture := rl.GetGestureDetected()
+		scene.camera.Update()
 
 		mousePos := rl.GetMousePosition()
-		worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera.Camera)
-		sys.SetMouse(float64(mousePos.X), float64(mousePos.Y), float64(worldMousePos.X), float64(worldMousePos.Y))
+		worldMousePos := rl.GetScreenToWorld2D(mousePos, *scene.camera.Camera)
+		scene.sys.SetMouse(float64(mousePos.X), float64(mousePos.Y), float64(worldMousePos.X), float64(worldMousePos.Y))
 
-		topLeft := rl.GetScreenToWorld2D(rl.Vector2Zero(), *camera.Camera)
-		botRight := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), *camera.Camera)
-		sys.SetVisibleWorld(float64(topLeft.X), float64(topLeft.Y), float64(botRight.X), float64(botRight.Y))
+		topLeft := rl.GetScreenToWorld2D(rl.Vector2Zero(), *scene.camera.Camera)
+		botRight := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), *scene.camera.Camera)
+		scene.sys.SetVisibleWorld(float64(topLeft.X), float64(topLeft.Y), float64(botRight.X), float64(botRight.Y))
 
 		// hovered = nil
 		// for i, n := range currentTree.Nodes {
@@ -180,18 +234,28 @@ func runVisu(input Input) {
 		// 	}
 		// }
 
-		if hovered != nil && rl.IsMouseButtonPressed(rl.MouseLeftButton) && gesture == rl.GestureDoubletap {
-			log.Info().Msg("clicked")
-		}
-
 		rl.BeginDrawing()
 
 		rl.ClearBackground(rl.RayWhite)
-		rl.BeginMode2D(*camera.Camera)
+		rl.BeginMode2D(*scene.camera.Camera)
 
-		sys.Update(&w)
+		scene.sys.Update(&scene.world)
 
 		rl.EndMode2D()
+
+		if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-200), 20, 150, 48), "load file") {
+
+			file, err := zenity.SelectFile(
+				zenity.Title("Search Tree Explorer"),
+				zenity.Filename(""),
+				zenity.FileFilters{
+					{Name: "Search Tree files", Patterns: []string{"*.json", "*.json.gz"}, CaseFold: true},
+				})
+			log.Info().Err(err).Str("file", file).Msg("Importing...")
+			if err == nil {
+				go importFile(app.events, file)
+			}
+		}
 
 		// if hovered != nil && !editMode {
 		// 	txtDims := rl.MeasureTextEx(rl.GetFontDefault(), hovered.Text, 32, 4)
@@ -227,13 +291,16 @@ func runVisu(input Input) {
 		if editMode {
 			gui.Lock()
 		}
-		if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), keys, &activeTree, editMode) {
-			log.Info().Int("active", int(activeTree)).Msg("DropdownBox")
-			if editMode {
-				currentTree = input.Trees[inputKeys[activeTree]]
-				// currentLayout = input.Layouts[inputKeys[activeTree]]
+		at := app.currentTree
 
-				hovered = nil
+		if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), strings.Join(app.treeNames, ";"), &app.currentTree, editMode) {
+			log.Info().Int("active", int(app.currentTree)).Msg("DropdownBox")
+			if editMode {
+				// currentLayout = input.Layouts[inputKeys[activeTree]]
+				if at != app.currentTree {
+					scene = app.loadTree(font)
+				}
+
 				// lastHovered = -1
 			}
 			editMode = !editMode
@@ -251,4 +318,8 @@ type Event any
 
 type MoveNodes struct {
 	positions map[uint64]graph.Position
+}
+
+type SwitchSearchTree struct {
+	graphs map[string]*GraphView
 }

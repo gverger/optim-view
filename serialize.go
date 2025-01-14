@@ -249,7 +249,7 @@ func loadSearchTrees(filename string) map[string]*GraphView {
 	}
 	graphs := make(map[string]*GraphView, len(st))
 	for _, tree := range st {
-		graphs[tree.Name] = tree.ToGraph()//.StripNodesWithoutChildren()
+		graphs[tree.Name] = tree.ToGraph().StripNodesWithoutChildren()
 	}
 	return graphs
 }

@@ -142,13 +142,12 @@ func runSearchTrees() {
 
 func main() {
 
-	fmt.Println("Reading trees")
 	// graphs := loadSearchTrees("tree.json.gz")
-	graphs := loadSearchTrees("tree.json")
+	// graphs := loadSearchTrees("tree.json")
 	// g := loadSearchTrees("search_tree_deer_2.json")
 	// g = g.StripNodesWithoutChildren()
 	runVisu(Input{
-		Trees:   graphs,
+		Trees:   map[string]*GraphView{},
 		Layouts: map[string]layout.Graph{},
 		Layers:  map[string]layout.LayeredGraph{},
 	})

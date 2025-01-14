@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
+	"path"
 
 	"encoding/json"
 
@@ -11,7 +13,7 @@ import (
 	"os"
 	"strconv"
 
-	// "github.com/goccy/go-json"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/gverger/optimview/graph"
 
 	"github.com/phuslu/log"
@@ -221,13 +223,31 @@ func loadSearchTree(filename string) map[string]Trace {
 	return Must(decodeTreeNodes(bufio.NewReader(file)))
 }
 
-func loadSearchTrees(filename string) *GraphView {
+type gzreadCloser struct {
+    *gzip.Reader
+    io.Closer
+}
+
+func (gz gzreadCloser) Close() error {
+    return gz.Closer.Close()
+}
+func loadSearchTrees(filename string) map[string]*GraphView {
 	file := Must(os.Open(filename))
 	defer file.Close()
 
 	log.Info().Str("file", filename).Msg("Opening file")
 
-	dec := json.NewDecoder(bufio.NewReader(file))
+	var reader io.Reader
+	if path.Ext(filename) == ".gz" {
+		gzipReader := Must(gzip.NewReader(file))
+		defer gzipReader.Close()
+		reader = bufio.NewReader(gzipReader)
+	} else {
+		reader = bufio.NewReader(file)
+	}
+
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	dec := json.NewDecoder(reader)
 
 	var st []Tree
 	MustSucceed(dec.Decode(&st))
@@ -235,7 +255,11 @@ func loadSearchTrees(filename string) *GraphView {
 	if len(st) == 0 {
 		log.Fatal().Msg("no tree")
 	}
-	return st[0].ToGraph()
+	graphs := make(map[string]*GraphView, len(st))
+	for _, tree := range st {
+		graphs[tree.Name] = tree.ToGraph().StripNodesWithoutChildren()
+	}
+	return graphs
 }
 
 type SearchTrees struct {

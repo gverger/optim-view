@@ -6,6 +6,7 @@ require (
 	github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c
 	github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20241117153000-01864c04b849
+	github.com/json-iterator/go v1.1.12
 	github.com/mlange-42/arche v0.13.3
 	github.com/nikolaydubina/go-graph-layout v0.2.0
 	github.com/phuslu/log v1.0.113
@@ -24,6 +25,8 @@ require (
 	github.com/go-text/typesetting v0.2.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/kolesa-team/go-webp v1.0.4 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/tdewolff/font v0.0.0-20241125190050-d899fdc808fc // indirect
 	github.com/tdewolff/minify/v2 v2.21.2 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect

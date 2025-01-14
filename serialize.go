@@ -13,8 +13,8 @@ import (
 	"os"
 	"strconv"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/gverger/optimview/graph"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/phuslu/log"
 )
@@ -223,14 +223,6 @@ func loadSearchTree(filename string) map[string]Trace {
 	return Must(decodeTreeNodes(bufio.NewReader(file)))
 }
 
-type gzreadCloser struct {
-    *gzip.Reader
-    io.Closer
-}
-
-func (gz gzreadCloser) Close() error {
-    return gz.Closer.Close()
-}
 func loadSearchTrees(filename string) map[string]*GraphView {
 	file := Must(os.Open(filename))
 	defer file.Close()
@@ -257,7 +249,7 @@ func loadSearchTrees(filename string) map[string]*GraphView {
 	}
 	graphs := make(map[string]*GraphView, len(st))
 	for _, tree := range st {
-		graphs[tree.Name] = tree.ToGraph().StripNodesWithoutChildren()
+		graphs[tree.Name] = tree.ToGraph()//.StripNodesWithoutChildren()
 	}
 	return graphs
 }
@@ -283,6 +275,12 @@ type ShapeDesc struct {
 	Shape     []Edge `json:"Shape"`
 }
 
+type ShapePos struct {
+	Id int
+	X  float32
+	Y  float32
+}
+
 type TNode struct {
 	Id                 uint64
 	GuideArea          float32
@@ -295,6 +293,7 @@ type TNode struct {
 	TrapezoidSetId     int
 	X                  float32
 	Y                  float32
+	Plot               []ShapePos
 }
 
 type Tree struct {
@@ -313,7 +312,15 @@ func (t Tree) ToGraph() *GraphView {
 			mapper[0] = uint64(i)
 			continue
 		}
-		g.AddNode(&DisplayableNode{Id: uint64(i), Text: fmt.Sprintf("Profit=%v", n.Profit)})
+		shapeTransforms := make([]ShapeTransform, 0, len(n.Plot))
+		for _, p := range n.Plot {
+			shapeTransforms = append(shapeTransforms, ShapeTransform{
+				Id: p.Id,
+				X:  p.X,
+				Y:  p.Y,
+			})
+		}
+		g.AddNode(&DisplayableNode{Id: uint64(i), Text: fmt.Sprintf("Profit=%v", n.Profit), Transform: shapeTransforms})
 		mapper[n.Id] = uint64(i)
 	}
 

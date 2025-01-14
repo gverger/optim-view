@@ -8,7 +8,6 @@ import (
 	"github.com/gverger/optimview/graph"
 	"github.com/gverger/optimview/systems"
 	"github.com/nikolaydubina/go-graph-layout/layout"
-	"github.com/phuslu/log"
 )
 
 type DisplayableNode = systems.DisplayableNode
@@ -143,10 +142,14 @@ func runSearchTrees() {
 func main() {
 
 	fmt.Println("Reading trees")
-	g := loadSearchTrees("tree.json")
+	graphs := loadSearchTrees("tree.json.gz")
 	// g := loadSearchTrees("search_tree_deer_2.json")
-	g = g.StripNodesWithoutChildren()
-	log.Info().Int("nodes", len(g.Nodes)).Msg("done")
+	// g = g.StripNodesWithoutChildren()
+	runVisu(Input{
+		Trees:   graphs,
+		Layouts: map[string]layout.Graph{},
+		Layers:  map[string]layout.LayeredGraph{},
+	})
 	// fmt.Printf("%+v\n",trees)
 	// return
 	// runSearchTrees()
@@ -170,5 +173,5 @@ func main() {
 	// // fmt.Printf("Input: %#+v\n", input)
 	// // fmt.Printf("Graph: %#+v\n", g)
 	//
-	runSingleVisu(g, layout.LayeredGraph{}, layout.Graph{})
+	// runSingleVisu(g, layout.LayeredGraph{}, layout.Graph{})
 }

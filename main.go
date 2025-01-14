@@ -11,6 +11,7 @@ import (
 )
 
 type DisplayableNode = systems.DisplayableNode
+type ShapeTransform = systems.ShapeTransform
 
 type GraphView = graph.Graph[*DisplayableNode, uint64]
 
@@ -142,7 +143,8 @@ func runSearchTrees() {
 func main() {
 
 	fmt.Println("Reading trees")
-	graphs := loadSearchTrees("tree.json.gz")
+	// graphs := loadSearchTrees("tree.json.gz")
+	graphs := loadSearchTrees("tree.json")
 	// g := loadSearchTrees("search_tree_deer_2.json")
 	// g = g.StripNodesWithoutChildren()
 	runVisu(Input{

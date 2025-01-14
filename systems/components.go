@@ -21,6 +21,8 @@ type Node struct {
 	color  rl.Color
 	Text   string
 	hidden bool
+
+	ShapeTransforms []ShapeTransform
 }
 
 type Edge struct {

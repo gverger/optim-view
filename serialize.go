@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/gverger/optimview/graph"
+	"github.com/gverger/optimview/systems"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/phuslu/log"
@@ -223,7 +224,7 @@ func loadSearchTree(filename string) map[string]Trace {
 	return Must(decodeTreeNodes(bufio.NewReader(file)))
 }
 
-func loadSearchTrees(filename string) map[string]*GraphView {
+func loadSearchTrees(filename string) map[string]systems.SearchTree {
 	file := Must(os.Open(filename))
 	defer file.Close()
 
@@ -247,15 +248,27 @@ func loadSearchTrees(filename string) map[string]*GraphView {
 	if len(st) == 0 {
 		log.Fatal().Msg("no tree")
 	}
-	graphs := make(map[string]*GraphView, len(st))
+	trees := make(map[string]systems.SearchTree, len(st))
 	for _, tree := range st {
-		graphs[tree.Name] = tree.ToGraph().StripNodesWithoutChildren()
-	}
-	return graphs
-}
+		shapes := make([]systems.ShapeDefinition, 0, len(tree.Init))
+		for _, s := range tree.Init {
+			polygons := make([]systems.Shape, 0)
+			for _, d := range s {
+				polygon := make([]systems.Position, 0, len(d.Shape))
+				for _, e := range d.Shape {
+					polygon = append(polygon, systems.Position{X: float64(e.Start.X), Y: float64(e.Start.Y)})
+				}
+				polygons = append(polygons, systems.Shape{Points: polygon})
+			}
+			shapes = append(shapes, systems.ShapeDefinition{Shapes: polygons})
+		}
 
-type SearchTrees struct {
-	Trees []Tree
+		trees[tree.Name] = systems.SearchTree{
+			Tree:   tree.ToGraph().StripNodesWithoutChildren(),
+			Shapes: shapes,
+		}
+	}
+	return trees
 }
 
 type Position struct {

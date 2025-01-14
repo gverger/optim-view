@@ -18,3 +18,7 @@ type VisibleWorld struct {
 	MaxX float64
 	MaxY float64
 }
+
+type Shapes struct {
+	Polygons [][]Position
+}

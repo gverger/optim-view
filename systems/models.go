@@ -1,5 +1,7 @@
 package systems
 
+import "github.com/gverger/optimview/graph"
+
 type ShapeTransform struct {
 	Id int
 	X  float32
@@ -11,4 +13,13 @@ type DisplayableNode struct {
 	Text string
 
 	Transform []ShapeTransform
+}
+
+type ShapeDefinition struct {
+	Shapes []Shape
+}
+
+type SearchTree struct {
+	Tree   *graph.Graph[*DisplayableNode, uint64]
+	Shapes []ShapeDefinition
 }

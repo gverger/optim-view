@@ -7,7 +7,7 @@ Need go 1.23
 Run
 
 ```bash
-go build . # the first build is long since it compiles some C libraries
+CGO_ENABLED=1 go build -ldflags '-s -w' . # the first build is long since it compiles some C libraries
 ./optimview
 ```
 

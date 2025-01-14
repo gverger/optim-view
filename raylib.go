@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -12,7 +13,6 @@ import (
 	"github.com/gverger/optimview/systems"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/ncruces/zenity"
-	"github.com/nikolaydubina/go-graph-layout/layout"
 	"github.com/phuslu/log"
 )
 
@@ -64,12 +64,6 @@ func (h *CameraHandler) Update() {
 	}
 }
 
-func runSingleVisu(tree *GraphView, layer layout.LayeredGraph, g layout.Graph) {
-	runVisu(Input{
-		Trees:   map[string]*GraphView{"Graph": tree},
-		Layouts: map[string]layout.Graph{"Graph": g},
-	})
-}
 func importFile(events chan<- Event, filename string) {
 	graphs := loadSearchTrees(filename)
 	events <- SwitchSearchTree{graphs: graphs}
@@ -96,7 +90,7 @@ type scene struct {
 func (a app) loadTree(font rl.Font) scene {
 	tree := a.trees[a.currentTree]
 	sys := systems.New()
-	sys.Add(systems.NewInitializer(*tree))
+	sys.Add(systems.NewInitializer(tree))
 	sys.Add(systems.NewMouseSelector())
 	sys.Add(systems.NewMover())
 	sys.Add(systems.NewDrawEdges(font))
@@ -104,7 +98,7 @@ func (a app) loadTree(font rl.Font) scene {
 	w := ecs.NewWorld()
 	sys.Initialize(&w)
 
-	go computePositions(a.events, tree)
+	go computePositions(a.events, tree.Tree)
 
 	camera := NewCameraHandler()
 
@@ -118,11 +112,12 @@ func (a app) loadTree(font rl.Font) scene {
 type app struct {
 	events      chan Event
 	treeNames   []string
-	trees       []*GraphView
+	trees       []systems.SearchTree
+	shapes      []ShapeDesc
 	currentTree int32
 }
 
-func newApp(trees map[string]*GraphView) app {
+func newApp(trees map[string]systems.SearchTree) app {
 	events := make(chan Event, 1)
 
 	if len(trees) == 0 {
@@ -141,7 +136,7 @@ func newApp(trees map[string]*GraphView) app {
 	inputKeys := Keys(trees)
 	sort.Strings(inputKeys)
 
-	treeArray := make([]*GraphView, len(trees))
+	treeArray := make([]systems.SearchTree, len(trees))
 	for i := 0; i < len(treeArray); i++ {
 		treeArray[i] = trees[inputKeys[i]]
 	}
@@ -193,7 +188,7 @@ func runVisu(input Input) {
 				log.Info().Interface("event", event).Msg("event received")
 				switch e := event.(type) {
 				case MoveNodes:
-					for _, node := range app.trees[app.currentTree].Nodes {
+					for _, node := range app.trees[app.currentTree].Tree.Nodes {
 						scene.sys.MoveNode(&scene.world, node.Id, e.positions[node.Id].X, e.positions[node.Id].Y)
 					}
 				case SwitchSearchTree:
@@ -306,7 +301,8 @@ func runVisu(input Input) {
 			editMode = !editMode
 		}
 		gui.Unlock()
-		rl.DrawFPS(10, 10)
+		rl.DrawFPS(10, int32(rl.GetScreenHeight())-20)
+		rl.DrawText(fmt.Sprintf("(%v,%v)", worldMousePos.X, worldMousePos.Y), 10, int32(rl.GetScreenHeight())-60, 8, rl.Blue)
 
 		rl.EndDrawing()
 	}
@@ -321,5 +317,5 @@ type MoveNodes struct {
 }
 
 type SwitchSearchTree struct {
-	graphs map[string]*GraphView
+	graphs map[string]systems.SearchTree
 }

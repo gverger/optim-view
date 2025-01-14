@@ -24,8 +24,12 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dchest/jsmin v0.0.0-20220218165748-59f39799265f h1:OGqDDftRTwrvUoL6pOG7rYTmWsTCvyEWFsMjg+HcOaA=
 github.com/dchest/jsmin v0.0.0-20220218165748-59f39799265f/go.mod h1:Dv9D0NUlAsaQcGQZa5kc5mqR9ua72SmA8VXi4cd+cBw=
+github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0 h1:90Ly+6UfUypEF6vvvW5rQIv9opIL8CbmW9FT20LDQoY=
+github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0/go.mod h1:V+Qd57rJe8gd4eiGzZyg4h54VLHmYVVw54iMnlAMrF8=
 github.com/ebitengine/purego v0.8.1 h1:sdRKd6plj7KYW33EH5As6YKfe8m9zbN9JMrOjNVF/BE=
 github.com/ebitengine/purego v0.8.1/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
+github.com/fogleman/gg v1.3.0 h1:/7zJX8F6AaYQc57WQCyN9cAIz+4bCJGO9B+dyW29am8=
+github.com/fogleman/gg v1.3.0/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c h1:YzIeMRbEHJ6XbzQQrW17OVlO46ws7QjU2OzyKXDfsXE=
 github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c/go.mod h1:tvwfxDWbHojl/iRFMuBVhydd1IaObUiHpYyG1XKG5Po=
 github.com/gen2brain/raylib-go/raygui v0.0.0-20241117153000-01864c04b849 h1:cKx247upqhrJN+XKXRKCq1d4G2WiqbQev2J1R2xl8UE=
@@ -56,6 +60,10 @@ github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnr
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/kolesa-team/go-webp v1.0.4 h1:wQvU4PLG/X7RS0vAeyhiivhLRoxfLVRlDq4I3frdxIQ=
 github.com/kolesa-team/go-webp v1.0.4/go.mod h1:oMvdivD6K+Q5qIIkVC2w4k2ZUnI1H+MyP7inwgWq9aA=
+github.com/logrusorgru/aurora v2.0.3+incompatible h1:tOpm7WcpBTn4fjmVfgpQq0EfczGlG91VSDkswnjF5A8=
+github.com/logrusorgru/aurora v2.0.3+incompatible/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
+github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb h1:1jlA56KggIWMFWNnaP9msDuPEJ9JPXt6gQlg8v4jNSE=
+github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb/go.mod h1:0wdicLL4EwzWFtOkdIP82qw4Xmc+XW7/3h/d8ClwwJQ=
 github.com/mlange-42/arche v0.13.3 h1:Z9Z4SQTGPl45oopCM9Krz/DiVg2M8CFq+5K/a4NQEo8=
 github.com/mlange-42/arche v0.13.3/go.mod h1:bFktKnvGDj2kP01xar79z0hKwGHdnoaEZR8HWmJkIyU=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
@@ -68,8 +76,12 @@ github.com/nikolaydubina/jsonl-graph v1.1.0 h1:hxU2EFe0keB47tekjkDMGO2+DDbZvcfz2
 github.com/nikolaydubina/jsonl-graph v1.1.0/go.mod h1:wQZL4BSABkCzcN3ual9qJ1AFE6wQSDJAbIZEmuYL1eY=
 github.com/nikolaydubina/multiline-jsonl v1.0.3 h1:rzfukoRroxvBorDgrtAjIcBasBpKQstqaOk9VfBPz70=
 github.com/nikolaydubina/multiline-jsonl v1.0.3/go.mod h1:/CONohg68Ltqm6QImYFWK2hC4025Sm/b53pqWQDVJ2A=
+github.com/osuushi/triangulate v0.0.0-20220629121601-b0217b0c87c8 h1:wOuUq9J7LMJCFcH4mWCe53YjJM2P7dfeQo3tNFI1inQ=
+github.com/osuushi/triangulate v0.0.0-20220629121601-b0217b0c87c8/go.mod h1:vj4EHdZW0JZbfITFZU3Vtujo8LYrvzZ6czqdm1oX1v4=
 github.com/phuslu/log v1.0.113 h1:Koq5A+8ourLX4vhkhW4HCJjo+jEtzMDhqvUUid/5m24=
 github.com/phuslu/log v1.0.113/go.mod h1:F8osGJADo5qLK/0F88djWwdyoZZ9xDJQL1HYRHFEkS0=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 h1:GranzK4hv1/pqTIhMTXt2X8MmMOuH3hMeUR0o9SP5yc=

@@ -21,16 +21,22 @@ require (
 	github.com/benoitkugler/textlayout v0.3.1 // indirect
 	github.com/benoitkugler/textprocessing v0.0.3 // indirect
 	github.com/dchest/jsmin v0.0.0-20220218165748-59f39799265f // indirect
+	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0 // indirect
 	github.com/ebitengine/purego v0.8.1 // indirect
+	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/go-fonts/latin-modern v0.3.3 // indirect
 	github.com/go-latex/latex v0.0.0-20240709081214-31cef3c7570e // indirect
 	github.com/go-text/typesetting v0.2.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/josephspurrier/goversioninfo v1.4.1 // indirect
 	github.com/kolesa-team/go-webp v1.0.4 // indirect
+	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
+	github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/ncruces/zenity v0.10.14 // indirect
+	github.com/osuushi/triangulate v0.0.0-20220629121601-b0217b0c87c8 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
 	github.com/tdewolff/font v0.0.0-20241125190050-d899fdc808fc // indirect
 	github.com/tdewolff/minify/v2 v2.21.2 // indirect

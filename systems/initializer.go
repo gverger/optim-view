@@ -2,17 +2,16 @@ package systems
 
 import (
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/gverger/optimview/graph"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
 )
 
-func NewInitializer(g graph.Graph[*DisplayableNode, uint64]) *Initializer {
-	return &Initializer{g: g}
+func NewInitializer(tree SearchTree) *Initializer {
+	return &Initializer{tree: tree}
 }
 
 type Initializer struct {
-	g graph.Graph[*DisplayableNode, uint64]
+	tree SearchTree
 }
 
 // Initialize implements System.
@@ -22,16 +21,19 @@ func (c *Initializer) Initialize(w *ecs.World) {
 
 	nodeLookup := make(map[uint64]ecs.Entity, 0)
 
-	for _, n := range c.g.Nodes {
+	graph := c.tree.Tree
+
+	for _, n := range graph.Nodes {
 		e := nodes.NewWith(
 			&Position{
 				// X: float64(n.XY[0]),
 				// Y: float64(n.XY[1]),
 			}, &Node{
-				color: rl.Gray,
-				Text:  n.Text,
-				SizeX: 25,
-				SizeY: 25,
+				color:           rl.Gray,
+				Text:            n.Text,
+				SizeX:           120,
+				SizeY:           90,
+				ShapeTransforms: n.Transform,
 			},
 			&Velocity{
 				Dx: 0,
@@ -50,13 +52,16 @@ func (c *Initializer) Initialize(w *ecs.World) {
 		nodeLookup[n.Id] = e
 	}
 
-	for i, e := range c.g.Edges {
-		src := nodeLookup[c.g.Nodes[i].Id]
+	for i, e := range graph.Edges {
+		src := nodeLookup[graph.Nodes[i].Id]
 		for j := range e {
-			dst := nodeLookup[c.g.Nodes[j].Id]
+			dst := nodeLookup[graph.Nodes[j].Id]
 			edges.NewWith(&Edge{From: src, To: dst})
 		}
 	}
+
+	shapes := generic.NewResource[[]ShapeDefinition](w)
+	shapes.Add(&c.tree.Shapes)
 
 	mappings := generic.NewResource[Mappings](w)
 	mappings.Add(&Mappings{

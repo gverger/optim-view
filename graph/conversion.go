@@ -26,7 +26,7 @@ func ComputeLayeredCoordinates[Node any, ID comparable](input Graph[Node, ID]) m
 	log.Info().Dur("duration", time.Since(now)).Msg("converted to layout")
 	now = time.Now()
 
-	x := layout.BrandesKopfLayersNodesHorizontalAssigner{Delta: 30}.NodesHorizontalCoordinates(c.LayoutGraph, c.Layers)
+	x := layout.BrandesKopfLayersNodesHorizontalAssigner{Delta: 120}.NodesHorizontalCoordinates(c.LayoutGraph, c.Layers)
 	log.Info().Dur("duration", time.Since(now)).Msg("brandeskopf")
 	now = time.Now()
 
@@ -61,8 +61,8 @@ func ConvertToLayoutGraph[Node any, ID comparable](input Graph[Node, ID]) Conver
 		index := uint64(i)
 		mapping[input.NodeID(n)] = index
 		g.Nodes[index] = layout.Node{
-			W: 50,
-			H: 50,
+			W: 110,
+			H: 90,
 		}
 	}
 

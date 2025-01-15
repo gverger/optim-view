@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"math"
 	"path"
 
 	"encoding/json"
@@ -251,16 +252,33 @@ func loadSearchTrees(filename string) map[string]systems.SearchTree {
 	trees := make(map[string]systems.SearchTree, len(st))
 	for _, tree := range st {
 		shapes := make([]systems.ShapeDefinition, 0, len(tree.Init))
+		minX := float32(math.MaxFloat32)
+		minY := float32(math.MaxFloat32)
+		maxX := float32(-math.MaxFloat32)
+		maxY := float32(-math.MaxFloat32)
 		for _, s := range tree.Init {
-			polygons := make([]systems.Shape, 0)
+			polygons := make([]systems.DrawableShape, 0)
 			for _, d := range s {
 				polygon := make([]systems.Position, 0, len(d.Shape))
-				for _, e := range d.Shape {
+				for i, e := range d.Shape {
+					if e.End.X != d.Shape[(i+1)%len(d.Shape)].Start.X {
+						log.Fatal().Interface("shape", d.Shape).Int("index", i).Msg("edges")
+					}
 					polygon = append(polygon, systems.Position{X: float64(e.Start.X), Y: float64(e.Start.Y)})
+					minX = min(minX, e.Start.X)
+					minY = min(minY, e.Start.Y)
+					maxX = max(maxX, e.Start.X)
+					maxY = max(maxY, e.Start.Y)
 				}
-				polygons = append(polygons, systems.Shape{Points: polygon})
+				polygons = append(polygons, systems.DrawableShape{Points: polygon, Color: d.FillColor})
 			}
-			shapes = append(shapes, systems.ShapeDefinition{Shapes: polygons})
+			shapes = append(shapes, systems.ShapeDefinition{
+				Shapes: polygons,
+				MinX:   minX,
+				MinY:   minY,
+				MaxX:   maxX,
+				MaxY:   maxY,
+			})
 		}
 
 		trees[tree.Name] = systems.SearchTree{

@@ -31,8 +31,8 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			}, &Node{
 				color:           rl.Gray,
 				Text:            n.Text,
-				SizeX:           25,
-				SizeY:           25,
+				SizeX:           120,
+				SizeY:           90,
 				ShapeTransforms: n.Transform,
 			},
 			&Velocity{
@@ -59,6 +59,9 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			edges.NewWith(&Edge{From: src, To: dst})
 		}
 	}
+
+	shapes := generic.NewResource[[]ShapeDefinition](w)
+	shapes.Add(&c.tree.Shapes)
 
 	mappings := generic.NewResource[Mappings](w)
 	mappings.Add(&Mappings{

@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -301,6 +302,7 @@ func runVisu(input Input) {
 		}
 		gui.Unlock()
 		rl.DrawFPS(10, int32(rl.GetScreenHeight())-20)
+		rl.DrawText(fmt.Sprintf("(%v,%v)", worldMousePos.X, worldMousePos.Y), 10, int32(rl.GetScreenHeight())-60, 8, rl.Blue)
 
 		rl.EndDrawing()
 	}

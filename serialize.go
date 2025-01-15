@@ -252,12 +252,12 @@ func loadSearchTrees(filename string) map[string]systems.SearchTree {
 	trees := make(map[string]systems.SearchTree, len(st))
 	for _, tree := range st {
 		shapes := make([]systems.ShapeDefinition, 0, len(tree.Init))
-		minX := float32(math.MaxFloat32)
-		minY := float32(math.MaxFloat32)
-		maxX := float32(-math.MaxFloat32)
-		maxY := float32(-math.MaxFloat32)
 		for _, s := range tree.Init {
 			polygons := make([]systems.DrawableShape, 0)
+			minX := float32(math.MaxFloat32)
+			minY := float32(math.MaxFloat32)
+			maxX := float32(-math.MaxFloat32)
+			maxY := float32(-math.MaxFloat32)
 			for _, d := range s {
 				polygon := make([]systems.Position, 0, len(d.Shape))
 				for i, e := range d.Shape {

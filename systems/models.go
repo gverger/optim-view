@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"slices"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/gverger/optimview/graph"
 	"github.com/osuushi/triangulate"
@@ -24,6 +26,23 @@ type DrawableShape struct {
 	Points []Position
 
 	Triangles []*triangulate.Triangle
+}
+
+func (s *DrawableShape) ComputeTriangles() {
+	points := make([]*triangulate.Point, 0, len(s.Points))
+	for _, p := range s.Points {
+		points = append(points, &triangulate.Point{X: p.X, Y: p.Y})
+	}
+	slices.Reverse(points)
+	triangles, err := triangulate.Triangulate(points)
+	if err != nil {
+		slices.Reverse(points)
+		triangles, err = triangulate.Triangulate(points)
+	}
+	if err != nil {
+		triangles = make([]*triangulate.Triangle, 0)
+	}
+	s.Triangles = triangles
 }
 
 type ShapeDefinition struct {

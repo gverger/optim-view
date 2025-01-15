@@ -31,8 +31,8 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			}, &Node{
 				color:           rl.Gray,
 				Text:            n.Text,
-				SizeX:           120,
-				SizeY:           90,
+				SizeX:           100,
+				SizeY:           100,
 				ShapeTransforms: n.Transform,
 			},
 			&Velocity{

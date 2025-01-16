@@ -18,25 +18,46 @@ type DrawNodes struct {
 	font    rl.Font
 	nbNodes int
 
-	filter       generic.Filter2[Position, Node]
-	hovered      generic.Resource[ecs.Entity]
-	visibleWorld generic.Resource[VisibleWorld]
-	shapes       generic.Resource[[]ShapeDefinition]
-	NodesTexture rl.RenderTexture2D
+	filter        generic.Filter2[Position, Node]
+	hovered       generic.Resource[ecs.Entity]
+	visibleWorld  generic.Resource[VisibleWorld]
+	shapes        generic.Resource[[]ShapeDefinition]
+	NodesTextures []rl.RenderTexture2D
 }
+
+const (
+	NodesPerTextureLine = 100
+	LinesPerTexture     = 100
+	NodeTextureSize     = 100
+)
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.filter = *generic.NewFilter2[Position, Node]()
 	d.hovered = generic.NewResource[ecs.Entity](w)
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
 	d.shapes = generic.NewResource[[]ShapeDefinition](w)
-	d.NodesTexture = rl.LoadRenderTexture(100*100, int32((d.nbNodes+99)/100)*100) // 100 x n grid
+	l := log.Info().Int("nodes", d.nbNodes)
+	nbTextureLines := (d.nbNodes-1)/NodesPerTextureLine + 1
+	l.Int("lines", nbTextureLines)
+	nbTextures := (nbTextureLines-1)/LinesPerTexture + 1
+	l.Int("textures", nbTextures)
+	d.NodesTextures = make([]rl.RenderTexture2D, 0, nbTextures)
+	for i := 0; i < nbTextures; i++ {
+		d.NodesTextures = append(d.NodesTextures, rl.LoadRenderTexture(NodeTextureSize*NodeTextureSize, int32(min(LinesPerTexture, nbTextureLines))*NodeTextureSize))
+		nbTextureLines -= LinesPerTexture
+	}
+	l.Msg("draw nodes")
+}
+
+func nodeTextureIdx(node int) int {
+	return (node - 1) / (LinesPerTexture * NodesPerTextureLine)
 }
 
 func nodeTextureRec(node int) rl.Rectangle {
-	x := (node - 1) % 100
-	y := (node - 1) / 100
-	return rl.NewRectangle(float32(x*100), float32(y*100), 100, 100)
+	n := (node - 1) % (LinesPerTexture * NodesPerTextureLine)
+	x := n % NodesPerTextureLine
+	y := n / NodesPerTextureLine
+	return rl.NewRectangle(float32(x*NodeTextureSize), float32(y*NodeTextureSize), NodeTextureSize, NodeTextureSize)
 }
 
 func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
@@ -57,8 +78,9 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			if n.rendered {
 				rec := nodeTextureRec(n.idx)
 				rec.Height = -rec.Height
-				rec.Y = float32(d.NodesTexture.Texture.Height) - rec.Y - 100 // texture is upside down...
-				rl.DrawTextureRec(d.NodesTexture.Texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
+				texture := d.NodesTextures[nodeTextureIdx(n.idx)].Texture
+				rec.Y = float32(texture.Height) - rec.Y - NodeTextureSize // texture is upside down...
+				rl.DrawTextureRec(texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
 			} else {
 				rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.LightGray)
 			}
@@ -72,8 +94,9 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		if n.SizeX*n.SizeY < visibleArea/40 && n.rendered {
 			rec := nodeTextureRec(n.idx)
 			rec.Height = -rec.Height
-			rec.Y = float32(d.NodesTexture.Texture.Height) - rec.Y - 100 // texture is upside down...
-			rl.DrawTextureRec(d.NodesTexture.Texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
+			texture := d.NodesTextures[nodeTextureIdx(n.idx)].Texture
+			rec.Y = float32(texture.Height) - rec.Y - NodeTextureSize // texture is upside down...
+			rl.DrawTextureRec(texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
 			continue
 		}
 
@@ -152,7 +175,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		}
 		if !n.rendered {
 
-			rl.BeginTextureMode(d.NodesTexture)
+			texture := d.NodesTextures[nodeTextureIdx(n.idx)]
+			rl.BeginTextureMode(texture)
 			rec := nodeTextureRec(n.idx)
 			for _, tr := range n.ShapeTransforms {
 				shapeList := shapes[tr.Id]

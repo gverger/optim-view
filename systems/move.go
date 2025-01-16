@@ -15,6 +15,9 @@ type Mover struct {
 	filter *generic.Filter2[Position, Target]
 }
 
+func (m *Mover) Close() {
+}
+
 func (m *Mover) Initialize(w *ecs.World) {
 	m.filter = generic.NewFilter2[Position, Target]()
 }

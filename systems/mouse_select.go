@@ -20,6 +20,10 @@ type MouseSelector struct {
 	hovered generic.Resource[ecs.Entity]
 }
 
+// Close implements System.
+func (m *MouseSelector) Close() {
+}
+
 func (m *MouseSelector) Initialize(w *ecs.World) {
 	m.filter = generic.NewFilter2[Position, Shape]()
 	m.mapper = generic.NewMap2[Position, Shape](w)

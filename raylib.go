@@ -91,7 +91,8 @@ func (a app) loadTree(font rl.Font) scene {
 	sys := systems.New()
 	sys.Add(systems.NewInitializer(tree))
 	sys.Add(systems.NewMouseSelector())
-	sys.Add(systems.NewMover())
+	// sys.Add(systems.NewMover())
+	sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewDrawEdges(font))
 	sys.Add(systems.NewDrawNodes(font, len(tree.Tree.Nodes)))
 	w := ecs.NewWorld()
@@ -193,6 +194,7 @@ func runVisu(input Input) {
 				case SwitchSearchTree:
 					close(app.events)
 					app = newApp(e.graphs)
+					scene.sys.Close()
 					scene = app.loadTree(font)
 				}
 
@@ -292,6 +294,7 @@ func runVisu(input Input) {
 			if editMode {
 				// currentLayout = input.Layouts[inputKeys[activeTree]]
 				if at != app.currentTree {
+					scene.sys.Close()
 					scene = app.loadTree(font)
 				}
 

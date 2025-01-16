@@ -18,6 +18,10 @@ type Targeter struct {
 	tick int
 }
 
+// Close implements System.
+func (m *Targeter) Close() {
+}
+
 func (m *Targeter) Initialize(w *ecs.World) {
 	m.filter = generic.NewFilter2[Position, Target]()
 }
@@ -34,8 +38,8 @@ func (m *Targeter) Update(ctx context.Context, w *ecs.World) {
 		}
 
 		if tar.X != pos.X || tar.Y != pos.Y {
-			pos.X = float64(easings.SineInOut(float32(m.tick), float32(tar.StartX), float32(tar.X-tar.StartX), 60))
-			pos.Y = float64(easings.SineInOut(float32(m.tick), float32(tar.StartY), float32(tar.Y-tar.StartY), 60))
+			pos.X = float64(easings.SineInOut(float32(m.tick), float32(tar.StartX), float32(tar.X-tar.StartX), 30))
+			pos.Y = float64(easings.SineInOut(float32(m.tick), float32(tar.StartY), float32(tar.Y-tar.StartY), 30))
 		}
 	}
 

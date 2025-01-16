@@ -50,9 +50,16 @@ func (s Systems) Update(w *ecs.World) {
 	}
 }
 
+func (s Systems) Close() {
+	for _, sys := range s.systems {
+		sys.Close()
+	}
+}
+
 type System interface {
 	Initialize(w *ecs.World)
 	Update(ctx context.Context, w *ecs.World)
+	Close()
 }
 
 func (s Systems) SetMouse(windowX, windowY, worlX, worldY float64) {

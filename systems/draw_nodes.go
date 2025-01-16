@@ -25,6 +25,18 @@ type DrawNodes struct {
 	NodesTextures []rl.RenderTexture2D
 }
 
+// Close implements System.
+func (d *DrawNodes) Close() {
+	for _, t := range d.NodesTextures {
+		rl.UnloadRenderTexture(t)
+	}
+	shapes := *d.shapes.Get()
+	for _, s := range shapes {
+		rl.UnloadRenderTexture(s.Texture)
+		s.rendered = false
+	}
+}
+
 const (
 	NodesPerTextureLine = 100
 	LinesPerTexture     = 100
@@ -36,11 +48,8 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.hovered = generic.NewResource[ecs.Entity](w)
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
 	d.shapes = generic.NewResource[[]ShapeDefinition](w)
-	l := log.Info().Int("nodes", d.nbNodes)
 	nbTextureLines := (d.nbNodes-1)/NodesPerTextureLine + 1
-	l.Int("lines", nbTextureLines)
 	nbTextures := (nbTextureLines-1)/LinesPerTexture + 1
-	l.Int("textures", nbTextures)
 	d.NodesTextures = make([]rl.RenderTexture2D, 0, nbTextures)
 	for i := 0; i < nbTextures; i++ {
 		d.NodesTextures = append(d.NodesTextures, rl.LoadRenderTexture(NodeTextureSize*NodeTextureSize, int32(min(LinesPerTexture, nbTextureLines))*NodeTextureSize))
@@ -49,7 +58,6 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 		rl.EndTextureMode()
 		nbTextureLines -= LinesPerTexture
 	}
-	l.Msg("draw nodes")
 }
 
 func nodeTextureIdx(node int) int {

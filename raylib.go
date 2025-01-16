@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -94,7 +93,7 @@ func (a app) loadTree(font rl.Font) scene {
 	sys.Add(systems.NewMouseSelector())
 	sys.Add(systems.NewMover())
 	sys.Add(systems.NewDrawEdges(font))
-	sys.Add(systems.NewDrawNodes(font))
+	sys.Add(systems.NewDrawNodes(font, len(tree.Tree.Nodes)))
 	w := ecs.NewWorld()
 	sys.Initialize(&w)
 
@@ -302,7 +301,6 @@ func runVisu(input Input) {
 		}
 		gui.Unlock()
 		rl.DrawFPS(10, int32(rl.GetScreenHeight())-20)
-		rl.DrawText(fmt.Sprintf("(%v,%v)", worldMousePos.X, worldMousePos.Y), 10, int32(rl.GetScreenHeight())-60, 8, rl.Blue)
 
 		rl.EndDrawing()
 	}

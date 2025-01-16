@@ -23,7 +23,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 
 	graph := c.tree.Tree
 
-	for _, n := range graph.Nodes {
+	for i, n := range graph.Nodes {
 		e := nodes.NewWith(
 			&Position{
 				// X: float64(n.XY[0]),
@@ -34,6 +34,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 				SizeX:           100,
 				SizeY:           100,
 				ShapeTransforms: n.Transform,
+				idx: i+1,
 			},
 			&Velocity{
 				Dx: 0,

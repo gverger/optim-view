@@ -23,6 +23,8 @@ type Node struct {
 	hidden bool
 
 	ShapeTransforms []ShapeTransform
+	rendered        bool
+	idx             int
 }
 
 type Edge struct {

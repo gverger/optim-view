@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"context"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
@@ -25,7 +27,7 @@ func (m *MouseSelector) Initialize(w *ecs.World) {
 	m.hovered = generic.NewResource[ecs.Entity](w)
 }
 
-func (m *MouseSelector) Update(w *ecs.World) {
+func (m *MouseSelector) Update(ctx context.Context, w *ecs.World) {
 	mWorld := m.mouse.Get().InWorld
 	mouse := rl.NewVector2(float32(mWorld.X), float32(mWorld.Y))
 

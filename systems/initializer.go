@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"context"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
@@ -70,6 +72,6 @@ func (c *Initializer) Initialize(w *ecs.World) {
 	})
 }
 
-func (i *Initializer) Update(w *ecs.World) {}
+func (i *Initializer) Update(ctx context.Context, w *ecs.World) {}
 
 var _ System = &Initializer{}

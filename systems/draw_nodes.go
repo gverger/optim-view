@@ -1,6 +1,7 @@
 package systems
 
 import (
+	"context"
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -38,7 +39,7 @@ func nodeTextureRec(node int) rl.Rectangle {
 	return rl.NewRectangle(float32(x*100), float32(y*100), 100, 100)
 }
 
-func (d *DrawNodes) Update(w *ecs.World) {
+func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	visible := d.visibleWorld.Get()
 	shapes := *d.shapes.Get()
 	query := d.filter.Query(w)
@@ -51,6 +52,19 @@ func (d *DrawNodes) Update(w *ecs.World) {
 			continue
 		}
 
+		select {
+		case <-ctx.Done():
+			if n.rendered {
+				rec := nodeTextureRec(n.idx)
+				rec.Height = -rec.Height
+				rec.Y = float32(d.NodesTexture.Texture.Height) - rec.Y - 100 // texture is upside down...
+				rl.DrawTextureRec(d.NodesTexture.Texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
+			} else {
+				rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.LightGray)
+			}
+			continue
+		default:
+		}
 		drawFast := false
 		if n.SizeX*n.SizeY < visibleArea/10 {
 			drawFast = true
@@ -116,49 +130,49 @@ func (d *DrawNodes) Update(w *ecs.World) {
 
 				offsetX := -shapeList.MinX
 				offsetY := -shapeList.MinY
-					rl.BeginTextureMode(shapes[tr.Id].Texture)
-					for _, s := range shapeList.Shapes {
-						renderShape(s, tScale*offsetX+1, float32(shapes[tr.Id].Texture.Texture.Height-1)-tScale*offsetY, tScale, -tScale)
-					}
-					rl.EndTextureMode()
+				rl.BeginTextureMode(shapes[tr.Id].Texture)
+				for _, s := range shapeList.Shapes {
+					renderShape(s, tScale*offsetX+1, float32(shapes[tr.Id].Texture.Texture.Height-1)-tScale*offsetY, tScale, -tScale)
+				}
+				rl.EndTextureMode()
 			}
 
 			if drawFast {
 				offsetX := scale*tr.X + float32(pos.X) + midX
 				offsetY := scale*tr.Y + float32(pos.Y) + midY
-					rl.DrawTextureEx(shapeList.Texture.Texture, rl.NewVector2(offsetX, offsetY), 0, scale/tScale, rl.White)
+				rl.DrawTextureEx(shapeList.Texture.Texture, rl.NewVector2(offsetX, offsetY), 0, scale/tScale, rl.White)
 
 			} else {
 				offsetX := scale*tr.X + float32(pos.X) - scale*shapeList.MinX + midX
 				offsetY := scale*tr.Y + float32(pos.Y) - scale*shapeList.MinY + midY
-					for _, s := range shapeList.Shapes {
-						renderShape(s, offsetX, offsetY, scale, scale)
-					}
+				for _, s := range shapeList.Shapes {
+					renderShape(s, offsetX, offsetY, scale, scale)
+				}
 			}
 		}
 		if !n.rendered {
 
-				rl.BeginTextureMode(d.NodesTexture)
-				rec := nodeTextureRec(n.idx)
-				for _, tr := range n.ShapeTransforms {
-					shapeList := shapes[tr.Id]
-					x := midX + scale*tr.X
-					if x > 100 {
-						log.Warn().Float32("x", x).Msg("too large")
-					}
-					y := midY + scale*tr.Y
-					if y > 100 {
-						log.Warn().Float32("y", y).Msg("too large")
-					}
-					rl.DrawTexturePro(shapeList.Texture.Texture,
-						rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), float32(shapeList.Texture.Texture.Height)),
-
-						rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
-						rl.Vector2Zero(), 0, rl.White)
-
+			rl.BeginTextureMode(d.NodesTexture)
+			rec := nodeTextureRec(n.idx)
+			for _, tr := range n.ShapeTransforms {
+				shapeList := shapes[tr.Id]
+				x := midX + scale*tr.X
+				if x > 100 {
+					log.Warn().Float32("x", x).Msg("too large")
 				}
-				rl.EndTextureMode()
-				n.rendered = true
+				y := midY + scale*tr.Y
+				if y > 100 {
+					log.Warn().Float32("y", y).Msg("too large")
+				}
+				rl.DrawTexturePro(shapeList.Texture.Texture,
+					rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), float32(shapeList.Texture.Texture.Height)),
+
+					rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
+					rl.Vector2Zero(), 0, rl.White)
+
+			}
+			rl.EndTextureMode()
+			n.rendered = true
 		}
 	}
 

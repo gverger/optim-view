@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"context"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
@@ -23,7 +25,7 @@ func (d *DrawEdges) Initialize(w *ecs.World) {
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
 }
 
-func (d *DrawEdges) Update(w *ecs.World) {
+func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {
 	visible := d.visibleWorld.Get()
 	query := d.filter.Query(w)
 	for query.Next() {

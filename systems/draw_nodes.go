@@ -7,7 +7,6 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
-	"github.com/phuslu/log"
 )
 
 func NewDrawNodes(font rl.Font, nbNodes int) *DrawNodes {
@@ -31,16 +30,16 @@ func (d *DrawNodes) Close() {
 		rl.UnloadRenderTexture(t)
 	}
 	shapes := *d.shapes.Get()
-	for _, s := range shapes {
-		rl.UnloadRenderTexture(s.Texture)
-		// s.rendered = false
+	for i := range shapes {
+		rl.UnloadRenderTexture(shapes[i].Texture)
+		shapes[i].rendered = false
 	}
 }
 
 const (
-	NodesPerTextureLine = 100
-	LinesPerTexture     = 100
-	NodeTextureSize     = 100
+	NodesPerTextureLine = 64
+	LinesPerTexture     = 64
+	NodeTextureSize     = 128
 )
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
@@ -53,7 +52,7 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	nbTextures := (nbTextureLines-1)/LinesPerTexture + 1
 	textures := d.NodesTextures.Get()
 	for i := 0; i < nbTextures; i++ {
-		*textures = append(*textures, rl.LoadRenderTexture(NodeTextureSize*NodeTextureSize, int32(min(LinesPerTexture, nbTextureLines))*NodeTextureSize))
+		*textures = append(*textures, rl.LoadRenderTexture(NodeTextureSize*NodesPerTextureLine, int32(min(LinesPerTexture, nbTextureLines))*NodeTextureSize))
 		rl.BeginTextureMode((*textures)[i])
 		rl.ClearBackground(rl.Fade(rl.White, 0))
 		rl.EndTextureMode()
@@ -100,10 +99,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			continue
 		default:
 		}
-		drawFast := false
-		if n.SizeX*n.SizeY < visibleArea/10 {
-			drawFast = true
-		}
+
 		if n.SizeX*n.SizeY < visibleArea/40 && n.rendered {
 			rec := nodeTextureRec(n.idx)
 			rec.Height = -rec.Height
@@ -111,6 +107,11 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			rec.Y = float32(texture.Height) - rec.Y - NodeTextureSize // texture is upside down...
 			rl.DrawTextureRec(texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
 			continue
+		}
+
+		drawFast := false
+		if n.SizeX*n.SizeY < visibleArea/10 {
+			drawFast = true
 		}
 
 		// color := n.color
@@ -147,7 +148,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		midX := (float32(n.SizeX) - scale*dimX) / 2
 		midY := (float32(n.SizeY) - scale*dimY) / 2
 		// rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.Green)
-		// rl.DrawText(fmt.Sprintf("mid %v %v scale %v dim %v %v", midX, midY, scale, dimX, dimY), int32(pos.X), int32(pos.Y), 8, rl.Maroon)
+		// rl.DrawText(fmt.Sprintf("%v", n.idx), int32(pos.X), int32(pos.Y), 8, rl.Maroon)
 
 		for _, tr := range n.ShapeTransforms {
 			shapeList := shapes[tr.Id]
@@ -173,7 +174,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				rl.BeginTextureMode(shapes[tr.Id].Texture)
 				rl.ClearBackground(rl.Fade(rl.White, 0.0))
 				for _, s := range shapeList.Shapes {
-					renderShape(s, tScale*offsetX+1, float32(shapes[tr.Id].Texture.Texture.Height-1)-tScale*offsetY, tScale, -tScale)
+					renderShape(s, tScale*offsetX, float32(shapes[tr.Id].Texture.Texture.Height)-tScale*offsetY, tScale, -tScale)
 				}
 				rl.EndTextureMode()
 			}
@@ -198,13 +199,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			for _, tr := range n.ShapeTransforms {
 				shapeList := shapes[tr.Id]
 				x := midX + scale*tr.X
-				if x > 100 {
-					log.Warn().Float32("x", x).Msg("too large")
-				}
 				y := midY + scale*tr.Y
-				if y > 100 {
-					log.Warn().Float32("y", y).Msg("too large")
-				}
 				rl.DrawTexturePro(shapeList.Texture.Texture,
 					rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), float32(shapeList.Texture.Texture.Height)),
 

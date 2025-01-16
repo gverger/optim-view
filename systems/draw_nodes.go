@@ -54,7 +54,7 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	for i := 0; i < nbTextures; i++ {
 		d.NodesTextures = append(d.NodesTextures, rl.LoadRenderTexture(NodeTextureSize*NodeTextureSize, int32(min(LinesPerTexture, nbTextureLines))*NodeTextureSize))
 		rl.BeginTextureMode(d.NodesTextures[i])
-		rl.ClearBackground(rl.RayWhite)
+		rl.ClearBackground(rl.Fade(rl.White, 0))
 		rl.EndTextureMode()
 		nbTextureLines -= LinesPerTexture
 	}
@@ -157,15 +157,19 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			}
 
 			if !shapeList.rendered {
+				// We render shapes with an offset of 1, to be sure they are surrounded by transparent,
+				// They seem to create a thin line at the border otherwise
+				// beware when displaying them, we should offset the draw by 1
+				// We don't do it now since we want an approximation of the drawing and it seems fine
 				shapes[tr.Id].Texture = rl.LoadRenderTexture(
-					int32(tScale*(shapeList.MaxX-shapeList.MinX))+2,
-					int32(tScale*(shapeList.MaxY-shapeList.MinY))+2)
+					int32(math.Ceil(float64(tScale*(shapeList.MaxX-shapeList.MinX))))+2,
+					int32(math.Ceil(float64(tScale*(shapeList.MaxY-shapeList.MinY))))+2)
 				shapes[tr.Id].rendered = true
 
 				offsetX := -shapeList.MinX
 				offsetY := -shapeList.MinY
 				rl.BeginTextureMode(shapes[tr.Id].Texture)
-				rl.ClearBackground(rl.RayWhite)
+				rl.ClearBackground(rl.Fade(rl.White, 0.0))
 				for _, s := range shapeList.Shapes {
 					renderShape(s, tScale*offsetX+1, float32(shapes[tr.Id].Texture.Texture.Height-1)-tScale*offsetY, tScale, -tScale)
 				}
@@ -176,7 +180,6 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				offsetX := scale*tr.X + float32(pos.X) + midX
 				offsetY := scale*tr.Y + float32(pos.Y) + midY
 				rl.DrawTextureEx(shapeList.Texture.Texture, rl.NewVector2(offsetX, offsetY), 0, scale/tScale, rl.White)
-
 			} else {
 				offsetX := scale*tr.X + float32(pos.X) - scale*shapeList.MinX + midX
 				offsetY := scale*tr.Y + float32(pos.Y) - scale*shapeList.MinY + midY

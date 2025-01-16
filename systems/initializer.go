@@ -70,6 +70,10 @@ func (c *Initializer) Initialize(w *ecs.World) {
 	shapes := generic.NewResource[[]ShapeDefinition](w)
 	shapes.Add(&c.tree.Shapes)
 
+	textures := generic.NewResource[[]rl.RenderTexture2D](w)
+	t := make([]rl.RenderTexture2D, 0)
+	textures.Add(&t)
+
 	mappings := generic.NewResource[Mappings](w)
 	mappings.Add(&Mappings{
 		nodeLookup: nodeLookup,

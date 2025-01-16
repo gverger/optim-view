@@ -6,18 +6,22 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
+	"github.com/phuslu/log"
 )
 
-func NewDrawNodes(font rl.Font) *DrawNodes {
-	return &DrawNodes{font: font}
+func NewDrawNodes(font rl.Font, nbNodes int) *DrawNodes {
+	return &DrawNodes{font: font, nbNodes: nbNodes}
 }
 
 type DrawNodes struct {
-	font         rl.Font
+	font    rl.Font
+	nbNodes int
+
 	filter       generic.Filter2[Position, Node]
 	hovered      generic.Resource[ecs.Entity]
 	visibleWorld generic.Resource[VisibleWorld]
 	shapes       generic.Resource[[]ShapeDefinition]
+	NodesTexture rl.RenderTexture2D
 }
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
@@ -25,6 +29,13 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.hovered = generic.NewResource[ecs.Entity](w)
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
 	d.shapes = generic.NewResource[[]ShapeDefinition](w)
+	d.NodesTexture = rl.LoadRenderTexture(100*100, int32((d.nbNodes+99)/100)*100) // 100 x n grid
+}
+
+func nodeTextureRec(node int) rl.Rectangle {
+	x := (node - 1) % 100
+	y := (node - 1) / 100
+	return rl.NewRectangle(float32(x*100), float32(y*100), 100, 100)
 }
 
 func (d *DrawNodes) Update(w *ecs.World) {
@@ -34,18 +45,22 @@ func (d *DrawNodes) Update(w *ecs.World) {
 
 	visibleArea := (visible.MaxX - visible.X) * (visible.MaxY - visible.Y)
 
-	cpt := 0
 	for query.Next() {
 		pos, n := query.Get()
-
 		if pos.X > visible.MaxX || pos.Y > visible.MaxY || pos.X+n.SizeX < visible.X || pos.Y+n.SizeY < visible.Y {
 			continue
 		}
-		cpt++
 
 		drawFast := false
-		if n.SizeX*n.SizeY < visibleArea/100 {
+		if n.SizeX*n.SizeY < visibleArea/10 {
 			drawFast = true
+		}
+		if n.SizeX*n.SizeY < visibleArea/40 && n.rendered {
+			rec := nodeTextureRec(n.idx)
+			rec.Height = -rec.Height
+			rec.Y = float32(d.NodesTexture.Texture.Height) - rec.Y - 100 // texture is upside down...
+			rl.DrawTextureRec(d.NodesTexture.Texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
+			continue
 		}
 
 		// color := n.color
@@ -101,27 +116,52 @@ func (d *DrawNodes) Update(w *ecs.World) {
 
 				offsetX := -shapeList.MinX
 				offsetY := -shapeList.MinY
-				rl.BeginTextureMode(shapes[tr.Id].Texture)
-				for _, s := range shapeList.Shapes {
-					renderShape(s, tScale*offsetX+1, float32(shapes[tr.Id].Texture.Texture.Height-1)-tScale*offsetY, tScale, -tScale)
-				}
-				rl.EndTextureMode()
+					rl.BeginTextureMode(shapes[tr.Id].Texture)
+					for _, s := range shapeList.Shapes {
+						renderShape(s, tScale*offsetX+1, float32(shapes[tr.Id].Texture.Texture.Height-1)-tScale*offsetY, tScale, -tScale)
+					}
+					rl.EndTextureMode()
 			}
 
 			if drawFast {
 				offsetX := scale*tr.X + float32(pos.X) + midX
 				offsetY := scale*tr.Y + float32(pos.Y) + midY
-				rl.DrawTextureEx(shapeList.Texture.Texture, rl.NewVector2(offsetX, offsetY), 0, scale/tScale, rl.White)
+					rl.DrawTextureEx(shapeList.Texture.Texture, rl.NewVector2(offsetX, offsetY), 0, scale/tScale, rl.White)
 
 			} else {
 				offsetX := scale*tr.X + float32(pos.X) - scale*shapeList.MinX + midX
 				offsetY := scale*tr.Y + float32(pos.Y) - scale*shapeList.MinY + midY
-				for _, s := range shapeList.Shapes {
-					renderShape(s, offsetX, offsetY, scale, scale)
-				}
+					for _, s := range shapeList.Shapes {
+						renderShape(s, offsetX, offsetY, scale, scale)
+					}
 			}
 		}
+		if !n.rendered {
+
+				rl.BeginTextureMode(d.NodesTexture)
+				rec := nodeTextureRec(n.idx)
+				for _, tr := range n.ShapeTransforms {
+					shapeList := shapes[tr.Id]
+					x := midX + scale*tr.X
+					if x > 100 {
+						log.Warn().Float32("x", x).Msg("too large")
+					}
+					y := midY + scale*tr.Y
+					if y > 100 {
+						log.Warn().Float32("y", y).Msg("too large")
+					}
+					rl.DrawTexturePro(shapeList.Texture.Texture,
+						rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), float32(shapeList.Texture.Texture.Height)),
+
+						rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
+						rl.Vector2Zero(), 0, rl.White)
+
+				}
+				rl.EndTextureMode()
+				n.rendered = true
+		}
 	}
+
 }
 
 func renderShape(s DrawableShape, offsetX, offsetY, scaleX, scaleY float32) {

@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"context"
+
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
 )
@@ -17,7 +19,7 @@ func (m *Mover) Initialize(w *ecs.World) {
 	m.filter = generic.NewFilter2[Position, Target]()
 }
 
-func (m *Mover) Update(w *ecs.World) {
+func (m *Mover) Update(ctx context.Context, w *ecs.World) {
 	query := m.filter.Query(w)
 	for query.Next() {
 		pos, trg := query.Get()

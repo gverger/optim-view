@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"context"
+
 	"github.com/gen2brain/raylib-go/easings"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
@@ -20,7 +22,7 @@ func (m *Targeter) Initialize(w *ecs.World) {
 	m.filter = generic.NewFilter2[Position, Target]()
 }
 
-func (m *Targeter) Update(w *ecs.World) {
+func (m *Targeter) Update(ctx context.Context, w *ecs.World) {
 	query := m.filter.Query(w)
 
 	for query.Next() {

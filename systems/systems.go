@@ -1,6 +1,9 @@
 package systems
 
 import (
+	"context"
+	"time"
+
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
 )
@@ -40,14 +43,16 @@ func (s *Systems) Add(sys System) {
 }
 
 func (s Systems) Update(w *ecs.World) {
+	ctx, cancel := context.WithTimeout(context.Background(), 96*time.Millisecond) // Should stop when at speed of 10 FPS
+	defer cancel()
 	for _, sys := range s.systems {
-		sys.Update(w)
+		sys.Update(ctx, w)
 	}
 }
 
 type System interface {
 	Initialize(w *ecs.World)
-	Update(w *ecs.World)
+	Update(ctx context.Context, w *ecs.World)
 }
 
 func (s Systems) SetMouse(windowX, windowY, worlX, worldY float64) {

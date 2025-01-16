@@ -44,6 +44,9 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.NodesTextures = make([]rl.RenderTexture2D, 0, nbTextures)
 	for i := 0; i < nbTextures; i++ {
 		d.NodesTextures = append(d.NodesTextures, rl.LoadRenderTexture(NodeTextureSize*NodeTextureSize, int32(min(LinesPerTexture, nbTextureLines))*NodeTextureSize))
+		rl.BeginTextureMode(d.NodesTextures[i])
+		rl.ClearBackground(rl.RayWhite)
+		rl.EndTextureMode()
 		nbTextureLines -= LinesPerTexture
 	}
 	l.Msg("draw nodes")
@@ -154,6 +157,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				offsetX := -shapeList.MinX
 				offsetY := -shapeList.MinY
 				rl.BeginTextureMode(shapes[tr.Id].Texture)
+				rl.ClearBackground(rl.RayWhite)
 				for _, s := range shapeList.Shapes {
 					renderShape(s, tScale*offsetX+1, float32(shapes[tr.Id].Texture.Texture.Height-1)-tScale*offsetY, tScale, -tScale)
 				}

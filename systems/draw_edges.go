@@ -19,6 +19,10 @@ type DrawEdges struct {
 	visibleWorld generic.Resource[VisibleWorld]
 }
 
+// Close implements System.
+func (d *DrawEdges) Close() {
+}
+
 func (d *DrawEdges) Initialize(w *ecs.World) {
 	d.filter = *generic.NewFilter1[Edge]()
 	d.filterNodes = generic.NewMap2[Position, Node](w)

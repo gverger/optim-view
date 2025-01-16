@@ -16,6 +16,10 @@ type Initializer struct {
 	tree SearchTree
 }
 
+// Close implements System.
+func (c *Initializer) Close() {
+}
+
 // Initialize implements System.
 func (c *Initializer) Initialize(w *ecs.World) {
 	nodes := generic.NewMap5[Position, Node, Velocity, Shape, Target](w)
@@ -36,7 +40,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 				SizeX:           100,
 				SizeY:           100,
 				ShapeTransforms: n.Transform,
-				idx: i+1,
+				idx:             i + 1,
 			},
 			&Velocity{
 				Dx: 0,

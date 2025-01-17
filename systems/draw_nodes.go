@@ -126,10 +126,10 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		maxY := float32(-math.MaxFloat32)
 		for _, tr := range n.ShapeTransforms {
 			shapeList := shapes[tr.Id]
-			minX = min(minX, tr.X)
-			minY = min(minY, tr.Y)
-			maxX = max(maxX, shapeList.MaxX-shapeList.MinX+tr.X)
-			maxY = max(maxY, shapeList.MaxY-shapeList.MinY+tr.Y)
+			minX = min(minX, tr.X+shapeList.MinX)
+			minY = min(minY, tr.Y+shapeList.MinY)
+			maxX = max(maxX, shapeList.MaxX+tr.X)
+			maxY = max(maxY, shapeList.MaxY+tr.Y)
 			// log.Info().Int("TR", tr.Id).Float32("MINX", shapeList.MinX).Float32("MAXX", shapeList.MaxX).Float32("MINY", shapeList.MinY).Float32("MAXY", shapeList.MaxY).Msg("shape")
 		}
 
@@ -180,12 +180,12 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			}
 
 			if drawFast {
-				offsetX := scale*tr.X + float32(pos.X) + midX
-				offsetY := scale*tr.Y + float32(pos.Y) + midY
+				offsetX := scale*tr.X + float32(pos.X) + midX + shapeList.MinX*scale
+				offsetY := scale*tr.Y + float32(pos.Y) + midY + shapeList.MinY*scale
 				rl.DrawTextureEx(shapeList.Texture.Texture, rl.NewVector2(offsetX, offsetY), 0, scale/tScale, rl.White)
 			} else {
-				offsetX := scale*tr.X + float32(pos.X) - scale*shapeList.MinX + midX
-				offsetY := scale*tr.Y + float32(pos.Y) - scale*shapeList.MinY + midY
+				offsetX := midX + scale*tr.X + float32(pos.X) // - scale*shapeList.MinX
+				offsetY := midY + scale*tr.Y + float32(pos.Y) // - scale*shapeList.MinY
 				for _, s := range shapeList.Shapes {
 					renderShape(s, offsetX, offsetY, scale, scale)
 				}
@@ -198,8 +198,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			rec := nodeTextureRec(n.idx)
 			for _, tr := range n.ShapeTransforms {
 				shapeList := shapes[tr.Id]
-				x := midX + scale*tr.X
-				y := midY + scale*tr.Y
+				x := midX + scale*tr.X + shapeList.MinX*scale
+				y := midY + scale*tr.Y + shapeList.MinY*scale
 				rl.DrawTexturePro(shapeList.Texture.Texture,
 					rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), float32(shapeList.Texture.Texture.Height)),
 

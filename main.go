@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gverger/optimview/graph"
 	"github.com/gverger/optimview/systems"
+	"github.com/phuslu/log"
 )
 
 type DisplayableNode = systems.DisplayableNode
@@ -27,7 +28,14 @@ type InputTree struct {
 	Nodes []Node `json:"nodes"`
 }
 
-
 func main() {
+	log.DefaultLogger = log.Logger{
+		TimeFormat: "15:04:05",
+		Writer: &log.ConsoleWriter{
+			ColorOutput:    true,
+			QuoteString:    true,
+			EndWithMessage: false,
+		},
+	}
 	runVisu(Input{})
 }

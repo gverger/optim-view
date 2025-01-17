@@ -7,6 +7,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
+	"github.com/phuslu/log"
 )
 
 func NewDrawNodes(font rl.Font, nbNodes int) *DrawNodes {
@@ -153,9 +154,12 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		for _, tr := range n.ShapeTransforms {
 			shapeList := shapes[tr.Id]
 
-			for i, s := range shapeList.Shapes {
+			for i := range shapeList.Shapes {
+				s := &shapes[tr.Id].Shapes[i]
 				if s.Triangles == nil {
-					shapeList.Shapes[i].ComputeTriangles()
+					if err := s.ComputeTriangles(); err != nil || len(s.Triangles) == 0 {
+						log.Warn().Int("item", tr.Id).Int("shape index", i).Err(err).Msg("cannot triangulate")
+					}
 				}
 			}
 
@@ -189,6 +193,11 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				for _, s := range shapeList.Shapes {
 					renderShape(s, offsetX, offsetY, scale, scale)
 				}
+				// rl.DrawTextEx(d.font, strconv.Itoa(tr.Id),
+				// 	rl.NewVector2(
+				// 		offsetX + scale * (shapeList.MaxX+shapeList.MinX)/2,
+				// 		offsetY + scale * (shapeList.MaxY+shapeList.MinY)/2),
+				// 	8, 0, rl.Black)
 			}
 		}
 		if !n.rendered {

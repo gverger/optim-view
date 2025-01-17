@@ -8,7 +8,9 @@ require (
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20241117153000-01864c04b849
 	github.com/json-iterator/go v1.1.12
 	github.com/mlange-42/arche v0.13.3
+	github.com/ncruces/zenity v0.10.14
 	github.com/nikolaydubina/go-graph-layout v0.2.0
+	github.com/osuushi/triangulate v0.0.0-20220629121601-b0217b0c87c8
 	github.com/phuslu/log v1.0.113
 	github.com/tdewolff/canvas v0.0.0-20241202004848-95f003d9bc50
 )
@@ -34,10 +36,9 @@ require (
 	github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/ncruces/zenity v0.10.14 // indirect
-	github.com/osuushi/triangulate v0.0.0-20220629121601-b0217b0c87c8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
+	github.com/tchayen/triangolatte v0.0.0-20210804113255-8b66c3824e73 // indirect
 	github.com/tdewolff/font v0.0.0-20241125190050-d899fdc808fc // indirect
 	github.com/tdewolff/minify/v2 v2.21.2 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect

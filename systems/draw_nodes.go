@@ -146,8 +146,10 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			tScale = 400 / dimY
 		}
 
+		reverseY := float32(-1)
+
 		midX := (float32(n.SizeX) - scale*dimX) / 2
-		midY := (float32(n.SizeY) - scale*dimY) / 2
+		midY := (float32(n.SizeY) - reverseY*scale*dimY) / 2
 		// rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.Green)
 		// rl.DrawText(fmt.Sprintf("%v", n.idx), int32(pos.X), int32(pos.Y), 8, rl.Maroon)
 
@@ -185,19 +187,22 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 			if drawFast {
 				offsetX := scale*tr.X + float32(pos.X) + midX + shapeList.MinX*scale
-				offsetY := scale*tr.Y + float32(pos.Y) + midY + shapeList.MinY*scale
-				rl.DrawTextureEx(shapeList.Texture.Texture, rl.NewVector2(offsetX, offsetY), 0, scale/tScale, rl.White)
-			} else {
-				offsetX := midX + scale*tr.X + float32(pos.X) // - scale*shapeList.MinX
-				offsetY := midY + scale*tr.Y + float32(pos.Y) // - scale*shapeList.MinY
-				for _, s := range shapeList.Shapes {
-					renderShape(s, offsetX, offsetY, scale, scale)
+				offsetY := reverseY*scale*tr.Y + float32(pos.Y) + midY + shapeList.MinY*scale
+				if reverseY < 0 {
+					offsetY -= scale * float32(shapeList.Texture.Texture.Height) / tScale
 				}
-				// rl.DrawTextEx(d.font, strconv.Itoa(tr.Id),
-				// 	rl.NewVector2(
-				// 		offsetX + scale * (shapeList.MaxX+shapeList.MinX)/2,
-				// 		offsetY + scale * (shapeList.MaxY+shapeList.MinY)/2),
-				// 	8, 0, rl.Black)
+
+				rl.DrawTexturePro(shapeList.Texture.Texture,
+					rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),
+					rl.NewRectangle(offsetX, offsetY, scale*float32(shapeList.Texture.Texture.Width)/tScale, scale*float32(shapeList.Texture.Texture.Height)/tScale),
+					rl.Vector2Zero(), 0, rl.White)
+			} else {
+				offsetX := midX + scale*tr.X + float32(pos.X)
+				offsetY := midY + reverseY*scale*tr.Y + float32(pos.Y)
+
+				for _, s := range shapeList.Shapes {
+					renderShape(s, offsetX, offsetY, scale, reverseY*scale)
+				}
 			}
 		}
 		if !n.rendered {
@@ -208,13 +213,15 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			for _, tr := range n.ShapeTransforms {
 				shapeList := shapes[tr.Id]
 				x := midX + scale*tr.X + shapeList.MinX*scale
-				y := midY + scale*tr.Y + shapeList.MinY*scale
+				y := midY + reverseY*scale*tr.Y + shapeList.MinY*reverseY*scale
+				if reverseY < 0 {
+					y -= scale * float32(shapeList.MaxY-shapeList.MinY)
+				}
 				rl.DrawTexturePro(shapeList.Texture.Texture,
-					rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), float32(shapeList.Texture.Texture.Height)),
+					rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),
 
 					rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
 					rl.Vector2Zero(), 0, rl.White)
-
 			}
 			rl.EndTextureMode()
 			n.rendered = true

@@ -346,9 +346,10 @@ func (t Tree) ToGraph() *GraphView {
 		shapeTransforms := make([]ShapeTransform, 0, len(n.Plot))
 		for _, p := range n.Plot {
 			shapeTransforms = append(shapeTransforms, ShapeTransform{
-				Id: p.Id,
-				X:  p.X,
-				Y:  p.Y,
+				Id:        p.Id,
+				X:         p.X,
+				Y:         p.Y,
+				Highlight: p.X == n.X && p.Y == n.Y,
 			})
 		}
 		g.AddNode(&DisplayableNode{Id: uint64(i), Text: fmt.Sprintf("Profit=%v", n.Profit), Transform: shapeTransforms})

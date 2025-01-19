@@ -11,9 +11,10 @@ import (
 )
 
 type ShapeTransform struct {
-	Id int
-	X  float32
-	Y  float32
+	Id        int
+	X         float32
+	Y         float32
+	Highlight bool
 }
 
 type DisplayableNode struct {

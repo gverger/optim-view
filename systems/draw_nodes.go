@@ -2,6 +2,7 @@ package systems
 
 import (
 	"context"
+	"image/color"
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -131,7 +132,6 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			minY = min(minY, tr.Y+shapeList.MinY)
 			maxX = max(maxX, shapeList.MaxX+tr.X)
 			maxY = max(maxY, shapeList.MaxY+tr.Y)
-			// log.Info().Int("TR", tr.Id).Float32("MINX", shapeList.MinX).Float32("MAXX", shapeList.MaxX).Float32("MINY", shapeList.MinY).Float32("MAXY", shapeList.MaxY).Msg("shape")
 		}
 
 		dimX := maxX - minX
@@ -180,12 +180,12 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				rl.BeginTextureMode(shapes[tr.Id].Texture)
 				rl.ClearBackground(rl.Fade(rl.White, 0.0))
 				for _, s := range shapeList.Shapes {
-					renderShape(s, tScale*offsetX, float32(shapes[tr.Id].Texture.Texture.Height)-tScale*offsetY, tScale, -tScale)
+					renderShape(s, false, tScale*offsetX, float32(shapes[tr.Id].Texture.Texture.Height)-tScale*offsetY, tScale, -tScale)
 				}
 				rl.EndTextureMode()
 			}
 
-			if drawFast {
+			if drawFast && !tr.Highlight {
 				offsetX := scale*tr.X + float32(pos.X) + midX + shapeList.MinX*scale
 				offsetY := reverseY*scale*tr.Y + float32(pos.Y) + midY + shapeList.MinY*scale
 				if reverseY < 0 {
@@ -201,12 +201,11 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				offsetY := midY + reverseY*scale*tr.Y + float32(pos.Y)
 
 				for _, s := range shapeList.Shapes {
-					renderShape(s, offsetX, offsetY, scale, reverseY*scale)
+					renderShape(s, tr.Highlight, offsetX, offsetY, scale, reverseY*scale)
 				}
 			}
 		}
 		if !n.rendered {
-
 			texture := nodeTextures[nodeTextureIdx(n.idx)]
 			rl.BeginTextureMode(texture)
 			rec := nodeTextureRec(n.idx)
@@ -217,11 +216,20 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				if reverseY < 0 {
 					y -= scale * float32(shapeList.MaxY-shapeList.MinY)
 				}
-				rl.DrawTexturePro(shapeList.Texture.Texture,
-					rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),
 
-					rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
-					rl.Vector2Zero(), 0, rl.White)
+				color := rl.White
+				if tr.Highlight {
+					for _, s := range shapeList.Shapes {
+						renderShape(s, tr.Highlight, rec.X+x, rec.Y+y+scale*(shapeList.MaxY-shapeList.MinY), scale, reverseY*scale)
+					}
+					// color = shapeColors[shapeList.Shapes[0].Color].highlighted.fill
+				} else {
+					rl.DrawTexturePro(shapeList.Texture.Texture,
+						rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),
+
+						rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
+						rl.Vector2Zero(), 0, color)
+				}
 			}
 			rl.EndTextureMode()
 			n.rendered = true
@@ -230,20 +238,42 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 }
 
-func renderShape(s DrawableShape, offsetX, offsetY, scaleX, scaleY float32) {
-	color := rl.Green
-	bgColor := rl.RayWhite
-	switch s.Color {
-	case "blue":
-		color = rl.Blue
-		bgColor = rl.SkyBlue
-	case "red":
-		color = rl.Red
-		bgColor = rl.Maroon
-	case "":
-		color = rl.Black
-		bgColor = rl.RayWhite
+type ShapeColor struct {
+	border color.RGBA
+	fill   color.RGBA
+}
+
+type HighlightableShapeColor struct {
+	normal      ShapeColor
+	highlighted ShapeColor
+}
+
+var shapeColors = map[string]HighlightableShapeColor{
+	"blue": HighlightableShapeColor{
+		normal:      ShapeColor{border: rl.Blue, fill: rl.SkyBlue},
+		highlighted: ShapeColor{border: rl.DarkGreen, fill: rl.Green},
+	},
+	"red": HighlightableShapeColor{
+		normal:      ShapeColor{border: rl.Maroon, fill: rl.Red},
+		highlighted: ShapeColor{border: rl.DarkPurple, fill: rl.Purple},
+	},
+	"": HighlightableShapeColor{
+		normal:      ShapeColor{border: rl.Black, fill: rl.RayWhite},
+		highlighted: ShapeColor{border: rl.Black, fill: rl.RayWhite},
+	},
+}
+
+func renderShape(s DrawableShape, highlight bool, offsetX, offsetY, scaleX, scaleY float32) {
+	col, ok := shapeColors[s.Color]
+	if !ok {
+		log.Fatal().Str("color", s.Color).Msg("Unknown color")
 	}
+
+	color := col.normal
+	if highlight {
+		color = col.highlighted
+	}
+
 	scaled := func(x float64, y float64) rl.Vector2 {
 		return rl.NewVector2(scaleX*float32(x)+offsetX, scaleY*float32(y)+offsetY)
 	}
@@ -252,9 +282,9 @@ func renderShape(s DrawableShape, offsetX, offsetY, scaleX, scaleY float32) {
 		for _, t := range s.Triangles {
 			// need to be counter clockwise: depends on scaleY
 			if scaleX*scaleY > 0 {
-				rl.DrawTriangle(scaled(t.C.X, t.C.Y), scaled(t.B.X, t.B.Y), scaled(t.A.X, t.A.Y), bgColor)
+				rl.DrawTriangle(scaled(t.C.X, t.C.Y), scaled(t.B.X, t.B.Y), scaled(t.A.X, t.A.Y), color.fill)
 			} else {
-				rl.DrawTriangle(scaled(t.A.X, t.A.Y), scaled(t.B.X, t.B.Y), scaled(t.C.X, t.C.Y), bgColor)
+				rl.DrawTriangle(scaled(t.A.X, t.A.Y), scaled(t.B.X, t.B.Y), scaled(t.C.X, t.C.Y), color.fill)
 			}
 			// Fill the holes between adjacent triangles
 			rl.DrawLineStrip(
@@ -263,7 +293,7 @@ func renderShape(s DrawableShape, offsetX, offsetY, scaleX, scaleY float32) {
 					scaled(t.B.X, t.B.Y),
 					scaled(t.C.X, t.C.Y),
 					scaled(t.A.X, t.A.Y),
-				}, bgColor)
+				}, color.fill)
 		}
 	}
 	points := make([]rl.Vector2, 0, len(s.Points))
@@ -271,7 +301,7 @@ func renderShape(s DrawableShape, offsetX, offsetY, scaleX, scaleY float32) {
 		points = append(points, scaled(p.X, p.Y))
 	}
 	points = append(points, scaled(s.Points[0].X, s.Points[0].Y))
-	rl.DrawLineStrip(points, color)
+	rl.DrawLineStrip(points, color.border)
 }
 
 var _ System = &DrawNodes{}

@@ -18,6 +18,9 @@ type Node struct {
 	SizeX float64
 	SizeY float64
 
+	DrawnSizeX  float64
+	DrawnSizeY float64
+
 	color  rl.Color
 	Text   string
 	hidden bool

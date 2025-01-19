@@ -148,6 +148,9 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 		reverseY := float32(-1)
 
+		n.DrawnSizeX = float64(scale * dimX)
+		n.DrawnSizeY = float64(scale * dimY)
+
 		midX := (float32(n.SizeX) - scale*dimX) / 2
 		midY := (float32(n.SizeY) - reverseY*scale*dimY) / 2
 		// rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.Green)

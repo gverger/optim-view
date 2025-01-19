@@ -31,7 +31,7 @@ func ComputeLayeredCoordinates[Node any, ID comparable](input Graph[Node, ID]) m
 	now = time.Now()
 
 	y := layout.BasicNodesVerticalCoordinatesAssigner{
-		MarginLayers: 120,
+		MarginLayers: 60,
 	}.NodesVerticalCoordinates(c.LayoutGraph, c.Layers)
 	log.Info().Dur("duration", time.Since(now)).Msg("vertical")
 	now = time.Now()

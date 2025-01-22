@@ -192,7 +192,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				offsetX := scale*tr.X + float32(pos.X) + midX + shapeList.MinX*scale
 				offsetY := reverseY*scale*tr.Y + float32(pos.Y) + midY + shapeList.MinY*scale
 				if reverseY < 0 {
-					offsetY -= scale * float32(shapeList.Texture.Texture.Height) / tScale
+					offsetY += scale * float32(-shapeList.MaxY-shapeList.MinY)
 				}
 
 				rl.DrawTexturePro(shapeList.Texture.Texture,
@@ -223,9 +223,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				color := rl.White
 				if tr.Highlight {
 					for _, s := range shapeList.Shapes {
-						renderShape(s, tr.Highlight, rec.X+x, rec.Y+y+scale*(shapeList.MaxY-shapeList.MinY), scale, reverseY*scale)
+						renderShape(s, tr.Highlight, rec.X+x-scale*shapeList.MinX, rec.Y+y+scale*shapeList.MaxY, scale, reverseY*scale)
 					}
-					// color = shapeColors[shapeList.Shapes[0].Color].highlighted.fill
 				} else {
 					rl.DrawTexturePro(shapeList.Texture.Texture,
 						rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),

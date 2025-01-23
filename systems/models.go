@@ -27,6 +27,7 @@ type DisplayableNode struct {
 type DrawableShape struct {
 	Color  string
 	Points []Position
+	Holes  [][]Position
 
 	Triangles []*triangulate.Triangle
 }

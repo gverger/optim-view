@@ -270,7 +270,19 @@ func loadSearchTrees(filename string) map[string]systems.SearchTree {
 					maxX = max(maxX, e.Start.X)
 					maxY = max(maxY, e.Start.Y)
 				}
-				polygons = append(polygons, systems.DrawableShape{Points: polygon, Color: d.FillColor})
+
+				shape := systems.DrawableShape{Points: polygon, Color: d.FillColor}
+				for _, edges := range d.Holes {
+					hole := make([]systems.Position, 0, len(edges))
+					for i, e := range edges {
+						if e.End.X != edges[(i+1)%len(edges)].Start.X {
+							log.Fatal().Interface("holes", edges).Int("index", i).Msg("edges")
+						}
+						hole = append(hole, systems.Position{X: float64(e.Start.X), Y: float64(e.Start.Y)})
+					}
+					shape.Holes = append(shape.Holes, hole)
+				}
+				polygons = append(polygons, shape)
 			}
 			shapes = append(shapes, systems.ShapeDefinition{
 				Shapes: polygons,
@@ -303,7 +315,8 @@ type Edge struct {
 type ShapeList []ShapeDesc
 type ShapeDesc struct {
 	FillColor string
-	Shape     []Edge `json:"Shape"`
+	Shape     []Edge   `json:"Shape"`
+	Holes     [][]Edge `json:"Holes"`
 }
 
 type ShapePos struct {

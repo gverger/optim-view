@@ -18,7 +18,6 @@
         "rm -rf $INSTALL_DIRECTORY/optimview.exe",
         "mkdir -p $INSTALL_DIRECTORY",
         "mv optimview.exe $INSTALL_DIRECTORY/",
-        "cp data/brandeskopf.json $INSTALL_DIRECTORY/",
         "echo Installed in \"$INSTALL_DIRECTORY\"",
         "echo run $INSTALL_DIRECTORY/optimview.exe"
       ],

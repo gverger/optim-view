@@ -80,6 +80,10 @@ func (c *Initializer) Initialize(w *ecs.World) {
 	mappings.Add(&Mappings{
 		nodeLookup: nodeLookup,
 	})
+
+	camera := generic.NewResource[CameraHandler](w)
+	cameraHandler := NewCameraHandler()
+	camera.Add(&cameraHandler)
 }
 
 func (i *Initializer) Update(ctx context.Context, w *ecs.World) {}

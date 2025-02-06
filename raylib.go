@@ -17,14 +17,6 @@ import (
 //go:embed data/Roboto.ttf
 var f embed.FS
 
-func NewCameraHandler() systems.CameraHandler {
-	return systems.CameraHandler{
-		Camera: &rl.Camera2D{
-			Zoom: 1.0,
-		},
-	}
-}
-
 func importFile(events chan<- Event, filename string) {
 	graphs := loadSearchTrees(filename)
 	events <- SwitchSearchTree{graphs: graphs}
@@ -51,12 +43,10 @@ func (a app) loadTree(font rl.Font) scene {
 	tree := a.trees[a.currentTree]
 	sys := systems.New()
 	sys.Add(systems.NewInitializer(tree))
-	sys.Add(systems.NewViewport(NewCameraHandler()))
+	sys.Add(systems.NewViewport())
 	sys.Add(systems.NewMouseSelector())
-	// sys.Add(systems.NewMover())
 	sys.Add(systems.NewTargeter())
-	sys.Add(systems.NewDrawEdges(font))
-	sys.Add(systems.NewDrawNodes(font, len(tree.Tree.Nodes)))
+	sys.Add(systems.NewDrawGraph(font, len(tree.Tree.Nodes)))
 	sys.Add(systems.NewNodeDetails(font))
 	sys.Add(systems.NewTreeNavigator())
 	w := ecs.NewWorld()
@@ -142,6 +132,7 @@ func runVisu(input Input) {
 	var selectionTexture rl.Texture2D
 
 	for !rl.WindowShouldClose() {
+		// Listen to events (graph changed for instance)
 		found := true
 		for found {
 			select {
@@ -187,6 +178,7 @@ func runVisu(input Input) {
 		if editMode {
 			gui.Lock()
 		}
+
 		at := app.currentTree
 
 		if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), strings.Join(app.treeNames, ";"), &app.currentTree, editMode) {

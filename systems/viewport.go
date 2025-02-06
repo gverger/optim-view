@@ -9,15 +9,12 @@ import (
 	"github.com/mlange-42/arche/generic"
 )
 
-func NewViewport(cameraHandler CameraHandler) *Viewport {
+func NewViewport() *Viewport {
 	return &Viewport{
-		cameraHandler: &cameraHandler,
 	}
 }
 
 type Viewport struct {
-	cameraHandler *CameraHandler
-
 	camera       generic.Resource[CameraHandler]
 	mouse        generic.Resource[Mouse]
 	visibleWorld generic.Resource[VisibleWorld]
@@ -43,7 +40,7 @@ func (v *Viewport) Initialize(w *ecs.World) {
 	v.camera = generic.NewResource[CameraHandler](w)
 	v.mouse = generic.NewResource[Mouse](w)
 	v.visibleWorld = generic.NewResource[VisibleWorld](w)
-	v.camera.Add(v.cameraHandler)
+	cameraHandler := v.camera.Get()
 	v.navMode = generic.NewResource[NavigationMode](w)
 	v.navMode.Add(&NavigationMode{Nav: FreeNav})
 
@@ -55,20 +52,20 @@ func (v *Viewport) Initialize(w *ecs.World) {
 
 	v.move = generic.NewMap2[Position, Target2](w)
 	v.cameraEntity = v.move.NewWith(&Position{
-		X: float64(v.cameraHandler.Camera.Target.X),
-		Y: float64(v.cameraHandler.Camera.Target.Y),
+		X: float64(cameraHandler.Camera.Target.X),
+		Y: float64(cameraHandler.Camera.Target.Y),
 	},
 		NewTarget2Empty(12))
 
 	v.cameraOffsetEntity = v.move.NewWith(&Position{
-		X: float64(v.cameraHandler.Camera.Offset.X),
-		Y: float64(v.cameraHandler.Camera.Offset.Y),
+		X: float64(cameraHandler.Camera.Offset.X),
+		Y: float64(cameraHandler.Camera.Offset.Y),
 	},
 		NewTarget2Empty(12))
 
 	v.zoom = generic.NewMap2[Size, Target1](w)
 	v.cameraZoomEntity = v.zoom.NewWith(&Size{
-		Value: v.cameraHandler.Camera.Zoom,
+		Value: cameraHandler.Camera.Zoom,
 	},
 		NewTarget1Empty(12))
 }
@@ -103,7 +100,8 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
 	selection := v.selected.Get()
 
-	camera := v.camera.Get().Camera
+	cameraHandler := v.camera.Get()
+	camera := cameraHandler.Camera
 	cpos, target := v.move.Get(v.cameraEntity)
 	// if moved elsewhere
 	if !target.Done {
@@ -151,7 +149,7 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		targetZoom.StartX = camera.Zoom
 		zoom.Value = camera.Zoom
 
-		t, z := v.cameraHandler.FocusOn(points...)
+		t, z := cameraHandler.FocusOn(points...)
 
 		target.X = float64(t.X)
 		target.Y = float64(t.Y)

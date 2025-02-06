@@ -17,6 +17,7 @@ type DrawEdges struct {
 	filter       generic.Filter1[Edge]
 	filterNodes  generic.Map2[Position, Node]
 	visibleWorld generic.Resource[VisibleWorld]
+	camera       generic.Resource[CameraHandler]
 }
 
 // Close implements System.
@@ -27,11 +28,15 @@ func (d *DrawEdges) Initialize(w *ecs.World) {
 	d.filter = *generic.NewFilter1[Edge]()
 	d.filterNodes = generic.NewMap2[Position, Node](w)
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
+	d.camera = generic.NewResource[CameraHandler](w)
 }
 
 func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {
 	visible := d.visibleWorld.Get()
 	query := d.filter.Query(w)
+
+	rl.BeginMode2D(*d.camera.Get().Camera)
+
 	for query.Next() {
 		e := query.Get()
 		p1, from := d.filterNodes.Get(e.From)
@@ -51,13 +56,6 @@ func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {
 		x2 := p2.X + to.SizeX/2
 		y2 := p2.Y + (from.SizeY-from.DrawnSizeY)/2 - 8
 
-		// src := rl.NewVector2(float32(x1), float32(y1))
-		// ctrlA := rl.NewVector2(float32(x1), float32(y1+20))
-		// ctrlB := rl.NewVector2(float32(x2), float32(y2-20))
-		// dst := rl.NewVector2(float32(x2), float32(y2))
-		//
-		// rl.DrawSplineSegmentBezierCubic(src, ctrlA, ctrlB, dst, 1, rl.Gray)
-
 		src := rl.NewVector2(float32(x1), float32(y1))
 		ctrlA := rl.NewVector2(float32(x1), float32((y1+y2)/2))
 		ctrlB := rl.NewVector2(float32(x2), float32((y1+y2)/2))
@@ -75,27 +73,7 @@ func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {
 		rl.DrawTriangle(dst, rl.NewVector2(dst.X, dst.Y-8), rl.NewVector2(dst.X-4, dst.Y-10), rl.Gray)
 	}
 
-	// query := d.filter.Query(w)
-	// edges := make([]ecs.Entity, 0, query.Count())
-	// for query.Next() {
-	// 	edges = append(edges, query.Entity())
-	// }
-	// for _, edge := range edges {
-	// 	jointsQuery := d.filterJoints.Query(w, edge)
-	// 	joints := make([]Position, jointsQuery.Count())
-	// 	for jointsQuery.Next() {
-	// 		p, j := jointsQuery.Get()
-	// 		joints[j.Order] = *p
-	// 	}
-	// 	for i := 1; i < len(joints); i++ {
-	// 		src := rl.NewVector2(float32(joints[i-1].X), float32(joints[i-1].Y))
-	// 		ctrlA := rl.NewVector2(float32(joints[i-1].X), float32(joints[i-1].Y+50))
-	// 		ctrlB := rl.NewVector2(float32(joints[i].X), float32(joints[i].Y-50))
-	// 		dst := rl.NewVector2(float32(joints[i].X), float32(joints[i].Y))
-	//
-	// 		rl.DrawSplineSegmentBezierCubic(src, ctrlA, ctrlB, dst, 1, rl.Green)
-	// 	}
-	// }
+	rl.EndMode2D()
 }
 
 var _ System = &DrawEdges{}

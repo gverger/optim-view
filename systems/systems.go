@@ -14,6 +14,7 @@ type Systems struct {
 	mappings     generic.Resource[Mappings]
 	mouse        generic.Resource[Mouse]
 	visibleWorld generic.Resource[VisibleWorld]
+	camera       generic.Resource[CameraHandler]
 
 	targetBuilder generic.Map1[Target]
 	edgeFilter    *generic.Filter1[JointOf]
@@ -60,19 +61,6 @@ type System interface {
 	Initialize(w *ecs.World)
 	Update(ctx context.Context, w *ecs.World)
 	Close()
-}
-
-func (s Systems) SetMouse(windowX, windowY, worlX, worldY float64) {
-	s.mouse.Get().InWorld = Position{worlX, worldY}
-	s.mouse.Get().OnScreen = Position{windowX, windowY}
-}
-
-func (s Systems) SetVisibleWorld(x, y, maxX, maxY float64) {
-	r := s.visibleWorld.Get()
-	r.X = x
-	r.Y = y
-	r.MaxX = maxX
-	r.MaxY = maxY
 }
 
 func (s Systems) MoveNode(w *ecs.World, nodeId uint64, newX, newY int) {

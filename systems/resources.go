@@ -1,6 +1,9 @@
 package systems
 
-import "github.com/mlange-42/arche/ecs"
+import (
+	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/mlange-42/arche/ecs"
+)
 
 type Mappings struct {
 	nodeLookup map[uint64]ecs.Entity
@@ -21,4 +24,8 @@ type VisibleWorld struct {
 
 type Shapes struct {
 	Polygons [][]Position
+}
+
+type CameraHandler struct {
+	Camera *rl.Camera2D
 }

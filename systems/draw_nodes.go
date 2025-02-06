@@ -24,6 +24,7 @@ type DrawNodes struct {
 	visibleWorld  generic.Resource[VisibleWorld]
 	shapes        generic.Resource[[]ShapeDefinition]
 	NodesTextures generic.Resource[[]rl.RenderTexture2D]
+	camera        generic.Resource[CameraHandler]
 }
 
 // Close implements System.
@@ -48,6 +49,7 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.filter = *generic.NewFilter2[Position, Node]()
 	d.hovered = generic.NewResource[ecs.Entity](w)
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
+	d.camera = generic.NewResource[CameraHandler](w)
 	d.shapes = generic.NewResource[[]ShapeDefinition](w)
 	d.NodesTextures = generic.NewResource[[]rl.RenderTexture2D](w)
 	nbTextureLines := (d.nbNodes-1)/NodesPerTextureLine + 1
@@ -80,6 +82,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	nodeTextures := *(d.NodesTextures.Get())
 
 	visibleArea := (visible.MaxX - visible.X) * (visible.MaxY - visible.Y)
+
+	rl.BeginMode2D(*d.camera.Get().Camera)
 
 	for query.Next() {
 		pos, n := query.Get()
@@ -238,6 +242,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		}
 	}
 
+	rl.EndMode2D()
 }
 
 type ShapeColor struct {

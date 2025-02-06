@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"math"
 	"sort"
 	"strings"
 
@@ -18,48 +17,11 @@ import (
 //go:embed data/Roboto.ttf
 var f embed.FS
 
-type MouseHandler struct {
-	LastClick int
-}
-
-type CameraHandler struct {
-	Camera *rl.Camera2D
-}
-
-func NewCameraHandler() CameraHandler {
-	return CameraHandler{
+func NewCameraHandler() systems.CameraHandler {
+	return systems.CameraHandler{
 		Camera: &rl.Camera2D{
 			Zoom: 1.0,
 		},
-	}
-}
-
-func (h *CameraHandler) Update() {
-	camera := h.Camera
-	if rl.IsMouseButtonDown(rl.MouseButtonRight) {
-		delta := rl.GetMouseDelta()
-		delta = rl.Vector2Scale(delta, -1.0/camera.Zoom)
-		camera.Target = rl.Vector2Add(camera.Target, delta)
-	}
-
-	wheel := rl.GetMouseWheelMove()
-	if wheel != 0 {
-		// Get the world point that is under the mouse
-		mouseWorldPos := rl.GetScreenToWorld2D(rl.GetMousePosition(), *camera)
-
-		// Set the offset to where the mouse is
-		camera.Offset = rl.GetMousePosition()
-
-		// Set the target to match, so that the camera maps the world space point
-		// under the cursor to the screen space point under the cursor at any zoom
-		camera.Target = mouseWorldPos
-
-		// Zoom increment
-		scaleFactor := float32(1.0 + (0.25 * math.Abs(float64(wheel))))
-		if wheel < 0 {
-			scaleFactor = 1.0 / scaleFactor
-		}
-		camera.Zoom = rl.Clamp(camera.Zoom*scaleFactor, 0.0125, 1024.0)
 	}
 }
 
@@ -81,15 +43,15 @@ func computePositions(events chan<- Event, tree *GraphView) {
 }
 
 type scene struct {
-	sys    *systems.Systems
-	camera CameraHandler
-	world  ecs.World
+	sys   *systems.Systems
+	world ecs.World
 }
 
 func (a app) loadTree(font rl.Font) scene {
 	tree := a.trees[a.currentTree]
 	sys := systems.New()
 	sys.Add(systems.NewInitializer(tree))
+	sys.Add(systems.NewViewport(NewCameraHandler()))
 	sys.Add(systems.NewMouseSelector())
 	// sys.Add(systems.NewMover())
 	sys.Add(systems.NewTargeter())
@@ -100,12 +62,9 @@ func (a app) loadTree(font rl.Font) scene {
 
 	go computePositions(a.events, tree.Tree)
 
-	camera := NewCameraHandler()
-
 	return scene{
-		sys:    sys,
-		camera: camera,
-		world:  w,
+		sys:   sys,
+		world: w,
 	}
 }
 
@@ -203,16 +162,6 @@ func runVisu(input Input) {
 			}
 		}
 
-		scene.camera.Update()
-
-		mousePos := rl.GetMousePosition()
-		worldMousePos := rl.GetScreenToWorld2D(mousePos, *scene.camera.Camera)
-		scene.sys.SetMouse(float64(mousePos.X), float64(mousePos.Y), float64(worldMousePos.X), float64(worldMousePos.Y))
-
-		topLeft := rl.GetScreenToWorld2D(rl.Vector2Zero(), *scene.camera.Camera)
-		botRight := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), *scene.camera.Camera)
-		scene.sys.SetVisibleWorld(float64(topLeft.X), float64(topLeft.Y), float64(botRight.X), float64(botRight.Y))
-
 		// hovered = nil
 		// for i, n := range currentTree.Nodes {
 		// 	if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
@@ -233,11 +182,8 @@ func runVisu(input Input) {
 		rl.BeginDrawing()
 
 		rl.ClearBackground(rl.RayWhite)
-		rl.BeginMode2D(*scene.camera.Camera)
 
 		scene.sys.Update(&scene.world)
-
-		rl.EndMode2D()
 
 		if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-200), 20, 150, 48), "load file") {
 

@@ -57,6 +57,7 @@ func (a app) loadTree(font rl.Font) scene {
 	sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewDrawEdges(font))
 	sys.Add(systems.NewDrawNodes(font, len(tree.Tree.Nodes)))
+	sys.Add(systems.NewNodeDetails(font))
 	w := ecs.NewWorld()
 	sys.Initialize(&w)
 
@@ -127,7 +128,7 @@ func runVisu(input Input) {
 	// rl.ToggleFullscreen()
 
 	fontData := Must(f.ReadFile("data/Roboto.ttf"))
-	font := rl.LoadFontFromMemory(".ttf", fontData, 96, nil)
+	font := rl.LoadFontFromMemory(".ttf", fontData, 32, nil)
 
 	rl.SetTextureFilter(font.Texture, rl.FilterBilinear)
 	rl.GenTextureMipmaps(&font.Texture)

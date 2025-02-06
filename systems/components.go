@@ -18,10 +18,11 @@ type Node struct {
 	SizeX float64
 	SizeY float64
 
-	DrawnSizeX  float64
+	DrawnSizeX float64
 	DrawnSizeY float64
 
 	color  rl.Color
+	Title  string
 	Text   string
 	hidden bool
 

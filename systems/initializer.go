@@ -2,6 +2,7 @@ package systems
 
 import (
 	"context"
+	"fmt"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
@@ -36,6 +37,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 				// Y: float64(n.XY[1]),
 			}, &Node{
 				color:           rl.Gray,
+				Title:           fmt.Sprintf("Node %v", n.Id),
 				Text:            n.Text,
 				SizeX:           100,
 				SizeY:           100,

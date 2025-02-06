@@ -365,7 +365,7 @@ func (t Tree) ToGraph() *GraphView {
 				Highlight: p.X == n.X && p.Y == n.Y,
 			})
 		}
-		g.AddNode(&DisplayableNode{Id: uint64(i), Text: fmt.Sprintf("Profit=%v", n.Profit), Transform: shapeTransforms})
+		g.AddNode(&DisplayableNode{Id: uint64(i), Text: nodeDetailsText(*n), Transform: shapeTransforms})
 		mapper[n.Id] = uint64(i)
 	}
 
@@ -381,4 +381,8 @@ func (t Tree) ToGraph() *GraphView {
 	}
 
 	return g
+}
+
+func nodeDetailsText(n TNode) string {
+	return fmt.Sprintf("Profit    : %v\nItem Area : %v\nGuide Area: %v", n.Profit, n.ItemArea, n.GuideArea)
 }

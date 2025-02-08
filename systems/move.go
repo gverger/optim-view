@@ -12,14 +12,14 @@ func NewMover() *Mover {
 }
 
 type Mover struct {
-	filter *generic.Filter2[Position, Target]
+	filter *generic.Filter2[Position, Target2]
 }
 
 func (m *Mover) Close() {
 }
 
 func (m *Mover) Initialize(w *ecs.World) {
-	m.filter = generic.NewFilter2[Position, Target]()
+	m.filter = generic.NewFilter2[Position, Target2]()
 }
 
 func (m *Mover) Update(ctx context.Context, w *ecs.World) {

@@ -16,7 +16,7 @@ type Systems struct {
 	visibleWorld generic.Resource[VisibleWorld]
 	camera       generic.Resource[CameraHandler]
 
-	targetBuilder generic.Map1[Target]
+	targetBuilder generic.Map1[Target2]
 	edgeFilter    *generic.Filter1[JointOf]
 }
 
@@ -31,7 +31,7 @@ func (s *Systems) Initialize(w *ecs.World) {
 
 	s.visibleWorld = generic.NewResource[VisibleWorld](w)
 	s.visibleWorld.Add(&VisibleWorld{})
-	s.targetBuilder = generic.NewMap1[Target](w)
+	s.targetBuilder = generic.NewMap1[Target2](w)
 	s.edgeFilter = generic.NewFilter1[JointOf]().WithRelation(generic.T[JointOf]())
 
 	for _, s := range s.systems {
@@ -66,11 +66,12 @@ type System interface {
 func (s Systems) MoveNode(w *ecs.World, nodeId uint64, newX, newY int) {
 	e := s.mappings.Get().nodeLookup[nodeId]
 	if t := s.targetBuilder.Get(e); t == nil {
-		s.targetBuilder.Assign(e, &Target{X: float64(newX), Y: float64(newY)})
+		s.targetBuilder.Assign(e, &Target2{X: float64(newX), Y: float64(newY), Duration: 30})
 	} else {
 		t.X = float64(newX)
 		t.Y = float64(newY)
 		t.SinceTick = 0
+		t.Duration = 30
 	}
 }
 
@@ -91,11 +92,12 @@ func (s Systems) MoveEdge(w *ecs.World, edgeId [2]uint64, newPos [][2]int) {
 		newX := newPos[i][0]
 		newY := newPos[i][1]
 		if t := s.targetBuilder.Get(e); t == nil {
-			s.targetBuilder.Assign(e, &Target{X: float64(newX), Y: float64(newY)})
+			s.targetBuilder.Assign(e, &Target2{X: float64(newX), Y: float64(newY), Duration: 30})
 		} else {
 			t.X = float64(newX)
 			t.Y = float64(newY)
 			t.SinceTick = 0
+			t.Duration = 30
 		}
 	}
 }

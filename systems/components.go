@@ -5,6 +5,10 @@ import (
 	"github.com/mlange-42/arche/ecs"
 )
 
+type Size struct {
+	Value float32
+}
+
 type Position struct {
 	X float64
 	Y float64
@@ -41,13 +45,42 @@ type Velocity struct {
 	Dy float64
 }
 
-type Target struct {
+type Target1 struct {
+	X float32
+
+	SinceTick int
+	Duration  int
+	StartX    float32
+	Done      bool
+}
+
+func NewTarget1Empty(duration int) *Target1 {
+	return &Target1{
+		Duration: duration,
+
+		SinceTick: -1,
+		Done:      true,
+	}
+}
+
+type Target2 struct {
 	X float64
 	Y float64
 
 	SinceTick int
+	Duration  int
 	StartX    float64
 	StartY    float64
+	Done      bool
+}
+
+func NewTarget2Empty(duration int) *Target2 {
+	return &Target2{
+		Duration: duration,
+
+		SinceTick: 0,
+		Done:      true,
+	}
 }
 
 type JointOf struct {

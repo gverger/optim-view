@@ -23,7 +23,7 @@ func (c *Initializer) Close() {
 
 // Initialize implements System.
 func (c *Initializer) Initialize(w *ecs.World) {
-	nodes := generic.NewMap5[Position, Node, Velocity, Shape, Target](w)
+	nodes := generic.NewMap5[Position, Node, Velocity, Shape, Target2](w)
 	edges := generic.NewMap1[Edge](w)
 
 	nodeLookup := make(map[uint64]ecs.Entity, 0)
@@ -51,12 +51,12 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			&Shape{
 				Points: []Position{
 					{0, 0},
-					{25, 0},
-					{25, 25},
-					{0, 25},
+					{100, 0},
+					{100, 100},
+					{0, 100},
 				},
 			},
-			&Target{},
+			&Target2{},
 		)
 		nodeLookup[n.Id] = e
 	}

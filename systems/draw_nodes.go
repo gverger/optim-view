@@ -152,12 +152,15 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 		reverseY := float32(-1)
 
-		n.DrawnSizeX = float64(scale * dimX)
-		n.DrawnSizeY = float64(scale * dimY)
+		if n.DrawnSizeX == 0 && n.DrawnSizeY == 0 {
+			n.DrawnSizeX = float64(scale * dimX)
+			n.DrawnSizeY = float64(scale * dimY)
+		}
 
 		midX := (float32(n.SizeX) - scale*dimX) / 2
 		midY := (float32(n.SizeY) - reverseY*scale*dimY) / 2
 		// rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.Green)
+		// rl.DrawRectangleLines(int32(pos.X+(n.SizeX-n.DrawnSizeX)/2), int32(pos.Y+(n.SizeY-n.DrawnSizeY)/2), int32(n.DrawnSizeX), int32(n.DrawnSizeY), rl.Blue)
 		// rl.DrawText(fmt.Sprintf("%v", n.idx), int32(pos.X), int32(pos.Y), 8, rl.Maroon)
 
 		for _, tr := range n.ShapeTransforms {

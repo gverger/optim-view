@@ -29,3 +29,22 @@ type Shapes struct {
 type CameraHandler struct {
 	Camera *rl.Camera2D
 }
+
+type SelectedNode struct {
+	Entity ecs.Entity
+}
+
+func (s SelectedNode) IsSet() bool {
+	return !s.Entity.IsZero()
+}
+
+type NavType uint
+
+const (
+	FreeNav     NavType = 0
+	KeyboardNav NavType = 1
+)
+
+type NavigationMode struct {
+	Nav NavType
+}

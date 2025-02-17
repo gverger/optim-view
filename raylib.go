@@ -58,6 +58,7 @@ func (a app) loadTree(font rl.Font) scene {
 	sys.Add(systems.NewDrawEdges(font))
 	sys.Add(systems.NewDrawNodes(font, len(tree.Tree.Nodes)))
 	sys.Add(systems.NewNodeDetails(font))
+	sys.Add(systems.NewTreeNavigator())
 	w := ecs.NewWorld()
 	sys.Initialize(&w)
 
@@ -163,23 +164,6 @@ func runVisu(input Input) {
 			}
 		}
 
-		// hovered = nil
-		// for i, n := range currentTree.Nodes {
-		// 	if rl.CheckCollisionPointRec(worldMousePos, rl.NewRectangle(float32(n.XY[0]), float32(n.XY[1]), float32(n.W), float32(n.H))) {
-		// 		hovered = currentTree.Nodes[i]
-		// 		if lastHovered != int(i) {
-		// 			// image := rl.LoadImageSvg(selected.SvgImage, 500, 500)
-		// 			rl.UnloadTexture(selectionTexture)
-		// 			// if img, ok := ImageFromSVG(selected.SvgImage); ok {
-		// 			// 	selectionTexture = rl.LoadTextureFromImage(img)
-		// 			// }
-		// 			// rl.UnloadImage(image)
-		// 			lastHovered = int(i)
-		// 		}
-		// 		break
-		// 	}
-		// }
-
 		rl.BeginDrawing()
 
 		rl.ClearBackground(rl.RayWhite)
@@ -200,37 +184,6 @@ func runVisu(input Input) {
 			}
 		}
 
-		// if hovered != nil && !editMode {
-		// 	txtDims := rl.MeasureTextEx(rl.GetFontDefault(), hovered.Text, 32, 4)
-		//
-		// 	shape := currentLayout.Nodes[uint64(lastHovered)]
-		// 	corner := rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]+shape.W), float32(shape.XY[1])), *camera.Camera)
-		//
-		// 	distX := float32(50)
-		// 	distY := -float32(60)
-		//
-		// 	rightmostPointX := corner.X + txtDims.X + 20
-		//
-		// 	if rightmostPointX > float32(rl.GetScreenWidth()-10) {
-		// 		distX = -50 - txtDims.X - 20
-		// 		corner.X = rl.GetWorldToScreen2D(rl.NewVector2(float32(shape.XY[0]), 0), *camera.Camera).X
-		// 	} else if rightmostPointX+distX > float32(rl.GetScreenWidth()-10) {
-		// 		distX = float32(rl.GetScreenWidth()-10) - (corner.X + txtDims.X + 20)
-		// 	}
-		//
-		// 	offsetX := rl.Clamp(corner.X+distX, 10, float32(rl.GetScreenWidth())-10-txtDims.X-20)
-		// 	offsetY := rl.Clamp(corner.Y-distY, 10, float32(rl.GetScreenHeight())-10-txtDims.Y-20)
-		//
-		// 	savedBackgroundColor := gui.GetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR)
-		// 	gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, 0xDDDDDDDD)
-		// 	gui.Panel(rl.NewRectangle(offsetX, offsetY, txtDims.X+20, txtDims.Y+20), "Properties")
-		// 	rl.DrawTextEx(font, hovered.Text, rl.NewVector2(offsetX+10, offsetY+24), 32, 0, rl.Black)
-		//
-		// 	// rl.DrawTexture(selectionTexture, int32(offsetX+10), int32(offsetY+300), rl.White)
-		//
-		// 	gui.SetStyle(gui.DEFAULT, gui.BACKGROUND_COLOR, savedBackgroundColor)
-		// }
-		//
 		if editMode {
 			gui.Lock()
 		}

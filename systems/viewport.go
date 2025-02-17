@@ -21,11 +21,13 @@ type Viewport struct {
 	camera       generic.Resource[CameraHandler]
 	mouse        generic.Resource[Mouse]
 	visibleWorld generic.Resource[VisibleWorld]
+	navMode      generic.Resource[NavigationMode]
 
-	hovered generic.Resource[ecs.Entity]
-	shape   generic.Map2[Position, Shape]
-	move    generic.Map2[Position, Target2]
-	zoom    generic.Map2[Size, Target1]
+	hovered  generic.Resource[ecs.Entity]
+	selected generic.Resource[SelectedNode]
+	shape    generic.Map2[Position, Shape]
+	move     generic.Map2[Position, Target2]
+	zoom     generic.Map2[Size, Target1]
 
 	cameraEntity       ecs.Entity
 	cameraOffsetEntity ecs.Entity
@@ -42,8 +44,13 @@ func (v *Viewport) Initialize(w *ecs.World) {
 	v.mouse = generic.NewResource[Mouse](w)
 	v.visibleWorld = generic.NewResource[VisibleWorld](w)
 	v.camera.Add(v.cameraHandler)
+	v.navMode = generic.NewResource[NavigationMode](w)
+	v.navMode.Add(&NavigationMode{Nav: FreeNav})
 
 	v.hovered = generic.NewResource[ecs.Entity](w)
+	v.selected = generic.NewResource[SelectedNode](w)
+	v.selected.Add(&SelectedNode{})
+
 	v.shape = generic.NewMap2[Position, Shape](w)
 
 	v.move = generic.NewMap2[Position, Target2](w)
@@ -51,19 +58,19 @@ func (v *Viewport) Initialize(w *ecs.World) {
 		X: float64(v.cameraHandler.Camera.Target.X),
 		Y: float64(v.cameraHandler.Camera.Target.Y),
 	},
-		NewTarget2Empty(16))
+		NewTarget2Empty(12))
 
 	v.cameraOffsetEntity = v.move.NewWith(&Position{
 		X: float64(v.cameraHandler.Camera.Offset.X),
 		Y: float64(v.cameraHandler.Camera.Offset.Y),
 	},
-		NewTarget2Empty(16))
+		NewTarget2Empty(12))
 
 	v.zoom = generic.NewMap2[Size, Target1](w)
 	v.cameraZoomEntity = v.zoom.NewWith(&Size{
 		Value: v.cameraHandler.Camera.Zoom,
 	},
-		NewTarget1Empty(16))
+		NewTarget1Empty(12))
 }
 
 // Return target, zoom
@@ -93,6 +100,9 @@ func (h *CameraHandler) FocusOn(points ...Position) (rl.Vector2, float32) {
 
 // Update implements System.
 func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
+
+	selection := v.selected.Get()
+
 	camera := v.camera.Get().Camera
 	cpos, target := v.move.Get(v.cameraEntity)
 	// if moved elsewhere
@@ -107,55 +117,57 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
 	zoom, targetZoom := v.zoom.Get(v.cameraZoomEntity)
 	if !targetZoom.Done {
-		camera.Zoom = zoom.Value
+		// camera.Zoom = zoom.Value
 	}
 
-	if rl.IsMouseButtonDown(rl.MouseButtonRight) {
+	if rl.IsMouseButtonDown(rl.MouseButtonLeft) {
 		delta := rl.GetMouseDelta()
 		delta = rl.Vector2Scale(delta, -1.0/camera.Zoom)
 		camera.Target = rl.Vector2Add(camera.Target, delta)
 		target.Done = true
 		targetOffset.Done = true
 		targetZoom.Done = true
+		selection.Entity = ecs.Entity{}
 	}
 
-	if rl.IsKeyPressed(rl.KeySpace) {
-		if v.hovered.Has() {
-			hovered := v.hovered.Get()
-			pos, shape := v.shape.Get(*hovered)
+	if rl.IsKeyPressed(rl.KeySpace) && v.hovered.Has() {
+		hovered := v.hovered.Get()
+		selection.Entity = *hovered
+	}
 
-			points := make([]Position, 0, len(shape.Points))
-			for _, p := range shape.Points {
-				points = append(points, Position{pos.X + p.X, pos.Y + p.Y})
-			}
+	if selection.IsSet() && target.Done {
+		pos, shape := v.shape.Get(selection.Entity)
 
-			target.StartX = float64(camera.Target.X)
-			target.StartY = float64(camera.Target.Y)
-			cpos.X = target.StartX
-			cpos.Y = target.StartY
-
-
-			targetZoom.StartX = camera.Zoom
-			zoom.Value = camera.Zoom
-
-			t, z := v.cameraHandler.FocusOn(points...)
-
-			target.X = float64(t.X)
-			target.Y = float64(t.Y)
-			target.SinceTick = 0
-
-			targetOffset.StartX = float64(camera.Offset.X)
-			targetOffset.StartY = float64(camera.Offset.Y)
-			offsetpos.X = targetOffset.StartX
-			offsetpos.Y = targetOffset.StartY
-
-			targetOffset.X = float64(rl.GetScreenWidth()) / 2
-			targetOffset.Y = float64(rl.GetScreenHeight()) / 2
-			targetOffset.SinceTick = 0
-
-			targetZoom.X = z
-			targetZoom.SinceTick = 0
+		points := make([]Position, 0, len(shape.Points))
+		for _, p := range shape.Points {
+			points = append(points, Position{pos.X + p.X, pos.Y + p.Y})
 		}
+
+		target.StartX = float64(camera.Target.X)
+		target.StartY = float64(camera.Target.Y)
+		cpos.X = target.StartX
+		cpos.Y = target.StartY
+
+		targetZoom.StartX = camera.Zoom
+		zoom.Value = camera.Zoom
+
+		t, z := v.cameraHandler.FocusOn(points...)
+
+		target.X = float64(t.X)
+		target.Y = float64(t.Y)
+		target.SinceTick = 0
+
+		targetOffset.StartX = float64(camera.Offset.X)
+		targetOffset.StartY = float64(camera.Offset.Y)
+		offsetpos.X = targetOffset.StartX
+		offsetpos.Y = targetOffset.StartY
+
+		targetOffset.X = float64(rl.GetScreenWidth()) / 2
+		targetOffset.Y = float64(rl.GetScreenHeight()) / 2
+		targetOffset.SinceTick = 0
+
+		targetZoom.X = z
+		targetZoom.SinceTick = 0
 	}
 
 	wheel := rl.GetMouseWheelMove()
@@ -177,6 +189,8 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		}
 		camera.Zoom = rl.Clamp(camera.Zoom*scaleFactor, 0.0125, 1024.0)
 		targetZoom.Done = true
+
+		selection.Entity = ecs.Entity{}
 	}
 
 	mousePos := rl.GetMousePosition()
@@ -193,4 +207,12 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 	visibleWorld.Y = float64(topLeft.Y)
 	visibleWorld.MaxX = float64(botRight.X)
 	visibleWorld.MaxY = float64(botRight.Y)
+
+	nav := v.navMode.Get()
+	if selection.IsSet() && target.Done {
+		nav.Nav = KeyboardNav
+	} else {
+		nav.Nav = FreeNav
+	}
+
 }

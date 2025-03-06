@@ -294,7 +294,7 @@ func loadSearchTrees(filename string) map[string]systems.SearchTree {
 		}
 
 		trees[tree.Name] = systems.SearchTree{
-			Tree:   tree.ToGraph().StripNodesWithoutChildren(),
+			Tree:   tree.ToGraph(),//.StripNodesWithoutChildren(),
 			Shapes: shapes,
 		}
 	}

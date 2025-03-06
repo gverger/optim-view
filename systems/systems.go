@@ -17,7 +17,9 @@ type Systems struct {
 	camera       generic.Resource[CameraHandler]
 
 	targetBuilder generic.Map1[Target2]
-	edgeFilter    *generic.Filter1[JointOf]
+
+	positions generic.Map1[Position]
+	edges     *generic.Filter1[Edge]
 }
 
 func New() *Systems {
@@ -32,7 +34,8 @@ func (s *Systems) Initialize(w *ecs.World) {
 	s.visibleWorld = generic.NewResource[VisibleWorld](w)
 	s.visibleWorld.Add(&VisibleWorld{})
 	s.targetBuilder = generic.NewMap1[Target2](w)
-	s.edgeFilter = generic.NewFilter1[JointOf]().WithRelation(generic.T[JointOf]())
+	s.positions = generic.NewMap1[Position](w)
+	s.edges = generic.NewFilter1[Edge]()
 
 	for _, s := range s.systems {
 		s.Initialize(w)
@@ -63,6 +66,57 @@ type System interface {
 	Close()
 }
 
+func (s *Systems) Delete(w *ecs.World, nodeId uint64) {
+	nodeEntity := s.mappings.Get().nodeLookup[nodeId]
+	w.RemoveEntity(nodeEntity)
+
+	query := s.edges.Query(w)
+	toDelete := make([]ecs.Entity, 0)
+	for query.Next() {
+		e := query.Get()
+		if e.From == nodeEntity || e.To == nodeEntity {
+			toDelete = append(toDelete, query.Entity())
+		}
+	}
+
+	for _, e := range toDelete {
+		w.RemoveEntity(e)
+	}
+
+}
+
+func (s Systems) SamePositions(nodeId uint64, oldSystems Systems) {
+	e, ok := s.mappings.Get().nodeLookup[nodeId]
+	if !ok {
+		return
+	}
+
+	oldE, ok := oldSystems.mappings.Get().nodeLookup[nodeId]
+	if !ok {
+		return
+	}
+
+	pos := oldSystems.positions.Get(oldE)
+
+	p := s.positions.Get(e)
+	p.X = pos.X
+	p.Y = pos.Y
+
+	s.MoveNode(nil, nodeId, int(pos.X), int(pos.Y))
+}
+
+func (s Systems) SetNodePos(w *ecs.World, nodeId uint64, newX, newY int) {
+	e := s.mappings.Get().nodeLookup[nodeId]
+	if t := s.targetBuilder.Get(e); t == nil {
+		s.targetBuilder.Assign(e, &Target2{X: float64(newX), Y: float64(newY), Duration: 0})
+	} else {
+		t.X = float64(newX)
+		t.Y = float64(newY)
+		t.SinceTick = 0
+		t.Duration = 0
+	}
+}
+
 func (s Systems) MoveNode(w *ecs.World, nodeId uint64, newX, newY int) {
 	e := s.mappings.Get().nodeLookup[nodeId]
 	if t := s.targetBuilder.Get(e); t == nil {
@@ -72,32 +126,5 @@ func (s Systems) MoveNode(w *ecs.World, nodeId uint64, newX, newY int) {
 		t.Y = float64(newY)
 		t.SinceTick = 0
 		t.Duration = 30
-	}
-}
-
-func (s Systems) MoveEdge(w *ecs.World, edgeId [2]uint64, newPos [][2]int) {
-	e := s.mappings.Get().edgeLookup[edgeId]
-
-	query := s.edgeFilter.Query(w, e)
-
-	joints := make([]ecs.Entity, query.Count())
-	query.Count()
-	for query.Next() {
-		e := query.Entity()
-		joint := query.Get()
-		joints[joint.Order] = e
-	}
-
-	for i, e := range joints {
-		newX := newPos[i][0]
-		newY := newPos[i][1]
-		if t := s.targetBuilder.Get(e); t == nil {
-			s.targetBuilder.Assign(e, &Target2{X: float64(newX), Y: float64(newY), Duration: 30})
-		} else {
-			t.X = float64(newX)
-			t.Y = float64(newY)
-			t.SinceTick = 0
-			t.Duration = 30
-		}
 	}
 }

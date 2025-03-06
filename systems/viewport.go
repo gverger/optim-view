@@ -2,6 +2,7 @@ package systems
 
 import (
 	"context"
+	"fmt"
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -10,8 +11,7 @@ import (
 )
 
 func NewViewport() *Viewport {
-	return &Viewport{
-	}
+	return &Viewport{}
 }
 
 type Viewport struct {
@@ -193,6 +193,8 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
 	mousePos := rl.GetMousePosition()
 	worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera)
+
+	rl.DrawText(fmt.Sprintf("M: %d, %d", int32(worldMousePos.X), int32(worldMousePos.Y)), int32(mousePos.X)+4, int32(mousePos.Y)+4, 32, rl.Red)
 
 	v.mouse.Get().InWorld = Position{float64(worldMousePos.X), float64(worldMousePos.Y)}
 	v.mouse.Get().OnScreen = Position{float64(mousePos.X), float64(mousePos.Y)}

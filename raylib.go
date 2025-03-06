@@ -34,12 +34,12 @@ func computePositions(events chan<- Event, tree *GraphView) {
 	events <- MoveNodes{positions: positions}
 }
 
-type scene struct {
+type sceneType struct {
 	sys   *systems.Systems
 	world ecs.World
 }
 
-func (a app) loadTree(font rl.Font) scene {
+func (a app) loadTree(font rl.Font) sceneType {
 	tree := a.trees[a.currentTree]
 	sys := systems.New()
 	sys.Add(systems.NewInitializer(tree))
@@ -54,7 +54,26 @@ func (a app) loadTree(font rl.Font) scene {
 
 	go computePositions(a.events, tree.Tree)
 
-	return scene{
+	return sceneType{
+		sys:   sys,
+		world: w,
+	}
+}
+
+func (a app) loadTreeNoPos(font rl.Font) sceneType {
+	tree := a.trees[a.currentTree]
+	sys := systems.New()
+	sys.Add(systems.NewInitializer(tree))
+	sys.Add(systems.NewViewport())
+	sys.Add(systems.NewMouseSelector())
+	sys.Add(systems.NewTargeter())
+	sys.Add(systems.NewDrawGraph(font, len(tree.Tree.Nodes)))
+	sys.Add(systems.NewNodeDetails(font))
+	sys.Add(systems.NewTreeNavigator())
+	w := ecs.NewWorld()
+	sys.Initialize(&w)
+
+	return sceneType{
 		sys:   sys,
 		world: w,
 	}
@@ -141,7 +160,9 @@ func runVisu(input Input) {
 				switch e := event.(type) {
 				case MoveNodes:
 					for _, node := range app.trees[app.currentTree].Tree.Nodes {
-						scene.sys.MoveNode(&scene.world, node.Id, e.positions[node.Id].X, e.positions[node.Id].Y)
+						if pos, ok := e.positions[node.Id]; ok {
+							scene.sys.MoveNode(&scene.world, node.Id, pos.X, pos.Y)
+						}
 					}
 				case SwitchSearchTree:
 					close(app.events)
@@ -194,7 +215,35 @@ func runVisu(input Input) {
 			}
 			editMode = !editMode
 		}
+
+		if gui.Button(rl.NewRectangle(10, 50, 200, 30), "Toggle") {
+
+			currentTree := app.trees[app.currentTree]
+			tree := systems.SearchTree{
+				Tree:   currentTree.Tree.StripNodesWithoutChildren(),
+				Shapes: currentTree.Shapes,
+			}
+
+			// oldScene := scene
+			app.trees[app.currentTree].Tree = tree.Tree
+			// scene = app.loadTreeNoPos(font)
+
+			go computePositions(app.events, tree.Tree)
+
+			for _, node := range currentTree.Tree.Nodes {
+				if !tree.Tree.HasNode(node) {
+					scene.sys.Delete(&scene.world, node.Id)
+					// log.Info().Interface("id", node.Id).Msg("positioning node")
+					// scene.sys.SamePositions(node.Id, *oldScene.sys)
+				}
+			}
+			// oldScene.sys.Close()
+
+
+		}
 		gui.Unlock()
+		rl.DrawFPS(10, int32(rl.GetScreenHeight())-20)
+
 		rl.DrawFPS(10, int32(rl.GetScreenHeight())-20)
 
 		rl.EndDrawing()

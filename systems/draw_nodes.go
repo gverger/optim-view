@@ -91,6 +91,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			continue
 		}
 
+		rl.DrawRectangle(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.LightGray)
+
 		select {
 		case <-ctx.Done():
 			if n.rendered {
@@ -159,7 +161,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 		midX := (float32(n.SizeX) - scale*dimX) / 2
 		midY := (float32(n.SizeY) - reverseY*scale*dimY) / 2
-		// rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.Green)
+
 		// rl.DrawRectangleLines(int32(pos.X+(n.SizeX-n.DrawnSizeX)/2), int32(pos.Y+(n.SizeY-n.DrawnSizeY)/2), int32(n.DrawnSizeX), int32(n.DrawnSizeY), rl.Blue)
 		// rl.DrawText(fmt.Sprintf("%v", n.idx), int32(pos.X), int32(pos.Y), 8, rl.Maroon)
 
@@ -288,24 +290,24 @@ func renderShape(s DrawableShape, highlight bool, offsetX, offsetY, scaleX, scal
 		return rl.NewVector2(scaleX*float32(x)+offsetX, scaleY*float32(y)+offsetY)
 	}
 
-	if s.Color != "" {
-		for _, t := range s.Triangles {
-			// need to be counter clockwise: depends on scaleY
-			if scaleX*scaleY > 0 {
-				rl.DrawTriangle(scaled(t.C.X, t.C.Y), scaled(t.B.X, t.B.Y), scaled(t.A.X, t.A.Y), color.fill)
-			} else {
-				rl.DrawTriangle(scaled(t.A.X, t.A.Y), scaled(t.B.X, t.B.Y), scaled(t.C.X, t.C.Y), color.fill)
-			}
-			// Fill the holes between adjacent triangles
-			rl.DrawLineStrip(
-				[]rl.Vector2{
-					scaled(t.A.X, t.A.Y),
-					scaled(t.B.X, t.B.Y),
-					scaled(t.C.X, t.C.Y),
-					scaled(t.A.X, t.A.Y),
-				}, color.fill)
+	// if s.Color != "" {
+	for _, t := range s.Triangles {
+		// need to be counter clockwise: depends on scaleY
+		if scaleX*scaleY > 0 {
+			rl.DrawTriangle(scaled(t.C.X, t.C.Y), scaled(t.B.X, t.B.Y), scaled(t.A.X, t.A.Y), color.fill)
+		} else {
+			rl.DrawTriangle(scaled(t.A.X, t.A.Y), scaled(t.B.X, t.B.Y), scaled(t.C.X, t.C.Y), color.fill)
 		}
+		// Fill the holes between adjacent triangles
+		rl.DrawLineStrip(
+			[]rl.Vector2{
+				scaled(t.A.X, t.A.Y),
+				scaled(t.B.X, t.B.Y),
+				scaled(t.C.X, t.C.Y),
+				scaled(t.A.X, t.A.Y),
+			}, color.fill)
 	}
+	// }
 	points := make([]rl.Vector2, 0, len(s.Points))
 	for _, p := range s.Points {
 		points = append(points, scaled(p.X, p.Y))

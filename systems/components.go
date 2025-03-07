@@ -40,6 +40,8 @@ type Edge struct {
 	To   ecs.Entity
 }
 
+type VisibleElement struct {}
+
 type Velocity struct {
 	Dx float64
 	Dy float64

@@ -23,8 +23,8 @@ func (c *Initializer) Close() {
 
 // Initialize implements System.
 func (c *Initializer) Initialize(w *ecs.World) {
-	nodes := generic.NewMap5[Position, Node, Velocity, Shape, Target2](w)
-	edges := generic.NewMap1[Edge](w)
+	nodes := generic.NewMap6[Position, Node, VisibleElement, Velocity, Shape, Target2](w)
+	edges := generic.NewMap2[Edge, VisibleElement](w)
 
 	nodeLookup := make(map[uint64]ecs.Entity, 0)
 
@@ -35,7 +35,8 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			&Position{
 				// X: float64(n.XY[0]),
 				// Y: float64(n.XY[1]),
-			}, &Node{
+			},
+			&Node{
 				color:           rl.Gray,
 				Title:           fmt.Sprintf("Node %v", n.Id),
 				Text:            n.Text,
@@ -44,6 +45,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 				ShapeTransforms: n.Transform,
 				idx:             i + 1,
 			},
+			&VisibleElement{},
 			&Velocity{
 				Dx: 0,
 				Dy: 0,
@@ -65,7 +67,11 @@ func (c *Initializer) Initialize(w *ecs.World) {
 		src := nodeLookup[graph.Nodes[i].Id]
 		for j := range e {
 			dst := nodeLookup[graph.Nodes[j].Id]
-			edges.NewWith(&Edge{From: src, To: dst})
+
+			edges.NewWith(
+				&Edge{From: src, To: dst},
+				&VisibleElement{},
+			)
 		}
 	}
 

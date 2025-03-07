@@ -19,7 +19,7 @@ type DrawNodes struct {
 	font    rl.Font
 	nbNodes int
 
-	filter        generic.Filter2[Position, Node]
+	filter        generic.Filter3[Position, Node, VisibleElement]
 	hovered       generic.Resource[ecs.Entity]
 	visibleWorld  generic.Resource[VisibleWorld]
 	shapes        generic.Resource[[]ShapeDefinition]
@@ -46,7 +46,7 @@ const (
 )
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
-	d.filter = *generic.NewFilter2[Position, Node]()
+	d.filter = *generic.NewFilter3[Position, Node, VisibleElement]()
 	d.hovered = generic.NewResource[ecs.Entity](w)
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
 	d.camera = generic.NewResource[CameraHandler](w)
@@ -86,7 +86,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	rl.BeginMode2D(*d.camera.Get().Camera)
 
 	for query.Next() {
-		pos, n := query.Get()
+		pos, n, _ := query.Get()
+
 		if pos.X > visible.MaxX || pos.Y > visible.MaxY || pos.X+n.SizeX < visible.X || pos.Y+n.SizeY < visible.Y {
 			continue
 		}

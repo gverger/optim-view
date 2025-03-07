@@ -150,6 +150,8 @@ func runVisu(input Input) {
 	// lastHovered := -1
 	var selectionTexture rl.Texture2D
 
+	allNodes := true
+
 	for !rl.WindowShouldClose() {
 		// Listen to events (graph changed for instance)
 		found := true
@@ -216,34 +218,39 @@ func runVisu(input Input) {
 			editMode = !editMode
 		}
 
-		if gui.Button(rl.NewRectangle(10, 50, 200, 30), "Toggle") {
+		showAllTxt := "Show all Nodes"
+		if allNodes {
+			showAllTxt = "Nodes with children"
+		}
+		if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-200), 98, 150, 48), showAllTxt) {
 
 			currentTree := app.trees[app.currentTree]
-			tree := systems.SearchTree{
-				Tree:   currentTree.Tree.StripNodesWithoutChildren(),
-				Shapes: currentTree.Shapes,
-			}
-
-			// oldScene := scene
-			app.trees[app.currentTree].Tree = tree.Tree
-			// scene = app.loadTreeNoPos(font)
-
-			go computePositions(app.events, tree.Tree)
-
-			for _, node := range currentTree.Tree.Nodes {
-				if !tree.Tree.HasNode(node) {
-					scene.sys.Delete(&scene.world, node.Id)
-					// log.Info().Interface("id", node.Id).Msg("positioning node")
-					// scene.sys.SamePositions(node.Id, *oldScene.sys)
+			if allNodes {
+				tree := systems.SearchTree{
+					Tree:   currentTree.Tree.StripNodesWithoutChildren(),
+					Shapes: currentTree.Shapes,
 				}
+
+				toHide := make([]uint64, 0, len(currentTree.Tree.Nodes))
+				for _, node := range currentTree.Tree.Nodes {
+					if !tree.Tree.HasNode(node) {
+						toHide = append(toHide, node.Id)
+					}
+				}
+
+				scene.sys.Hide(&scene.world, toHide)
+
+				go computePositions(app.events, tree.Tree)
+			} else {
+				scene.sys.ShowAll(&scene.world)
+
+				go computePositions(app.events, currentTree.Tree)
 			}
-			// oldScene.sys.Close()
 
-
+			allNodes = !allNodes
 		}
-		gui.Unlock()
-		rl.DrawFPS(10, int32(rl.GetScreenHeight())-20)
 
+		gui.Unlock()
 		rl.DrawFPS(10, int32(rl.GetScreenHeight())-20)
 
 		rl.EndDrawing()

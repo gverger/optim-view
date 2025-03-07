@@ -14,7 +14,7 @@ func NewMouseSelector() *MouseSelector {
 }
 
 type MouseSelector struct {
-	shapes *generic.Filter2[Position, Shape]
+	shapes *generic.Filter3[Position, Shape, VisibleElement]
 	mapper generic.Map2[Position, Shape]
 
 	mouse   generic.Resource[Mouse]
@@ -26,7 +26,7 @@ func (m *MouseSelector) Close() {
 }
 
 func (m *MouseSelector) Initialize(w *ecs.World) {
-	m.shapes = generic.NewFilter2[Position, Shape]()
+	m.shapes = generic.NewFilter3[Position, Shape, VisibleElement]()
 	m.mapper = generic.NewMap2[Position, Shape](w)
 	m.mouse = generic.NewResource[Mouse](w)
 	m.hovered = generic.NewResource[ecs.Entity](w)
@@ -51,7 +51,8 @@ func (m *MouseSelector) Update(ctx context.Context, w *ecs.World) {
 
 	query := m.shapes.Query(w)
 	for query.Next() {
-		pos, shape := query.Get()
+		pos, shape, _ := query.Get()
+
 		points := make([]rl.Vector2, 0, len(shape.Points))
 		for _, p := range shape.Points {
 			points = append(points, rl.NewVector2(float32(p.X+pos.X), float32(p.Y+pos.Y)))

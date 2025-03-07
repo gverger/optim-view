@@ -16,7 +16,7 @@ func NewNodeDetails(font rl.Font) *NodeDetails {
 type NodeDetails struct {
 	font rl.Font
 
-	nodes  generic.Filter2[Position, Node]
+	nodes  generic.Filter3[Position, Node, VisibleElement]
 	mouse  generic.Resource[Mouse]
 	camera generic.Resource[CameraHandler]
 }
@@ -27,7 +27,7 @@ func (n *NodeDetails) Close() {
 
 // Initialize implements System.
 func (n *NodeDetails) Initialize(w *ecs.World) {
-	n.nodes = *generic.NewFilter2[Position, Node]()
+	n.nodes = *generic.NewFilter3[Position, Node, VisibleElement]()
 	n.mouse = generic.NewResource[Mouse](w)
 	n.camera = generic.NewResource[CameraHandler](w)
 }
@@ -39,7 +39,7 @@ func (n *NodeDetails) Update(ctx context.Context, w *ecs.World) {
 	query := n.nodes.Query(w)
 
 	for query.Next() {
-		pos, node := query.Get()
+		pos, node, _ := query.Get()
 
 		if pos.X <= mouse.InWorld.X && pos.Y <= mouse.InWorld.Y && mouse.InWorld.X <= pos.X+node.SizeX && mouse.InWorld.Y <= pos.Y+node.SizeY {
 

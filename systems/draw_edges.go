@@ -18,7 +18,7 @@ func NewDrawEdges(font rl.Font) *DrawEdges {
 
 type DrawEdges struct {
 	font         rl.Font
-	filter       generic.Filter1[Edge]
+	filter       generic.Filter2[Edge, VisibleElement]
 	filterNodes  generic.Map2[Position, Node]
 	visibleWorld generic.Resource[VisibleWorld]
 	camera       generic.Resource[CameraHandler]
@@ -29,7 +29,7 @@ func (d *DrawEdges) Close() {
 }
 
 func (d *DrawEdges) Initialize(w *ecs.World) {
-	d.filter = *generic.NewFilter1[Edge]()
+	d.filter = *generic.NewFilter2[Edge, VisibleElement]()
 	d.filterNodes = generic.NewMap2[Position, Node](w)
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
 	d.camera = generic.NewResource[CameraHandler](w)
@@ -42,7 +42,8 @@ func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {
 	rl.BeginMode2D(*d.camera.Get().Camera)
 
 	for query.Next() {
-		e := query.Get()
+		e, _ := query.Get()
+
 		p1, from := d.filterNodes.Get(e.From)
 		p2, to := d.filterNodes.Get(e.To)
 		// Simple way of detecting a line is not shown:

@@ -16,16 +16,18 @@ func NewTreeNavigator() *TreeNavigator {
 type TreeNavigator struct {
 	mode     generic.Resource[NavigationMode]
 	selected generic.Resource[SelectedNode]
-	edges    generic.Filter1[Edge]
+	edges    generic.Filter2[Edge, VisibleElement]
 	nodes    generic.Map1[Position]
+	visible  generic.Map1[VisibleElement]
 }
 
 // Initialize implements System.
 func (t *TreeNavigator) Initialize(w *ecs.World) {
 	t.mode = generic.NewResource[NavigationMode](w)
 	t.selected = generic.NewResource[SelectedNode](w)
-	t.edges = *generic.NewFilter1[Edge]()
+	t.edges = *generic.NewFilter2[Edge, VisibleElement]()
 	t.nodes = generic.NewMap1[Position](w)
+	t.visible = generic.NewMap1[VisibleElement](w)
 }
 
 // Update implements System.
@@ -45,7 +47,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	var parent ecs.Entity
 	children := make([]ecs.Entity, 0)
 	for edgeQuery.Next() {
-		e := edgeQuery.Get()
+		e, _ := edgeQuery.Get()
 
 		if e.From.ID() == selection.Entity.ID() {
 			children = append(children, e.To)
@@ -58,7 +60,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	if !parent.IsZero() {
 		edgeQuery = t.edges.Query(w)
 		for edgeQuery.Next() {
-			e := edgeQuery.Get()
+			e, _ := edgeQuery.Get()
 			if e.From.ID() == parent.ID() {
 				siblings = append(siblings, e.To)
 			}
@@ -70,6 +72,10 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	if isPressed(rl.KeyJ) || isPressed(rl.KeyDown) {
 		minX := math.MaxFloat64
 		for _, c := range children {
+			if t.visible.Get(c) == nil {
+				continue
+			}
+
 			node := t.nodes.Get(c)
 			if node.X < minX {
 				minX = node.X
@@ -86,6 +92,10 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 		me := t.nodes.Get(selection.Entity)
 		maxX := -math.MaxFloat64
 		for _, s := range siblings {
+			if t.visible.Get(s) == nil {
+				continue
+			}
+
 			node := t.nodes.Get(s)
 			if node.X > maxX && node.X < me.X {
 				maxX = node.X
@@ -98,6 +108,10 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 		me := t.nodes.Get(selection.Entity)
 		minX := math.MaxFloat64
 		for _, s := range siblings {
+			if t.visible.Get(s) == nil {
+				continue
+			}
+
 			node := t.nodes.Get(s)
 			if node.X < minX && node.X > me.X {
 				minX = node.X

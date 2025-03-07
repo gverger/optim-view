@@ -6,6 +6,7 @@ import (
 
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
+	"github.com/phuslu/log"
 )
 
 type Systems struct {
@@ -18,8 +19,12 @@ type Systems struct {
 
 	targetBuilder generic.Map1[Target2]
 
-	positions generic.Map1[Position]
-	edges     *generic.Filter1[Edge]
+	positions       generic.Map1[Position]
+	edges           *generic.Filter1[Edge]
+	nodes           *generic.Filter1[Node]
+	visibleElements generic.Map1[VisibleElement]
+	hiddenNodes     *generic.Filter1[Node]
+	hiddenEdges     *generic.Filter1[Edge]
 }
 
 func New() *Systems {
@@ -36,6 +41,10 @@ func (s *Systems) Initialize(w *ecs.World) {
 	s.targetBuilder = generic.NewMap1[Target2](w)
 	s.positions = generic.NewMap1[Position](w)
 	s.edges = generic.NewFilter1[Edge]()
+	s.nodes = generic.NewFilter1[Node]()
+	s.visibleElements = generic.NewMap1[VisibleElement](w)
+	s.hiddenNodes = generic.NewFilter1[Node]().Without(generic.T[VisibleElement]())
+	s.hiddenEdges = generic.NewFilter1[Edge]().Without(generic.T[VisibleElement]())
 
 	for _, s := range s.systems {
 		s.Initialize(w)
@@ -66,21 +75,57 @@ type System interface {
 	Close()
 }
 
-func (s *Systems) Delete(w *ecs.World, nodeId uint64) {
-	nodeEntity := s.mappings.Get().nodeLookup[nodeId]
-	w.RemoveEntity(nodeEntity)
+func (s *Systems) ShowAll(w *ecs.World) {
+	s.visibleElements.AddBatch(s.hiddenEdges.Filter(w))
+	s.visibleElements.AddBatch(s.hiddenNodes.Filter(w))
+}
 
-	query := s.edges.Query(w)
-	toDelete := make([]ecs.Entity, 0)
-	for query.Next() {
-		e := query.Get()
-		if e.From == nodeEntity || e.To == nodeEntity {
-			toDelete = append(toDelete, query.Entity())
+func (s *Systems) Hide(w *ecs.World, nodeIds []uint64) {
+	todelete := make(map[ecs.Entity]bool, len(nodeIds))
+
+	for _, id := range nodeIds {
+		nodeEntity := s.mappings.Get().nodeLookup[id]
+		if s.visibleElements.Get(nodeEntity) != nil {
+			todelete[nodeEntity] = true
 		}
 	}
 
-	for _, e := range toDelete {
-		w.RemoveEntity(e)
+	query := s.edges.Query(w)
+	deleted := 0
+	total := 0
+	for query.Next() {
+		e := query.Get()
+		ent := query.Entity()
+		if s.visibleElements.Get(ent) == nil {
+			continue
+		}
+		total++
+
+		if todelete[e.From] || todelete[e.To] {
+			todelete[ent] = true
+			deleted++
+		}
+	}
+	log.Info().Int("deleted edges", deleted).Int("total", total).Msg("Hide")
+
+	for e := range todelete {
+		s.visibleElements.Remove(e)
+	}
+}
+
+func (s *Systems) Delete(w *ecs.World, nodeId uint64) {
+	nodeEntity := s.mappings.Get().nodeLookup[nodeId]
+	s.visibleElements.Remove(nodeEntity)
+
+	query := s.edges.Query(w)
+	for query.Next() {
+		e := query.Get()
+		if e.From == nodeEntity || e.To == nodeEntity {
+			ent := query.Entity()
+			if s.visibleElements.Get(ent) != nil {
+				s.visibleElements.Remove(ent)
+			}
+		}
 	}
 
 }

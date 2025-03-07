@@ -53,8 +53,8 @@ func updateTarget2(m *Targeter, w *ecs.World) {
 		}
 
 		if tar.X != pos.X || tar.Y != pos.Y {
-			pos.X = float64(easings.QuadIn(float32(m.tick-tar.SinceTick), float32(tar.StartX), float32(tar.X-tar.StartX), float32(tar.Duration)))
-			pos.Y = float64(easings.QuadIn(float32(m.tick-tar.SinceTick), float32(tar.StartY), float32(tar.Y-tar.StartY), float32(tar.Duration)))
+			pos.X = float64(easings.QuadInOut(float32(m.tick-tar.SinceTick), float32(tar.StartX), float32(tar.X-tar.StartX), float32(tar.Duration)))
+			pos.Y = float64(easings.QuadInOut(float32(m.tick-tar.SinceTick), float32(tar.StartY), float32(tar.Y-tar.StartY), float32(tar.Duration)))
 		} else {
 			tar.Done = true
 		}
@@ -79,7 +79,7 @@ func updateTarget1(m *Targeter, w *ecs.World) {
 		}
 
 		if tar.X != size.Value {
-			size.Value = easings.ExpoIn(float32(m.tick-tar.SinceTick), float32(tar.StartX), float32(tar.X-tar.StartX), float32(tar.Duration))
+			size.Value = easings.QuadInOut(float32(m.tick-tar.SinceTick), float32(tar.StartX), float32(tar.X-tar.StartX), float32(tar.Duration))
 		} else {
 			tar.Done = true
 		}

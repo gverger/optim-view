@@ -114,7 +114,7 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
 	zoom, targetZoom := v.zoom.Get(v.cameraZoomEntity)
 	if !targetZoom.Done {
-		// camera.Zoom = zoom.Value
+		camera.Zoom = zoom.Value
 	}
 
 	if rl.IsMouseButtonDown(rl.MouseButtonLeft) {
@@ -124,15 +124,14 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		target.Done = true
 		targetOffset.Done = true
 		targetZoom.Done = true
-		selection.Entity = ecs.Entity{}
 	}
 
-	if rl.IsKeyPressed(rl.KeySpace) && v.hovered.Has() {
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) && v.hovered.Has() {
 		hovered := v.hovered.Get()
 		selection.Entity = *hovered
 	}
 
-	if selection.IsSet() && target.Done {
+	if selection.IsSet() && (rl.IsKeyPressed(rl.KeySpace)) {
 		pos, shape := v.shape.Get(selection.Entity)
 
 		points := make([]Position, 0, len(shape.Points))
@@ -163,8 +162,10 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		targetOffset.Y = float64(rl.GetScreenHeight()) / 2
 		targetOffset.SinceTick = 0
 
-		targetZoom.X = z
-		targetZoom.SinceTick = 0
+		if target.X == target.StartX && target.Y == target.StartY {
+			targetZoom.X = z
+			targetZoom.SinceTick = 0
+		}
 	}
 
 	wheel := rl.GetMouseWheelMove()
@@ -187,7 +188,6 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		camera.Zoom = rl.Clamp(camera.Zoom*scaleFactor, 0.0125, 1024.0)
 		targetZoom.Done = true
 
-		selection.Entity = ecs.Entity{}
 	}
 
 	mousePos := rl.GetMousePosition()

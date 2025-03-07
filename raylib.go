@@ -171,6 +171,7 @@ func runVisu(input Input) {
 					app = newApp(e.graphs)
 					scene.sys.Close()
 					scene = app.loadTree(font)
+					allNodes = true
 				}
 
 			default:
@@ -211,6 +212,7 @@ func runVisu(input Input) {
 				if at != app.currentTree {
 					scene.sys.Close()
 					scene = app.loadTree(font)
+					allNodes = true
 				}
 
 				// lastHovered = -1

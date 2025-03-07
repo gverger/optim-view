@@ -43,7 +43,7 @@ func (d *DrawNodes) Close() {
 const (
 	NodesPerTextureLine = 64
 	LinesPerTexture     = 64
-	NodeTextureSize     = 128
+	NodeTextureSize     = 100 // Nodes are 100x100
 )
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
@@ -203,8 +203,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				// beware when displaying them, we should offset the draw by 1
 				// We don't do it now since we want an approximation of the drawing and it seems fine
 				shapes[tr.Id].Texture = rl.LoadRenderTexture(
-					int32(math.Ceil(float64(tScale*(shapeList.MaxX-shapeList.MinX))))+2,
-					int32(math.Ceil(float64(tScale*(shapeList.MaxY-shapeList.MinY))))+2)
+					int32(math.Ceil(float64(tScale*(shapeList.MaxX-shapeList.MinX)))),
+					int32(math.Ceil(float64(tScale*(shapeList.MaxY-shapeList.MinY)))))
 				shapes[tr.Id].rendered = true
 
 				offsetX := -shapeList.MinX

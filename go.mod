@@ -7,7 +7,7 @@ require (
 	github.com/gen2brain/raylib-go/raygui v0.0.0-20250109172833-6dbba4f81a9b
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20250109172833-6dbba4f81a9b
 	github.com/json-iterator/go v1.1.12
-	github.com/mlange-42/arche v0.13.3
+	github.com/mlange-42/arche v0.15.3
 	github.com/ncruces/zenity v0.10.14
 	github.com/nikolaydubina/go-graph-layout v0.2.0
 	github.com/osuushi/triangulate v0.0.0-20220629121601-b0217b0c87c8

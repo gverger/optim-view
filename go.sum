@@ -66,8 +66,8 @@ github.com/logrusorgru/aurora v2.0.3+incompatible h1:tOpm7WcpBTn4fjmVfgpQq0EfczG
 github.com/logrusorgru/aurora v2.0.3+incompatible/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb h1:1jlA56KggIWMFWNnaP9msDuPEJ9JPXt6gQlg8v4jNSE=
 github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb/go.mod h1:0wdicLL4EwzWFtOkdIP82qw4Xmc+XW7/3h/d8ClwwJQ=
-github.com/mlange-42/arche v0.13.3 h1:Z9Z4SQTGPl45oopCM9Krz/DiVg2M8CFq+5K/a4NQEo8=
-github.com/mlange-42/arche v0.13.3/go.mod h1:bFktKnvGDj2kP01xar79z0hKwGHdnoaEZR8HWmJkIyU=
+github.com/mlange-42/arche v0.15.3 h1:vonT1aCIHmu3nnCopzmhzOP5+J2NswVTexa2UDyek34=
+github.com/mlange-42/arche v0.15.3/go.mod h1:bX5PDzTbf2pEIlwnjRu3IpVqduLsxve4rUblXV0Byj0=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
@@ -92,8 +92,8 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
-github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
+github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/tchayen/triangolatte v0.0.0-20210804113255-8b66c3824e73 h1:3qeAEjuZIEPaS0GmsLEOq1HzxyCljwhy/smh7bMA7Uo=
 github.com/tchayen/triangolatte v0.0.0-20210804113255-8b66c3824e73/go.mod h1:2EwgalDDpNRGoZwXq8AUpp/ZVCxHCwNEhVj37Q1tptI=
 github.com/tdewolff/canvas v0.0.0-20241202004848-95f003d9bc50 h1:X60bN+1R784EZ5fBDFqbuqLexAhOT9yCpQ2JUyu6eeE=

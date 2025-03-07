@@ -25,6 +25,7 @@ type DrawNodes struct {
 	shapes        generic.Resource[[]ShapeDefinition]
 	NodesTextures generic.Resource[[]rl.RenderTexture2D]
 	camera        generic.Resource[CameraHandler]
+	selected      generic.Resource[SelectedNode]
 }
 
 // Close implements System.
@@ -51,6 +52,8 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
 	d.camera = generic.NewResource[CameraHandler](w)
 	d.shapes = generic.NewResource[[]ShapeDefinition](w)
+	d.selected = generic.NewResource[SelectedNode](w)
+	d.selected = generic.NewResource[SelectedNode](w)
 	d.NodesTextures = generic.NewResource[[]rl.RenderTexture2D](w)
 	nbTextureLines := (d.nbNodes-1)/NodesPerTextureLine + 1
 	nbTextures := (nbTextureLines-1)/LinesPerTexture + 1
@@ -80,6 +83,14 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	shapes := *d.shapes.Get()
 	query := d.filter.Query(w)
 	nodeTextures := *(d.NodesTextures.Get())
+	selected := ecs.Entity{}
+	if d.selected.Has() {
+		selected = d.selected.Get().Entity
+	}
+	hovered := ecs.Entity{}
+	if d.hovered.Has() {
+		hovered = *d.hovered.Get()
+	}
 
 	visibleArea := (visible.MaxX - visible.X) * (visible.MaxY - visible.Y)
 
@@ -92,7 +103,15 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			continue
 		}
 
-		rl.DrawRectangle(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.LightGray)
+		nodeColor := Palette.Background
+		if hovered == query.Entity() {
+			nodeColor = Palette.Hovered
+		}
+		if selected == query.Entity() {
+			nodeColor = Palette.Selected
+		}
+
+		rl.DrawRectangle(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), nodeColor)
 
 		select {
 		case <-ctx.Done():

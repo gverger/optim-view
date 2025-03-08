@@ -20,12 +20,11 @@ type DrawNodes struct {
 	nbNodes int
 
 	filter        generic.Filter3[Position, Node, VisibleElement]
-	// hovered       generic.Resource[ecs.Entity]
 	visibleWorld  generic.Resource[VisibleWorld]
 	shapes        generic.Resource[[]ShapeDefinition]
 	NodesTextures generic.Resource[[]rl.RenderTexture2D]
 	camera        generic.Resource[CameraHandler]
-	selection      generic.Resource[NodeSelection]
+	selection     generic.Resource[NodeSelection]
 }
 
 // Close implements System.
@@ -44,6 +43,8 @@ const (
 	NodesPerTextureLine = 64
 	LinesPerTexture     = 64
 	NodeTextureSize     = 100 // Nodes are 100x100
+
+	NodeMinBorderSize = 5
 )
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
@@ -161,10 +162,10 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		scale := float32(1)
 		tScale := float32(1)
 		if dimX > dimY {
-			scale = float32(n.SizeX) / dimX
+			scale = float32(n.SizeX-NodeMinBorderSize) / dimX
 			tScale = 400 / dimX
 		} else {
-			scale = float32(n.SizeY) / dimY
+			scale = float32(n.SizeY-NodeMinBorderSize) / dimY
 			tScale = 400 / dimY
 		}
 

@@ -23,6 +23,8 @@ func (c *Initializer) Close() {
 
 // Initialize implements System.
 func (c *Initializer) Initialize(w *ecs.World) {
+	gridResource := generic.NewResource[Grid](w)
+	grid := gridResource.Get()
 	nodes := generic.NewMap6[Position, Node, VisibleElement, Velocity, Shape, Target2](w)
 	edges := generic.NewMap2[Edge, VisibleElement](w)
 
@@ -61,6 +63,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			&Target2{},
 		)
 		nodeLookup[n.Id] = e
+		grid.AddEntity(e, GridPos{})
 	}
 
 	for i, e := range graph.Edges {

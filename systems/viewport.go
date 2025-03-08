@@ -19,11 +19,10 @@ type Viewport struct {
 	visibleWorld generic.Resource[VisibleWorld]
 	navMode      generic.Resource[NavigationMode]
 
-	hovered  generic.Resource[ecs.Entity]
-	selected generic.Resource[SelectedNode]
-	shape    generic.Map2[Position, Shape]
-	move     generic.Map2[Position, Target2]
-	zoom     generic.Map2[Size, Target1]
+	selection generic.Resource[NodeSelection]
+	shape     generic.Map2[Position, Shape]
+	move      generic.Map2[Position, Target2]
+	zoom      generic.Map2[Size, Target1]
 
 	cameraEntity       ecs.Entity
 	cameraOffsetEntity ecs.Entity
@@ -43,9 +42,8 @@ func (v *Viewport) Initialize(w *ecs.World) {
 	v.navMode = generic.NewResource[NavigationMode](w)
 	v.navMode.Add(&NavigationMode{Nav: FreeNav})
 
-	v.hovered = generic.NewResource[ecs.Entity](w)
-	v.selected = generic.NewResource[SelectedNode](w)
-	v.selected.Add(&SelectedNode{})
+	v.selection = generic.NewResource[NodeSelection](w)
+	v.selection.Add(&NodeSelection{})
 
 	v.shape = generic.NewMap2[Position, Shape](w)
 
@@ -97,7 +95,7 @@ func (h *CameraHandler) FocusOn(points ...Position) (rl.Vector2, float32) {
 // Update implements System.
 func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
-	selection := v.selected.Get()
+	selection := v.selection.Get()
 
 	cameraHandler := v.camera.Get()
 	camera := cameraHandler.Camera
@@ -126,13 +124,12 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		targetZoom.Done = true
 	}
 
-	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) && v.hovered.Has() {
-		hovered := v.hovered.Get()
-		selection.Entity = *hovered
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) && selection.HasHovered() {
+		selection.Selected = selection.Hovered
 	}
 
-	if selection.IsSet() && (rl.IsKeyPressed(rl.KeySpace)) {
-		pos, shape := v.shape.Get(selection.Entity)
+	if selection.HasSelected() && (rl.IsKeyPressed(rl.KeySpace)) {
+		pos, shape := v.shape.Get(selection.Selected)
 
 		points := make([]Position, 0, len(shape.Points))
 		for _, p := range shape.Points {
@@ -208,10 +205,15 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 	visibleWorld.MaxY = float64(botRight.Y)
 
 	nav := v.navMode.Get()
-	if selection.IsSet() && target.Done {
+	if selection.HasSelected() && target.Done {
 		nav.Nav = KeyboardNav
 	} else {
 		nav.Nav = FreeNav
 	}
 
+	// Debug Grid cell for mouse
+	// gpos := GridCoords(int(worldMousePos.X), int(worldMousePos.Y))
+	// rl.BeginMode2D(*v.camera.Get().Camera)
+	// rl.DrawRectangleLines(int32(gpos.X)*1000, int32(gpos.Y)*1000, 1000, 1000, rl.Blue)
+	// rl.EndMode2D()
 }

@@ -16,9 +16,11 @@ func NewNodeDetails(font rl.Font) *NodeDetails {
 type NodeDetails struct {
 	font rl.Font
 
-	nodes  generic.Filter3[Position, Node, VisibleElement]
+	nodes  generic.Map3[Position, Node, VisibleElement]
 	mouse  generic.Resource[Mouse]
 	camera generic.Resource[CameraHandler]
+
+	selection generic.Resource[NodeSelection]
 }
 
 // Close implements System.
@@ -27,28 +29,20 @@ func (n *NodeDetails) Close() {
 
 // Initialize implements System.
 func (n *NodeDetails) Initialize(w *ecs.World) {
-	n.nodes = *generic.NewFilter3[Position, Node, VisibleElement]()
+	n.nodes = generic.NewMap3[Position, Node, VisibleElement](w)
 	n.mouse = generic.NewResource[Mouse](w)
 	n.camera = generic.NewResource[CameraHandler](w)
+	n.selection = generic.NewResource[NodeSelection](w)
 }
 
 // Update implements System.
 func (n *NodeDetails) Update(ctx context.Context, w *ecs.World) {
+	selection := n.selection.Get()
+	if selection.HasHovered() {
+		pos, node, _ := n.nodes.Get(selection.Hovered)
+		n.displayDetails(node, pos)
 
-	mouse := n.mouse.Get()
-	query := n.nodes.Query(w)
-
-	for query.Next() {
-		pos, node, _ := query.Get()
-
-		if pos.X <= mouse.InWorld.X && pos.Y <= mouse.InWorld.Y && mouse.InWorld.X <= pos.X+node.SizeX && mouse.InWorld.Y <= pos.Y+node.SizeY {
-
-			n.displayDetails(node, pos)
-			query.Close()
-			break
-		}
 	}
-
 }
 
 func (n *NodeDetails) displayDetails(hoveredNode *Node, pos *Position) {

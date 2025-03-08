@@ -69,12 +69,17 @@ func (h *CameraHandler) Update() {
 	}
 }
 
-type SelectedNode struct {
-	Entity ecs.Entity
+type NodeSelection struct {
+	Hovered  ecs.Entity
+	Selected ecs.Entity
 }
 
-func (s SelectedNode) IsSet() bool {
-	return !s.Entity.IsZero()
+func (s NodeSelection) HasHovered() bool {
+	return !s.Hovered.IsZero()
+}
+
+func (s NodeSelection) HasSelected() bool {
+	return !s.Selected.IsZero()
 }
 
 type NavType uint
@@ -86,4 +91,55 @@ const (
 
 type NavigationMode struct {
 	Nav NavType
+}
+
+type DebugText struct {
+	Text string
+}
+
+type GridPos struct {
+	X int
+	Y int
+}
+
+func GridCoords(x, y int) GridPos {
+	gx := x / 1000
+	if x < 0 {
+		gx--
+	}
+	gy := y / 1000
+	if y < 0 {
+		gy--
+	}
+	return GridPos{
+		X: gx,
+		Y: gy,
+	}
+}
+
+type Grid struct {
+	grid map[GridPos][]ecs.Entity
+}
+
+func (g *Grid) AddEntity(e ecs.Entity, pos GridPos) {
+	g.grid[pos] = append(g.grid[pos], e)
+}
+
+func (g *Grid) MoveEntity(e ecs.Entity, oldPos, newPos GridPos) {
+	if oldPos == newPos {
+		return
+	}
+	for i, entity := range g.grid[oldPos] {
+		if entity == e {
+			g.grid[oldPos][i] = g.grid[oldPos][len(g.grid[oldPos])-1]
+			g.grid[oldPos] = g.grid[oldPos][:len(g.grid[oldPos])-1]
+			break
+		}
+	}
+
+	g.grid[newPos] = append(g.grid[newPos], e)
+}
+
+func (g Grid) At(pos GridPos) []ecs.Entity {
+	return g.grid[pos]
 }

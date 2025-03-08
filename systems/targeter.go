@@ -16,6 +16,8 @@ type Targeter struct {
 	filterTarget2 *generic.Filter2[Position, Target2]
 	filterTarget1 *generic.Filter2[Size, Target1]
 
+	grid generic.Resource[Grid]
+
 	tick int
 }
 
@@ -26,6 +28,7 @@ func (m *Targeter) Close() {
 func (m *Targeter) Initialize(w *ecs.World) {
 	m.filterTarget2 = generic.NewFilter2[Position, Target2]()
 	m.filterTarget1 = generic.NewFilter2[Size, Target1]()
+	m.grid = generic.NewResource[Grid](w)
 }
 
 func (m *Targeter) Update(ctx context.Context, w *ecs.World) {
@@ -36,6 +39,7 @@ func (m *Targeter) Update(ctx context.Context, w *ecs.World) {
 
 func updateTarget2(m *Targeter, w *ecs.World) {
 	query := m.filterTarget2.Query(w)
+	grid := m.grid.Get()
 
 	for query.Next() {
 		pos, tar := query.Get()
@@ -53,8 +57,14 @@ func updateTarget2(m *Targeter, w *ecs.World) {
 		}
 
 		if tar.X != pos.X || tar.Y != pos.Y {
+			oldX := pos.X
+			oldY := pos.Y
 			pos.X = float64(easings.QuadInOut(float32(m.tick-tar.SinceTick), float32(tar.StartX), float32(tar.X-tar.StartX), float32(tar.Duration)))
 			pos.Y = float64(easings.QuadInOut(float32(m.tick-tar.SinceTick), float32(tar.StartY), float32(tar.Y-tar.StartY), float32(tar.Duration)))
+
+			oldGPos := GridCoords(int(oldX), int(oldY))
+			gpos := GridCoords(int(pos.X), int(pos.Y))
+			grid.MoveEntity(query.Entity(), oldGPos, gpos)
 		} else {
 			tar.Done = true
 		}

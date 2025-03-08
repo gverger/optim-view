@@ -20,12 +20,12 @@ type DrawNodes struct {
 	nbNodes int
 
 	filter        generic.Filter3[Position, Node, VisibleElement]
-	hovered       generic.Resource[ecs.Entity]
+	// hovered       generic.Resource[ecs.Entity]
 	visibleWorld  generic.Resource[VisibleWorld]
 	shapes        generic.Resource[[]ShapeDefinition]
 	NodesTextures generic.Resource[[]rl.RenderTexture2D]
 	camera        generic.Resource[CameraHandler]
-	selected      generic.Resource[SelectedNode]
+	selection      generic.Resource[NodeSelection]
 }
 
 // Close implements System.
@@ -48,12 +48,10 @@ const (
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.filter = *generic.NewFilter3[Position, Node, VisibleElement]()
-	d.hovered = generic.NewResource[ecs.Entity](w)
 	d.visibleWorld = generic.NewResource[VisibleWorld](w)
 	d.camera = generic.NewResource[CameraHandler](w)
 	d.shapes = generic.NewResource[[]ShapeDefinition](w)
-	d.selected = generic.NewResource[SelectedNode](w)
-	d.selected = generic.NewResource[SelectedNode](w)
+	d.selection = generic.NewResource[NodeSelection](w)
 	d.NodesTextures = generic.NewResource[[]rl.RenderTexture2D](w)
 	nbTextureLines := (d.nbNodes-1)/NodesPerTextureLine + 1
 	nbTextures := (nbTextureLines-1)/LinesPerTexture + 1
@@ -84,12 +82,10 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	query := d.filter.Query(w)
 	nodeTextures := *(d.NodesTextures.Get())
 	selected := ecs.Entity{}
-	if d.selected.Has() {
-		selected = d.selected.Get().Entity
-	}
 	hovered := ecs.Entity{}
-	if d.hovered.Has() {
-		hovered = *d.hovered.Get()
+	if d.selection.Has() {
+		selected = d.selection.Get().Selected
+		hovered = d.selection.Get().Hovered
 	}
 
 	visibleArea := (visible.MaxX - visible.X) * (visible.MaxY - visible.Y)

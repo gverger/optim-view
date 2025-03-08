@@ -2,8 +2,10 @@ package systems
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
 	"github.com/phuslu/log"
@@ -16,6 +18,8 @@ type Systems struct {
 	mouse        generic.Resource[Mouse]
 	visibleWorld generic.Resource[VisibleWorld]
 	camera       generic.Resource[CameraHandler]
+	debugTxt     generic.Resource[DebugText]
+	grid         generic.Resource[Grid]
 
 	targetBuilder generic.Map1[Target2]
 
@@ -45,6 +49,11 @@ func (s *Systems) Initialize(w *ecs.World) {
 	s.visibleElements = generic.NewMap1[VisibleElement](w)
 	s.hiddenNodes = generic.NewFilter1[Node]().Without(generic.T[VisibleElement]())
 	s.hiddenEdges = generic.NewFilter1[Edge]().Without(generic.T[VisibleElement]())
+	s.grid = generic.NewResource[Grid](w)
+	s.grid.Add(&Grid{grid: make(map[GridPos][]ecs.Entity)})
+
+	s.debugTxt = generic.NewResource[DebugText](w)
+	s.debugTxt.Add(&DebugText{})
 
 	for _, s := range s.systems {
 		s.Initialize(w)
@@ -58,9 +67,16 @@ func (s *Systems) Add(sys System) {
 func (s Systems) Update(w *ecs.World) {
 	ctx, cancel := context.WithTimeout(context.Background(), 96*time.Millisecond) // Should stop when at speed of 10 FPS
 	defer cancel()
+	txt := s.debugTxt.Get()
+	txt.Text = ""
 	for _, sys := range s.systems {
+		start := time.Now()
 		sys.Update(ctx, w)
+		duration := time.Since(start)
+		txt.Text += fmt.Sprintf("%T: %dms\n", sys, duration.Milliseconds())
 	}
+
+	rl.DrawText(txt.Text, 10, 200, 10, rl.Red)
 }
 
 func (s Systems) Close() {

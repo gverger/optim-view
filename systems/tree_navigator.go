@@ -15,7 +15,7 @@ func NewTreeNavigator() *TreeNavigator {
 
 type TreeNavigator struct {
 	mode     generic.Resource[NavigationMode]
-	selected generic.Resource[SelectedNode]
+	selected generic.Resource[NodeSelection]
 	edges    generic.Filter2[Edge, VisibleElement]
 	nodes    generic.Map1[Position]
 	visible  generic.Map1[VisibleElement]
@@ -24,7 +24,7 @@ type TreeNavigator struct {
 // Initialize implements System.
 func (t *TreeNavigator) Initialize(w *ecs.World) {
 	t.mode = generic.NewResource[NavigationMode](w)
-	t.selected = generic.NewResource[SelectedNode](w)
+	t.selected = generic.NewResource[NodeSelection](w)
 	t.edges = *generic.NewFilter2[Edge, VisibleElement]()
 	t.nodes = generic.NewMap1[Position](w)
 	t.visible = generic.NewMap1[VisibleElement](w)
@@ -37,7 +37,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	}
 
 	selection := t.selected.Get()
-	if selection == nil || !selection.IsSet() {
+	if selection == nil || !selection.HasSelected() {
 		return
 	}
 
@@ -49,9 +49,9 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	for edgeQuery.Next() {
 		e, _ := edgeQuery.Get()
 
-		if e.From.ID() == selection.Entity.ID() {
+		if e.From.ID() == selection.Selected.ID() {
 			children = append(children, e.To)
-		} else if e.To.ID() == selection.Entity.ID() {
+		} else if e.To.ID() == selection.Selected.ID() {
 			parent = e.From
 		}
 	}
@@ -89,7 +89,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	}
 
 	if isPressed(rl.KeyH) || isPressed(rl.KeyLeft) {
-		me := t.nodes.Get(selection.Entity)
+		me := t.nodes.Get(selection.Selected)
 		maxX := -math.MaxFloat64
 		for _, s := range siblings {
 			if t.visible.Get(s) == nil {
@@ -105,7 +105,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	}
 
 	if isPressed(rl.KeyL) || isPressed(rl.KeyRight) {
-		me := t.nodes.Get(selection.Entity)
+		me := t.nodes.Get(selection.Selected)
 		minX := math.MaxFloat64
 		for _, s := range siblings {
 			if t.visible.Get(s) == nil {
@@ -121,7 +121,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	}
 
 	if !bestNode.IsZero() {
-		selection.Entity = bestNode
+		selection.Selected = bestNode
 	}
 
 }

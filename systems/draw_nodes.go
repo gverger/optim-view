@@ -195,13 +195,13 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			}
 
 			if !shapeList.rendered {
-				// We render shapes with an offset of 1, to be sure they are surrounded by transparent,
+				// We render shapes with an offset of 2, to be sure they are surrounded by transparent,
 				// They seem to create a thin line at the border otherwise
-				// beware when displaying them, we should offset the draw by 1
+				// beware when displaying them, we should offset the draw by 2
 				// We don't do it now since we want an approximation of the drawing and it seems fine
 				shapes[tr.Id].Texture = rl.LoadRenderTexture(
-					int32(math.Ceil(float64(tScale*(shapeList.MaxX-shapeList.MinX)))),
-					int32(math.Ceil(float64(tScale*(shapeList.MaxY-shapeList.MinY)))))
+					int32(math.Ceil(float64(tScale*(shapeList.MaxX-shapeList.MinX))))+4,
+					int32(math.Ceil(float64(tScale*(shapeList.MaxY-shapeList.MinY))))+4)
 				shapes[tr.Id].rendered = true
 
 				offsetX := -shapeList.MinX
@@ -209,7 +209,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				rl.BeginTextureMode(shapes[tr.Id].Texture)
 				rl.ClearBackground(rl.Fade(rl.White, 0.0))
 				for _, s := range shapeList.Shapes {
-					renderShape(s, false, tScale*offsetX, float32(shapes[tr.Id].Texture.Texture.Height)-tScale*offsetY, tScale, -tScale)
+					renderShape(s, false, tScale*offsetX+2, float32(shapes[tr.Id].Texture.Texture.Height)-tScale*offsetY-2, tScale, -tScale)
 				}
 				rl.EndTextureMode()
 			}

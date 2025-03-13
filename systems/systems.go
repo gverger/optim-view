@@ -2,8 +2,10 @@ package systems
 
 import (
 	"context"
+	// "fmt"
 	"time"
 
+	// rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
 	"github.com/phuslu/log"
@@ -15,6 +17,7 @@ type Systems struct {
 	mappings     generic.Resource[Mappings]
 	mouse        generic.Resource[Mouse]
 	visibleWorld generic.Resource[VisibleWorld]
+	boundaries   generic.Resource[Boundaries]
 	camera       generic.Resource[CameraHandler]
 	debugTxt     generic.Resource[DebugText]
 	grid         generic.Resource[Grid]
@@ -40,6 +43,8 @@ func (s *Systems) Initialize(w *ecs.World) {
 
 	s.visibleWorld = generic.NewResource[VisibleWorld](w)
 	s.visibleWorld.Add(&VisibleWorld{})
+	s.boundaries = generic.NewResource[Boundaries](w)
+	s.boundaries.Add(&Boundaries{})
 	s.targetBuilder = generic.NewMap1[Target2](w)
 	s.positions = generic.NewMap1[Position](w)
 	s.edges = generic.NewFilter1[Edge]()

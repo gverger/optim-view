@@ -17,6 +17,14 @@ type Mouse struct {
 	InWorld  Position
 }
 
+// Boundaries of the graph
+type Boundaries struct {
+	X    float64
+	Y    float64
+	MaxX float64
+	MaxY float64
+}
+
 type VisibleWorld struct {
 	X    float64
 	Y    float64

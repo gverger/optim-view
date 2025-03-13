@@ -17,12 +17,14 @@ type Viewport struct {
 	camera       generic.Resource[CameraHandler]
 	mouse        generic.Resource[Mouse]
 	visibleWorld generic.Resource[VisibleWorld]
+	boundaries   generic.Resource[Boundaries]
 	navMode      generic.Resource[NavigationMode]
 
-	selection generic.Resource[NodeSelection]
-	shape     generic.Map2[Position, Shape]
-	move      generic.Map2[Position, Target2]
-	zoom      generic.Map2[Size, Target1]
+	selection     generic.Resource[NodeSelection]
+	shape         generic.Map2[Position, Shape]
+	move          generic.Map2[Position, Target2]
+	zoom          generic.Map2[Size, Target1]
+	positions     generic.Filter1[Position]
 
 	cameraEntity       ecs.Entity
 	cameraOffsetEntity ecs.Entity
@@ -46,6 +48,7 @@ func (v *Viewport) Initialize(w *ecs.World) {
 	v.selection.Add(&NodeSelection{})
 
 	v.shape = generic.NewMap2[Position, Shape](w)
+	v.positions = *generic.NewFilter1[Position]().With(generic.T[Node]())
 
 	v.move = generic.NewMap2[Position, Target2](w)
 	v.cameraEntity = v.move.NewWith(&Position{
@@ -185,6 +188,36 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		camera.Zoom = rl.Clamp(camera.Zoom*scaleFactor, 0.0125, 1024.0)
 		targetZoom.Done = true
 
+	}
+
+	nodes := v.positions.Query(w)
+	if nodes.Next() {
+		p := nodes.Get()
+		minPos := Position{p.X, p.Y}
+		maxPos := Position{p.X + 100, p.Y + 100}
+		for nodes.Next() {
+			p := nodes.Get()
+			if p.X < minPos.X {
+				minPos.X = p.X
+			}
+			if p.X+100 > maxPos.X {
+				maxPos.X = p.X + 100
+			}
+			if p.Y < minPos.Y {
+				minPos.Y = p.Y
+			}
+			if p.Y+100 > maxPos.Y {
+				maxPos.Y = p.Y + 100
+			}
+		}
+
+		tx := min(float32(maxPos.X), max(camera.Target.X, float32(minPos.X)))
+		ty := min(float32(maxPos.Y), max(camera.Target.Y, float32(minPos.Y)))
+
+		if tx != camera.Target.X || ty != camera.Target.Y {
+			camera.Target.X = tx
+			camera.Target.Y = ty
+		}
 	}
 
 	mousePos := rl.GetMousePosition()

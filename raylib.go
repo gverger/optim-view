@@ -43,9 +43,9 @@ func (a app) loadTree(font rl.Font) sceneType {
 	tree := a.trees[a.currentTree]
 	sys := systems.New()
 	sys.Add(systems.NewInitializer(tree))
+	sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewViewport())
 	sys.Add(systems.NewMouseSelector())
-	sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewDrawEdges(font))
 	sys.Add(systems.NewDrawNodes(font, len(tree.Tree.Nodes)))
 	sys.Add(systems.NewNodeDetails(font))

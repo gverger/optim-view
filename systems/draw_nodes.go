@@ -222,8 +222,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				}
 
 				rl.DrawTexturePro(shapeList.Texture.Texture,
-					rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),
-					rl.NewRectangle(offsetX, offsetY, scale*float32(shapeList.Texture.Texture.Width)/tScale, scale*float32(shapeList.Texture.Texture.Height)/tScale),
+					rl.NewRectangle(2, 2, float32(shapeList.Texture.Texture.Width - 4), reverseY*float32(shapeList.Texture.Texture.Height - 4)),
+					rl.NewRectangle(offsetX, offsetY, scale*float32(shapeList.Texture.Texture.Width - 4)/tScale, scale*float32(shapeList.Texture.Texture.Height - 4)/tScale),
 					rl.Vector2Zero(), 0, rl.White)
 			} else {
 				offsetX := midX + scale*tr.X + float32(pos.X)

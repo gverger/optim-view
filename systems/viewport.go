@@ -204,6 +204,17 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 	visibleWorld.MaxX = float64(botRight.X)
 	visibleWorld.MaxY = float64(botRight.Y)
 
+	// // Reduce visible part of the screen for debug
+	// sizeX := botRight.X - topLeft.X
+	// sizeY := botRight.Y - topLeft.Y
+	// visibleWorld.X += float64(sizeX) / 4
+	// visibleWorld.Y += float64(sizeY) / 4
+	// visibleWorld.MaxX -= float64(sizeX) / 4
+	// visibleWorld.MaxY -= float64(sizeY) / 4
+	// rl.BeginMode2D(*camera)
+	// rl.DrawRectangleLines(int32(visibleWorld.X), int32(visibleWorld.Y), int32(visibleWorld.MaxX-visibleWorld.X), int32(visibleWorld.MaxY-visibleWorld.Y), rl.Orange)
+	// rl.EndMode2D()
+
 	nav := v.navMode.Get()
 	if selection.HasSelected() && target.Done {
 		nav.Nav = KeyboardNav

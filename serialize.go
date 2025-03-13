@@ -293,6 +293,8 @@ func loadSearchTrees(filename string) map[string]systems.SearchTree {
 			})
 		}
 
+		log.Info().Str("name", tree.Name).Int("nodes", len(tree.Nodes)).Msg("Tree loaded")
+
 		trees[tree.Name] = systems.SearchTree{
 			Tree:   tree.ToGraph(),//.StripNodesWithoutChildren(),
 			Shapes: shapes,

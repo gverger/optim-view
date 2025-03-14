@@ -3,8 +3,7 @@ package systems
 import (
 	"context"
 
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 )
 
 func NewMover() *Mover {
@@ -12,18 +11,18 @@ func NewMover() *Mover {
 }
 
 type Mover struct {
-	filter *generic.Filter2[Position, Target2]
+	filter *ecs.Filter2[Position, Target2]
 }
 
 func (m *Mover) Close() {
 }
 
 func (m *Mover) Initialize(w *ecs.World) {
-	m.filter = generic.NewFilter2[Position, Target2]()
+	m.filter = ecs.NewFilter2[Position, Target2](w)
 }
 
 func (m *Mover) Update(ctx context.Context, w *ecs.World) {
-	query := m.filter.Query(w)
+	query := m.filter.Query()
 	for query.Next() {
 		pos, trg := query.Get()
 

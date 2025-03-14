@@ -5,8 +5,7 @@ import (
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 )
 
 func NewTreeNavigator() *TreeNavigator {
@@ -14,20 +13,20 @@ func NewTreeNavigator() *TreeNavigator {
 }
 
 type TreeNavigator struct {
-	mode     generic.Resource[NavigationMode]
-	selected generic.Resource[NodeSelection]
-	edges    generic.Filter2[Edge, VisibleElement]
-	nodes    generic.Map1[Position]
-	visible  generic.Map1[VisibleElement]
+	mode     ecs.Resource[NavigationMode]
+	selected ecs.Resource[NodeSelection]
+	edges    ecs.Filter2[Edge, VisibleElement]
+	nodes    ecs.Map1[Position]
+	visible  ecs.Map1[VisibleElement]
 }
 
 // Initialize implements System.
 func (t *TreeNavigator) Initialize(w *ecs.World) {
-	t.mode = generic.NewResource[NavigationMode](w)
-	t.selected = generic.NewResource[NodeSelection](w)
-	t.edges = *generic.NewFilter2[Edge, VisibleElement]()
-	t.nodes = generic.NewMap1[Position](w)
-	t.visible = generic.NewMap1[VisibleElement](w)
+	t.mode = ecs.NewResource[NavigationMode](w)
+	t.selected = ecs.NewResource[NodeSelection](w)
+	t.edges = *ecs.NewFilter2[Edge, VisibleElement](w)
+	t.nodes = ecs.NewMap1[Position](w)
+	t.visible = ecs.NewMap1[VisibleElement](w)
 }
 
 // Update implements System.
@@ -43,7 +42,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 
 	// rl.DrawText("SELECTED", 20, 300, 32, rl.Blue)
 
-	edgeQuery := t.edges.Query(w)
+	edgeQuery := t.edges.Query()
 	var parent ecs.Entity
 	children := make([]ecs.Entity, 0)
 	for edgeQuery.Next() {
@@ -58,7 +57,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 
 	siblings := make([]ecs.Entity, 0)
 	if !parent.IsZero() {
-		edgeQuery = t.edges.Query(w)
+		edgeQuery = t.edges.Query()
 		for edgeQuery.Next() {
 			e, _ := edgeQuery.Get()
 			if e.From.ID() == parent.ID() {

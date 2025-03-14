@@ -4,8 +4,7 @@ import (
 	"context"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 )
 
 const (
@@ -18,10 +17,10 @@ func NewDrawEdges(font rl.Font) *DrawEdges {
 
 type DrawEdges struct {
 	font         rl.Font
-	filter       generic.Filter2[Edge, VisibleElement]
-	filterNodes  generic.Map2[Position, Node]
-	visibleWorld generic.Resource[VisibleWorld]
-	camera       generic.Resource[CameraHandler]
+	filter       ecs.Filter2[Edge, VisibleElement]
+	filterNodes  ecs.Map2[Position, Node]
+	visibleWorld ecs.Resource[VisibleWorld]
+	camera       ecs.Resource[CameraHandler]
 }
 
 // Close implements System.
@@ -29,15 +28,15 @@ func (d *DrawEdges) Close() {
 }
 
 func (d *DrawEdges) Initialize(w *ecs.World) {
-	d.filter = *generic.NewFilter2[Edge, VisibleElement]()
-	d.filterNodes = generic.NewMap2[Position, Node](w)
-	d.visibleWorld = generic.NewResource[VisibleWorld](w)
-	d.camera = generic.NewResource[CameraHandler](w)
+	d.filter = *ecs.NewFilter2[Edge, VisibleElement](w)
+	d.filterNodes = ecs.NewMap2[Position, Node](w)
+	d.visibleWorld = ecs.NewResource[VisibleWorld](w)
+	d.camera = ecs.NewResource[CameraHandler](w)
 }
 
 func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {
 	visible := d.visibleWorld.Get()
-	query := d.filter.Query(w)
+	query := d.filter.Query()
 
 	lhlines := make(map[float32]float32)
 	rhlines := make(map[float32]float32)

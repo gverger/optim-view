@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 )
 
 func NewInitializer(tree SearchTree) *Initializer {
@@ -23,17 +22,17 @@ func (c *Initializer) Close() {
 
 // Initialize implements System.
 func (c *Initializer) Initialize(w *ecs.World) {
-	gridResource := generic.NewResource[Grid](w)
+	gridResource := ecs.NewResource[Grid](w)
 	grid := gridResource.Get()
-	nodes := generic.NewMap6[Position, Node, VisibleElement, Velocity, Shape, Target2](w)
-	edges := generic.NewMap2[Edge, VisibleElement](w)
+	nodes := ecs.NewMap6[Position, Node, VisibleElement, Velocity, Shape, Target2](w)
+	edges := ecs.NewMap2[Edge, VisibleElement](w)
 
 	nodeLookup := make(map[uint64]ecs.Entity, 0)
 
 	graph := c.tree.Tree
 
 	for i, n := range graph.Nodes {
-		e := nodes.NewWith(
+		e := nodes.NewEntity(
 			&Position{
 				// X: float64(n.XY[0]),
 				// Y: float64(n.XY[1]),
@@ -71,26 +70,26 @@ func (c *Initializer) Initialize(w *ecs.World) {
 		for j := range e {
 			dst := nodeLookup[graph.Nodes[j].Id]
 
-			edges.NewWith(
+			edges.NewEntity(
 				&Edge{From: src, To: dst},
 				&VisibleElement{},
 			)
 		}
 	}
 
-	shapes := generic.NewResource[[]ShapeDefinition](w)
+	shapes := ecs.NewResource[[]ShapeDefinition](w)
 	shapes.Add(&c.tree.Shapes)
 
-	textures := generic.NewResource[[]rl.RenderTexture2D](w)
+	textures := ecs.NewResource[[]rl.RenderTexture2D](w)
 	t := make([]rl.RenderTexture2D, 0)
 	textures.Add(&t)
 
-	mappings := generic.NewResource[Mappings](w)
+	mappings := ecs.NewResource[Mappings](w)
 	mappings.Add(&Mappings{
 		nodeLookup: nodeLookup,
 	})
 
-	camera := generic.NewResource[CameraHandler](w)
+	camera := ecs.NewResource[CameraHandler](w)
 	cameraHandler := NewCameraHandler()
 	camera.Add(&cameraHandler)
 }

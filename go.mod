@@ -1,6 +1,6 @@
 module github.com/gverger/optimview
 
-go 1.23.1
+go 1.24.0
 
 require (
 	github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c
@@ -8,7 +8,6 @@ require (
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20250109172833-6dbba4f81a9b
 	github.com/gverger/go-graph-layout v0.3.1
 	github.com/json-iterator/go v1.1.12
-	github.com/mlange-42/arche v0.15.3
 	github.com/ncruces/zenity v0.10.14
 	github.com/osuushi/triangulate v0.0.0-20220629121601-b0217b0c87c8
 	github.com/phuslu/log v1.0.113
@@ -35,6 +34,7 @@ require (
 	github.com/kolesa-team/go-webp v1.0.4 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb // indirect
+	github.com/mlange-42/ark v0.3.0
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

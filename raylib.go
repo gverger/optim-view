@@ -7,7 +7,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/gverger/optimview/graph"
 	"github.com/gverger/optimview/systems"
-	"github.com/mlange-42/arche/ecs"
+	"github.com/mlange-42/ark/ecs"
 	"github.com/ncruces/zenity"
 	"github.com/phuslu/log"
 )

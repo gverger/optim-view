@@ -5,8 +5,7 @@ import (
 	"slices"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 )
 
 func NewMouseSelector() *MouseSelector {
@@ -14,12 +13,12 @@ func NewMouseSelector() *MouseSelector {
 }
 
 type MouseSelector struct {
-	shapes *generic.Filter3[Position, Shape, VisibleElement]
-	mapper generic.Map3[Position, Shape, VisibleElement]
-	grid   generic.Resource[Grid]
+	shapes *ecs.Filter3[Position, Shape, VisibleElement]
+	mapper ecs.Map3[Position, Shape, VisibleElement]
+	grid   ecs.Resource[Grid]
 
-	mouse     generic.Resource[Mouse]
-	selection generic.Resource[NodeSelection]
+	mouse     ecs.Resource[Mouse]
+	selection ecs.Resource[NodeSelection]
 }
 
 // Close implements System.
@@ -27,11 +26,11 @@ func (m *MouseSelector) Close() {
 }
 
 func (m *MouseSelector) Initialize(w *ecs.World) {
-	m.shapes = generic.NewFilter3[Position, Shape, VisibleElement]()
-	m.mapper = generic.NewMap3[Position, Shape, VisibleElement](w)
-	m.mouse = generic.NewResource[Mouse](w)
-	m.selection = generic.NewResource[NodeSelection](w)
-	m.grid = generic.NewResource[Grid](w)
+	m.shapes = ecs.NewFilter3[Position, Shape, VisibleElement](w)
+	m.mapper = ecs.NewMap3[Position, Shape, VisibleElement](w)
+	m.mouse = ecs.NewResource[Mouse](w)
+	m.selection = ecs.NewResource[NodeSelection](w)
+	m.grid = ecs.NewResource[Grid](w)
 }
 
 func (m *MouseSelector) Update(ctx context.Context, w *ecs.World) {

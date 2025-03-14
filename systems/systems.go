@@ -6,8 +6,7 @@ import (
 	"time"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 	"github.com/phuslu/log"
 )
 
@@ -15,22 +14,22 @@ type Systems struct {
 	systems   []System
 	debugMode bool
 
-	mappings     generic.Resource[Mappings]
-	mouse        generic.Resource[Mouse]
-	visibleWorld generic.Resource[VisibleWorld]
-	boundaries   generic.Resource[Boundaries]
-	camera       generic.Resource[CameraHandler]
-	debugTxt     generic.Resource[DebugText]
-	grid         generic.Resource[Grid]
+	mappings     ecs.Resource[Mappings]
+	mouse        ecs.Resource[Mouse]
+	visibleWorld ecs.Resource[VisibleWorld]
+	boundaries   ecs.Resource[Boundaries]
+	camera       ecs.Resource[CameraHandler]
+	debugTxt     ecs.Resource[DebugText]
+	grid         ecs.Resource[Grid]
 
-	targetBuilder generic.Map1[Target2]
+	targetBuilder ecs.Map1[Target2]
 
-	positions       generic.Map1[Position]
-	edges           *generic.Filter1[Edge]
-	nodes           *generic.Filter1[Node]
-	visibleElements generic.Map1[VisibleElement]
-	hiddenNodes     *generic.Filter1[Node]
-	hiddenEdges     *generic.Filter1[Edge]
+	positions       ecs.Map1[Position]
+	edges           *ecs.Filter1[Edge]
+	nodes           *ecs.Filter1[Node]
+	visibleElements ecs.Map1[VisibleElement]
+	hiddenNodes     *ecs.Filter1[Node]
+	hiddenEdges     *ecs.Filter1[Edge]
 }
 
 func New(debugMode bool) *Systems {
@@ -41,25 +40,25 @@ func New(debugMode bool) *Systems {
 }
 
 func (s *Systems) Initialize(w *ecs.World) {
-	s.mappings = generic.NewResource[Mappings](w)
-	s.mouse = generic.NewResource[Mouse](w)
+	s.mappings = ecs.NewResource[Mappings](w)
+	s.mouse = ecs.NewResource[Mouse](w)
 	s.mouse.Add(&Mouse{})
 
-	s.visibleWorld = generic.NewResource[VisibleWorld](w)
+	s.visibleWorld = ecs.NewResource[VisibleWorld](w)
 	s.visibleWorld.Add(&VisibleWorld{})
-	s.boundaries = generic.NewResource[Boundaries](w)
+	s.boundaries = ecs.NewResource[Boundaries](w)
 	s.boundaries.Add(&Boundaries{})
-	s.targetBuilder = generic.NewMap1[Target2](w)
-	s.positions = generic.NewMap1[Position](w)
-	s.edges = generic.NewFilter1[Edge]()
-	s.nodes = generic.NewFilter1[Node]()
-	s.visibleElements = generic.NewMap1[VisibleElement](w)
-	s.hiddenNodes = generic.NewFilter1[Node]().Without(generic.T[VisibleElement]())
-	s.hiddenEdges = generic.NewFilter1[Edge]().Without(generic.T[VisibleElement]())
-	s.grid = generic.NewResource[Grid](w)
+	s.targetBuilder = ecs.NewMap1[Target2](w)
+	s.positions = ecs.NewMap1[Position](w)
+	s.edges = ecs.NewFilter1[Edge](w)
+	s.nodes = ecs.NewFilter1[Node](w)
+	s.visibleElements = ecs.NewMap1[VisibleElement](w)
+	s.hiddenNodes = ecs.NewFilter1[Node](w).Without(ecs.C[VisibleElement]())
+	s.hiddenEdges = ecs.NewFilter1[Edge](w).Without(ecs.C[VisibleElement]())
+	s.grid = ecs.NewResource[Grid](w)
 	s.grid.Add(&Grid{grid: make(map[GridPos][]ecs.Entity)})
 
-	s.debugTxt = generic.NewResource[DebugText](w)
+	s.debugTxt = ecs.NewResource[DebugText](w)
 	s.debugTxt.Add(&DebugText{})
 
 	for _, s := range s.systems {
@@ -101,8 +100,8 @@ type System interface {
 }
 
 func (s *Systems) ShowAll(w *ecs.World) {
-	s.visibleElements.AddBatch(s.hiddenEdges.Filter(w))
-	s.visibleElements.AddBatch(s.hiddenNodes.Filter(w))
+	s.visibleElements.AddBatch(s.hiddenEdges.Batch(), &VisibleElement{})
+	s.visibleElements.AddBatch(s.hiddenNodes.Batch(), &VisibleElement{})
 }
 
 func (s *Systems) Hide(w *ecs.World, nodeIds []uint64) {
@@ -115,7 +114,7 @@ func (s *Systems) Hide(w *ecs.World, nodeIds []uint64) {
 		}
 	}
 
-	query := s.edges.Query(w)
+	query := s.edges.Query()
 	deleted := 0
 	total := 0
 	for query.Next() {
@@ -142,7 +141,7 @@ func (s *Systems) Delete(w *ecs.World, nodeId uint64) {
 	nodeEntity := s.mappings.Get().nodeLookup[nodeId]
 	s.visibleElements.Remove(nodeEntity)
 
-	query := s.edges.Query(w)
+	query := s.edges.Query()
 	for query.Next() {
 		e := query.Get()
 		if e.From == nodeEntity || e.To == nodeEntity {
@@ -178,7 +177,7 @@ func (s Systems) SamePositions(nodeId uint64, oldSystems Systems) {
 func (s Systems) SetNodePos(w *ecs.World, nodeId uint64, newX, newY int) {
 	e := s.mappings.Get().nodeLookup[nodeId]
 	if t := s.targetBuilder.Get(e); t == nil {
-		s.targetBuilder.Assign(e, &Target2{X: float64(newX), Y: float64(newY), Duration: 0})
+		s.targetBuilder.Add(e, &Target2{X: float64(newX), Y: float64(newY), Duration: 0})
 	} else {
 		t.X = float64(newX)
 		t.Y = float64(newY)
@@ -190,7 +189,7 @@ func (s Systems) SetNodePos(w *ecs.World, nodeId uint64, newX, newY int) {
 func (s Systems) MoveNode(w *ecs.World, nodeId uint64, newX, newY int) {
 	e := s.mappings.Get().nodeLookup[nodeId]
 	if t := s.targetBuilder.Get(e); t == nil {
-		s.targetBuilder.Assign(e, &Target2{X: float64(newX), Y: float64(newY), Duration: 30})
+		s.targetBuilder.Add(e, &Target2{X: float64(newX), Y: float64(newY), Duration: 30})
 	} else {
 		t.X = float64(newX)
 		t.Y = float64(newY)

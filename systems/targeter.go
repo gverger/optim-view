@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/gen2brain/raylib-go/easings"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 )
 
 func NewTargeter() *Targeter {
@@ -13,10 +12,10 @@ func NewTargeter() *Targeter {
 }
 
 type Targeter struct {
-	filterTarget2 *generic.Filter2[Position, Target2]
-	filterTarget1 *generic.Filter2[Size, Target1]
+	filterTarget2 *ecs.Filter2[Position, Target2]
+	filterTarget1 *ecs.Filter2[Size, Target1]
 
-	grid generic.Resource[Grid]
+	grid ecs.Resource[Grid]
 
 	tick int
 }
@@ -26,9 +25,9 @@ func (m *Targeter) Close() {
 }
 
 func (m *Targeter) Initialize(w *ecs.World) {
-	m.filterTarget2 = generic.NewFilter2[Position, Target2]()
-	m.filterTarget1 = generic.NewFilter2[Size, Target1]()
-	m.grid = generic.NewResource[Grid](w)
+	m.filterTarget2 = ecs.NewFilter2[Position, Target2](w)
+	m.filterTarget1 = ecs.NewFilter2[Size, Target1](w)
+	m.grid = ecs.NewResource[Grid](w)
 }
 
 func (m *Targeter) Update(ctx context.Context, w *ecs.World) {
@@ -38,7 +37,7 @@ func (m *Targeter) Update(ctx context.Context, w *ecs.World) {
 }
 
 func updateTarget2(m *Targeter, w *ecs.World) {
-	query := m.filterTarget2.Query(w)
+	query := m.filterTarget2.Query()
 	grid := m.grid.Get()
 
 	for query.Next() {
@@ -72,7 +71,7 @@ func updateTarget2(m *Targeter, w *ecs.World) {
 }
 
 func updateTarget1(m *Targeter, w *ecs.World) {
-	query := m.filterTarget1.Query(w)
+	query := m.filterTarget1.Query()
 
 	for query.Next() {
 		size, tar := query.Get()

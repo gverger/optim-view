@@ -7,8 +7,7 @@ import (
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/gverger/optimview/graphics"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 	"github.com/phuslu/log"
 )
 
@@ -24,10 +23,10 @@ type DrawNodes struct {
 	shapes       []ShapeDefinition
 	nodeTextures graphics.TextureArray
 
-	filter       generic.Filter3[Position, Node, VisibleElement]
-	visibleWorld generic.Resource[VisibleWorld]
-	camera       generic.Resource[CameraHandler]
-	selection    generic.Resource[NodeSelection]
+	filter        ecs.Filter3[Position, Node, VisibleElement]
+	visibleWorld  ecs.Resource[VisibleWorld]
+	camera        ecs.Resource[CameraHandler]
+	selection     ecs.Resource[NodeSelection]
 }
 
 // Close implements System.
@@ -47,10 +46,10 @@ const (
 )
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
-	d.filter = *generic.NewFilter3[Position, Node, VisibleElement]()
-	d.visibleWorld = generic.NewResource[VisibleWorld](w)
-	d.camera = generic.NewResource[CameraHandler](w)
-	d.selection = generic.NewResource[NodeSelection](w)
+	d.filter = *ecs.NewFilter3[Position, Node, VisibleElement](w)
+	d.visibleWorld = ecs.NewResource[VisibleWorld](w)
+	d.camera = ecs.NewResource[CameraHandler](w)
+	d.selection = ecs.NewResource[NodeSelection](w)
 
 	shapes := generic.NewResource[[]ShapeDefinition](w)
 	d.shapes = *shapes.Get()

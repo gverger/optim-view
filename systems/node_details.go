@@ -5,8 +5,7 @@ import (
 
 	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 )
 
 func NewNodeDetails(font rl.Font) *NodeDetails {
@@ -16,11 +15,11 @@ func NewNodeDetails(font rl.Font) *NodeDetails {
 type NodeDetails struct {
 	font rl.Font
 
-	nodes  generic.Map3[Position, Node, VisibleElement]
-	mouse  generic.Resource[Mouse]
-	camera generic.Resource[CameraHandler]
+	nodes  ecs.Map3[Position, Node, VisibleElement]
+	mouse  ecs.Resource[Mouse]
+	camera ecs.Resource[CameraHandler]
 
-	selection generic.Resource[NodeSelection]
+	selection ecs.Resource[NodeSelection]
 }
 
 // Close implements System.
@@ -29,10 +28,10 @@ func (n *NodeDetails) Close() {
 
 // Initialize implements System.
 func (n *NodeDetails) Initialize(w *ecs.World) {
-	n.nodes = generic.NewMap3[Position, Node, VisibleElement](w)
-	n.mouse = generic.NewResource[Mouse](w)
-	n.camera = generic.NewResource[CameraHandler](w)
-	n.selection = generic.NewResource[NodeSelection](w)
+	n.nodes = ecs.NewMap3[Position, Node, VisibleElement](w)
+	n.mouse = ecs.NewResource[Mouse](w)
+	n.camera = ecs.NewResource[CameraHandler](w)
+	n.selection = ecs.NewResource[NodeSelection](w)
 }
 
 // Update implements System.

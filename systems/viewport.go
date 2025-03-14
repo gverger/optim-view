@@ -5,8 +5,7 @@ import (
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/mlange-42/arche/ecs"
-	"github.com/mlange-42/arche/generic"
+	"github.com/mlange-42/ark/ecs"
 )
 
 func NewViewport() *Viewport {
@@ -14,17 +13,17 @@ func NewViewport() *Viewport {
 }
 
 type Viewport struct {
-	camera       generic.Resource[CameraHandler]
-	mouse        generic.Resource[Mouse]
-	visibleWorld generic.Resource[VisibleWorld]
-	boundaries   generic.Resource[Boundaries]
-	navMode      generic.Resource[NavigationMode]
+	camera       ecs.Resource[CameraHandler]
+	mouse        ecs.Resource[Mouse]
+	visibleWorld ecs.Resource[VisibleWorld]
+	boundaries   ecs.Resource[Boundaries]
+	navMode      ecs.Resource[NavigationMode]
 
-	selection generic.Resource[NodeSelection]
-	shape     generic.Map2[Position, Shape]
-	move      generic.Map2[Position, Target2]
-	zoom      generic.Map2[Size, Target1]
-	positions generic.Filter1[Position]
+	selection     ecs.Resource[NodeSelection]
+	shape         ecs.Map2[Position, Shape]
+	move          ecs.Map2[Position, Target2]
+	zoom          ecs.Map2[Size, Target1]
+	positions     ecs.Filter1[Position]
 
 	cameraEntity       ecs.Entity
 	cameraOffsetEntity ecs.Entity
@@ -37,34 +36,34 @@ func (v *Viewport) Close() {
 
 // Initialize implements System.
 func (v *Viewport) Initialize(w *ecs.World) {
-	v.camera = generic.NewResource[CameraHandler](w)
-	v.mouse = generic.NewResource[Mouse](w)
-	v.visibleWorld = generic.NewResource[VisibleWorld](w)
+	v.camera = ecs.NewResource[CameraHandler](w)
+	v.mouse = ecs.NewResource[Mouse](w)
+	v.visibleWorld = ecs.NewResource[VisibleWorld](w)
 	cameraHandler := v.camera.Get()
-	v.navMode = generic.NewResource[NavigationMode](w)
+	v.navMode = ecs.NewResource[NavigationMode](w)
 	v.navMode.Add(&NavigationMode{Nav: FreeNav})
 
-	v.selection = generic.NewResource[NodeSelection](w)
+	v.selection = ecs.NewResource[NodeSelection](w)
 	v.selection.Add(&NodeSelection{})
 
-	v.shape = generic.NewMap2[Position, Shape](w)
-	v.positions = *generic.NewFilter1[Position]().With(generic.T[Node]())
+	v.shape = ecs.NewMap2[Position, Shape](w)
+	v.positions = *ecs.NewFilter1[Position](w).With(ecs.C[Node]())
 
-	v.move = generic.NewMap2[Position, Target2](w)
-	v.cameraEntity = v.move.NewWith(&Position{
+	v.move = ecs.NewMap2[Position, Target2](w)
+	v.cameraEntity = v.move.NewEntity(&Position{
 		X: float64(cameraHandler.Camera.Target.X),
 		Y: float64(cameraHandler.Camera.Target.Y),
 	},
 		NewTarget2Empty(12))
 
-	v.cameraOffsetEntity = v.move.NewWith(&Position{
+	v.cameraOffsetEntity = v.move.NewEntity(&Position{
 		X: float64(cameraHandler.Camera.Offset.X),
 		Y: float64(cameraHandler.Camera.Offset.Y),
 	},
 		NewTarget2Empty(12))
 
-	v.zoom = generic.NewMap2[Size, Target1](w)
-	v.cameraZoomEntity = v.zoom.NewWith(&Size{
+	v.zoom = ecs.NewMap2[Size, Target1](w)
+	v.cameraZoomEntity = v.zoom.NewEntity(&Size{
 		Value: cameraHandler.Camera.Zoom,
 	},
 		NewTarget1Empty(12))
@@ -190,7 +189,7 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
 	}
 
-	nodes := v.positions.Query(w)
+	nodes := v.positions.Query()
 	if nodes.Next() {
 		p := nodes.Get()
 		minPos := Position{p.X, p.Y}

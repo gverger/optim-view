@@ -4,7 +4,7 @@ import (
 	"context"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/mlange-42/arche/ecs"
+	"github.com/mlange-42/ark/ecs"
 )
 
 func NewDrawGraph(font rl.Font, nbNodes int) *DrawGraph {

@@ -89,7 +89,10 @@ func NewTarget2Empty(duration int) *Target2 {
 	}
 }
 
-type JointOf struct {
-	ecs.Relation
-	Order int
+type ChildOf struct {
+	ecs.RelationMarker
+}
+
+type StartOf struct {
+	ecs.RelationMarker
 }

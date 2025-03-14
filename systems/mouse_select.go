@@ -39,8 +39,8 @@ func (m *MouseSelector) Update(ctx context.Context, w *ecs.World) {
 
 	selection := m.selection.Get()
 	if selection.HasHovered() {
-		pos, shape, visible := m.mapper.Get(selection.Hovered)
-		if pos != nil && shape != nil && visible != nil {
+		if m.mapper.HasAll(selection.Hovered) {
+			pos, shape, _ := m.mapper.Get(selection.Hovered)
 			points := make([]rl.Vector2, 0, len(shape.Points))
 			for _, p := range shape.Points {
 				points = append(points, rl.NewVector2(float32(p.X+pos.X), float32(p.Y+pos.Y)))
@@ -59,8 +59,8 @@ func (m *MouseSelector) Update(ctx context.Context, w *ecs.World) {
 	for i := gpos.X - 1; i < gpos.X+1; i++ {
 		for j := gpos.Y - 1; j < gpos.Y+1; j++ {
 			for _, e := range grid.At(GridPos{X: i, Y: j}) {
-				pos, shape, visible := m.mapper.Get(e)
-				if pos != nil && shape != nil && visible != nil {
+				if m.mapper.HasAll(e) {
+					pos, shape, _ := m.mapper.Get(e)
 					points := make([]rl.Vector2, 0, len(shape.Points))
 					for _, p := range shape.Points {
 						points = append(points, rl.NewVector2(float32(p.X+pos.X), float32(p.Y+pos.Y)))

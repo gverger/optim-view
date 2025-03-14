@@ -18,9 +18,12 @@ func NewDrawEdges(font rl.Font) *DrawEdges {
 type DrawEdges struct {
 	font         rl.Font
 	filter       ecs.Filter2[Edge, VisibleElement]
-	filterNodes  ecs.Map2[Position, Node]
+	mapNodes     ecs.Map2[Position, Node]
 	visibleWorld ecs.Resource[VisibleWorld]
 	camera       ecs.Resource[CameraHandler]
+
+	filterNodes ecs.Filter2[Position, Node]
+	filterEdges ecs.Filter3[Position, Node, ChildOf]
 }
 
 // Close implements System.
@@ -29,73 +32,74 @@ func (d *DrawEdges) Close() {
 
 func (d *DrawEdges) Initialize(w *ecs.World) {
 	d.filter = *ecs.NewFilter2[Edge, VisibleElement](w)
-	d.filterNodes = ecs.NewMap2[Position, Node](w)
+	d.mapNodes = ecs.NewMap2[Position, Node](w)
 	d.visibleWorld = ecs.NewResource[VisibleWorld](w)
 	d.camera = ecs.NewResource[CameraHandler](w)
+
+	d.filterNodes = *ecs.NewFilter2[Position, Node](w).With(ecs.C[VisibleElement]())
+	d.filterEdges = *ecs.NewFilter3[Position, Node, ChildOf](w).With(ecs.C[VisibleElement]())
 }
 
 func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {
 	visible := d.visibleWorld.Get()
-	query := d.filter.Query()
 
-	lhlines := make(map[float32]float32)
-	rhlines := make(map[float32]float32)
-
+	qNodes := d.filterNodes.Query()
 	rl.BeginMode2D(*d.camera.Get().Camera)
-
-	for query.Next() {
-		e, _ := query.Get()
-
-		p1, from := d.filterNodes.Get(e.From)
-		p2, to := d.filterNodes.Get(e.To)
-
+	for qNodes.Next() {
+		p1, from := qNodes.Get()
 		x1 := p1.X + from.SizeX/2
 		y1 := p1.Y + from.SizeY + 8
-		x2 := p2.X + to.SizeX/2
-		y2 := p2.Y - 8
-
 		src := rl.NewVector2(float32(x1), float32(y1))
-		ctrlA := rl.NewVector2(float32(x1), float32((y1+y2)/2))
-		ctrlB := rl.NewVector2(float32(x2), float32((y1+y2)/2))
-		dst := rl.NewVector2(float32(x2), float32(y2))
 
-		if x1 >= visible.X && x1 <= visible.MaxX && ctrlA.Y >= float32(visible.Y) && y1 <= visible.MaxY {
-			rl.DrawLineEx(src, ctrlA, 2, rl.Gray)
-		}
+		qChildren := d.filterEdges.Query(ecs.Rel[ChildOf](qNodes.Entity()))
+		startDrawn := false
 
-		if x2 >= visible.X && x2 <= visible.MaxX && ctrlB.Y >= float32(visible.Y) && y2 <= visible.MaxY {
-			rl.DrawLineEx(rl.NewVector2(ctrlB.X, ctrlB.Y-EdgeThickness/2), rl.NewVector2(dst.X, dst.Y-8), 2, rl.Gray)
-			rl.DrawTriangle(rl.NewVector2(dst.X, dst.Y-8), dst, rl.NewVector2(dst.X+4, dst.Y-10), rl.Gray)
-			rl.DrawTriangle(dst, rl.NewVector2(dst.X, dst.Y-8), rl.NewVector2(dst.X-4, dst.Y-10), rl.Gray)
-		}
+		cx1 := visible.MaxX + 1
+		cx2 := visible.X - 1
+		cy := float32(0.0)
 
-		xl1 := ctrlA.X
-		xl2 := ctrlB.X
-		if xl1 > xl2 {
-			xl1, xl2 = xl2, xl1
-		}
-		if ctrlA.Y >= float32(visible.Y) && ctrlA.Y <= float32(visible.MaxY) && xl2 >= float32(visible.X) && xl1 <= float32(visible.MaxX) {
-			if xl1 >= float32(visible.X) && xl2 <= float32(visible.MaxX) {
-				rl.DrawLineEx(ctrlA, ctrlB, 2, rl.Gray)
-			} else {
-				if xl1 < float32(visible.X) {
-					if l, ok := lhlines[ctrlA.Y]; !ok || l < xl2 {
-						lhlines[ctrlA.Y] = xl2
-					}
-				}
-				if xl2 > float32(visible.MaxX) {
-					if l, ok := rhlines[ctrlA.Y]; !ok || l > xl1 {
-						rhlines[ctrlA.Y] = xl1
-					}
-				}
+		for qChildren.Next() {
+			p2, to, _ := qChildren.Get()
+
+			x2 := p2.X + to.SizeX/2
+			y2 := p2.Y - 8
+
+			ctrlA := rl.NewVector2(float32(x1), float32((y1+y2)/2))
+			ctrlB := rl.NewVector2(float32(x2), float32((y1+y2)/2))
+			dst := rl.NewVector2(float32(x2), float32(y2))
+
+			// Draw start of edge, from src
+			if !startDrawn && x1 >= visible.X && x1 <= visible.MaxX && ctrlA.Y >= float32(visible.Y) && y1 <= visible.MaxY {
+				rl.DrawLineEx(src, ctrlA, 2, rl.Gray)
+				startDrawn = true
 			}
+
+			// Draw end of edge, the arrow to dst
+			if x2 >= visible.X && x2 <= visible.MaxX && y2 >= visible.Y && float64(ctrlB.Y) <= visible.MaxY {
+				rl.DrawLineEx(rl.NewVector2(ctrlB.X, ctrlB.Y-EdgeThickness/2), rl.NewVector2(dst.X, dst.Y-8), 2, rl.Gray)
+				rl.DrawTriangle(rl.NewVector2(dst.X, dst.Y-8), dst, rl.NewVector2(dst.X+4, dst.Y-10), rl.Gray)
+				rl.DrawTriangle(dst, rl.NewVector2(dst.X, dst.Y-8), rl.NewVector2(dst.X-4, dst.Y-10), rl.Gray)
+			}
+
+			// Update left and right of the edge horizontal line
+			if x2 < cx1 {
+				cx1 = x2
+			}
+			if x2 > cx2 {
+				cx2 = x2
+			}
+			cy = ctrlA.Y
 		}
-	}
-	for y, x := range lhlines {
-		rl.DrawLineEx(rl.NewVector2(float32(visible.X), y), rl.NewVector2(min(x, float32(visible.MaxX)), y), 2, rl.Gray)
-	}
-	for y, x := range rhlines {
-		rl.DrawLineEx(rl.NewVector2(max(x, float32(visible.X)), y), rl.NewVector2(float32(visible.MaxX), y), 2, rl.Gray)
+
+		if cy >= float32(visible.Y) && cy <= float32(visible.MaxY) && cx2 >= visible.X && cx1 <= visible.MaxX {
+			if cx1 < visible.X {
+				cx1 = visible.X
+			}
+			if cx2 > visible.MaxX {
+				cx2 = visible.MaxX
+			}
+			rl.DrawLineEx(rl.NewVector2(float32(cx1), cy), rl.NewVector2(float32(cx2), cy), 2, rl.Gray)
+		}
 	}
 
 	rl.EndMode2D()

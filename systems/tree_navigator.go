@@ -15,16 +15,16 @@ func NewTreeNavigator() *TreeNavigator {
 type TreeNavigator struct {
 	mode     ecs.Resource[NavigationMode]
 	selected ecs.Resource[NodeSelection]
-	edges    ecs.Filter2[Edge, VisibleElement]
-	nodes    ecs.Map1[Position]
-	visible  ecs.Map1[VisibleElement]
+	edges    *ecs.Filter2[Edge, VisibleElement]
+	nodes    *ecs.Map1[Position]
+	visible  *ecs.Map1[VisibleElement]
 }
 
 // Initialize implements System.
 func (t *TreeNavigator) Initialize(w *ecs.World) {
 	t.mode = ecs.NewResource[NavigationMode](w)
 	t.selected = ecs.NewResource[NodeSelection](w)
-	t.edges = *ecs.NewFilter2[Edge, VisibleElement](w)
+	t.edges = ecs.NewFilter2[Edge, VisibleElement](w)
 	t.nodes = ecs.NewMap1[Position](w)
 	t.visible = ecs.NewMap1[VisibleElement](w)
 }

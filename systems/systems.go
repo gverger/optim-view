@@ -22,12 +22,12 @@ type Systems struct {
 	debugTxt     ecs.Resource[DebugText]
 	grid         ecs.Resource[Grid]
 
-	targetBuilder ecs.Map1[Target2]
+	targetBuilder *ecs.Map1[Target2]
 
-	positions       ecs.Map1[Position]
+	positions       *ecs.Map1[Position]
 	edges           *ecs.Filter1[Edge]
 	nodes           *ecs.Filter1[Node]
-	visibleElements ecs.Map1[VisibleElement]
+	visibleElements *ecs.Map1[VisibleElement]
 	hiddenNodes     *ecs.Filter1[Node]
 	hiddenEdges     *ecs.Filter1[Edge]
 }

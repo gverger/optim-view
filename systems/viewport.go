@@ -20,10 +20,10 @@ type Viewport struct {
 	navMode      ecs.Resource[NavigationMode]
 
 	selection     ecs.Resource[NodeSelection]
-	shape         ecs.Map2[Position, Shape]
-	move          ecs.Map2[Position, Target2]
-	zoom          ecs.Map2[Size, Target1]
-	positions     ecs.Filter1[Position]
+	shape         *ecs.Map2[Position, Shape]
+	move          *ecs.Map2[Position, Target2]
+	zoom          *ecs.Map2[Size, Target1]
+	positions     *ecs.Filter1[Position]
 
 	cameraEntity       ecs.Entity
 	cameraOffsetEntity ecs.Entity
@@ -47,7 +47,7 @@ func (v *Viewport) Initialize(w *ecs.World) {
 	v.selection.Add(&NodeSelection{})
 
 	v.shape = ecs.NewMap2[Position, Shape](w)
-	v.positions = *ecs.NewFilter1[Position](w).With(ecs.C[Node]())
+	v.positions = ecs.NewFilter1[Position](w).With(ecs.C[Node]())
 
 	v.move = ecs.NewMap2[Position, Target2](w)
 	v.cameraEntity = v.move.NewEntity(&Position{

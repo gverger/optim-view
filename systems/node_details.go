@@ -15,7 +15,7 @@ func NewNodeDetails(font rl.Font) *NodeDetails {
 type NodeDetails struct {
 	font rl.Font
 
-	nodes  ecs.Map3[Position, Node, VisibleElement]
+	nodes  *ecs.Map3[Position, Node, VisibleElement]
 	mouse  ecs.Resource[Mouse]
 	camera ecs.Resource[CameraHandler]
 

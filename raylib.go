@@ -129,9 +129,9 @@ func runVisu(input Input) {
 	// currentLayer := input.Layers[inputKeys[activeTree]]
 	// currentLayout := input.Layouts[inputKeys[activeTree]]
 
-	rl.SetConfigFlags(rl.FlagMsaa4xHint)
 	// rl.SetConfigFlags(rl.TextureFilterNearestMipLinear)
 
+	rl.SetConfigFlags(rl.FlagWindowResizable | rl.FlagWindowMaximized | rl.FlagMsaa4xHint)
 	rl.InitWindow(1600, 1000, "Graph Visualization")
 	defer rl.CloseWindow()
 

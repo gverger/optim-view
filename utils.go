@@ -6,7 +6,7 @@ import (
 
 func MustSucceed(err error) {
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(err).Msg("fatal error")
 	}
 }
 

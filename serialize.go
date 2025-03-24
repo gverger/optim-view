@@ -1,10 +1,12 @@
 package main
 
 import (
+	"archive/tar"
 	"bufio"
 	"compress/gzip"
 	"math"
 	"path"
+	"strings"
 
 	"fmt"
 	"io"
@@ -17,7 +19,97 @@ import (
 	"github.com/phuslu/log"
 )
 
+func loadSearchTree(reader io.Reader) systems.SearchTree {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	dec := json.NewDecoder(reader)
+
+	var tree Tree
+	MustSucceed(dec.Decode(&tree))
+
+	shapes := make([]systems.ShapeDefinition, 0, len(tree.Init))
+	for _, s := range tree.Init {
+		polygons := make([]systems.DrawableShape, 0)
+		minX := float32(math.MaxFloat32)
+		minY := float32(math.MaxFloat32)
+		maxX := float32(-math.MaxFloat32)
+		maxY := float32(-math.MaxFloat32)
+		for _, d := range s {
+			polygon := make([]systems.Position, 0, len(d.Shape))
+			for i, e := range d.Shape {
+				if e.End.X != d.Shape[(i+1)%len(d.Shape)].Start.X {
+					log.Fatal().Interface("shape", d.Shape).Int("index", i).Msg("edges")
+				}
+				polygon = append(polygon, systems.Position{X: float64(e.Start.X), Y: float64(e.Start.Y)})
+				minX = min(minX, e.Start.X)
+				minY = min(minY, e.Start.Y)
+				maxX = max(maxX, e.Start.X)
+				maxY = max(maxY, e.Start.Y)
+			}
+
+			shape := systems.DrawableShape{Points: polygon, Color: d.FillColor}
+			for _, edges := range d.Holes {
+				hole := make([]systems.Position, 0, len(edges))
+				for i, e := range edges {
+					if e.End.X != edges[(i+1)%len(edges)].Start.X {
+						log.Fatal().Interface("holes", edges).Int("index", i).Msg("edges")
+					}
+					hole = append(hole, systems.Position{X: float64(e.Start.X), Y: float64(e.Start.Y)})
+				}
+				shape.Holes = append(shape.Holes, hole)
+			}
+			polygons = append(polygons, shape)
+		}
+		shapes = append(shapes, systems.ShapeDefinition{
+			Shapes: polygons,
+			MinX:   minX,
+			MinY:   minY,
+			MaxX:   maxX,
+			MaxY:   maxY,
+		})
+	}
+
+	log.Info().Int("nodes", len(tree.Nodes)).Msg("Tree loaded")
+
+	return systems.SearchTree{
+		Tree:   tree.ToGraph(),
+		Shapes: shapes,
+	}
+}
+
+func loadTarTrees(filename string) map[string]systems.SearchTree {
+	file := Must(os.Open(filename))
+	defer file.Close()
+
+	log.Info().Str("file", filename).Msg("Opening file")
+
+	trees := make(map[string]systems.SearchTree)
+	gzipReader := Must(gzip.NewReader(file))
+	defer gzipReader.Close()
+	tarReader := tar.NewReader(gzipReader)
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+
+		MustSucceed(err)
+
+		if header.Typeflag == tar.TypeReg && path.Ext(header.Name) == ".json" {
+			log.Info().Str("filename", header.Name).Msg("reading file")
+			trees[header.Name[:len(header.Name)-5]] = loadSearchTree(tarReader)
+		} else {
+			log.Info().Str("filename", header.Name).Msg("skipping non json entry")
+		}
+	}
+	return trees
+}
+
 func loadSearchTrees(filename string) map[string]systems.SearchTree {
+	if path.Ext(filename) == ".tgz" || strings.HasSuffix(filename, ".tar.gz") {
+		return loadTarTrees(filename)
+	}
+
 	file := Must(os.Open(filename))
 	defer file.Close()
 

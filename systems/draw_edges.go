@@ -17,13 +17,13 @@ func NewDrawEdges(font rl.Font) *DrawEdges {
 
 type DrawEdges struct {
 	font         rl.Font
-	filter       ecs.Filter2[Edge, VisibleElement]
-	mapNodes     ecs.Map2[Position, Node]
+	filter       *ecs.Filter2[Edge, VisibleElement]
+	mapNodes     *ecs.Map2[Position, Node]
 	visibleWorld ecs.Resource[VisibleWorld]
 	camera       ecs.Resource[CameraHandler]
 
-	filterNodes ecs.Filter2[Position, Node]
-	filterEdges ecs.Filter3[Position, Node, ChildOf]
+	filterNodes *ecs.Filter2[Position, Node]
+	filterEdges *ecs.Filter3[Position, Node, ChildOf]
 }
 
 // Close implements System.
@@ -31,13 +31,13 @@ func (d *DrawEdges) Close() {
 }
 
 func (d *DrawEdges) Initialize(w *ecs.World) {
-	d.filter = *ecs.NewFilter2[Edge, VisibleElement](w)
+	d.filter = ecs.NewFilter2[Edge, VisibleElement](w)
 	d.mapNodes = ecs.NewMap2[Position, Node](w)
 	d.visibleWorld = ecs.NewResource[VisibleWorld](w)
 	d.camera = ecs.NewResource[CameraHandler](w)
 
-	d.filterNodes = *ecs.NewFilter2[Position, Node](w).With(ecs.C[VisibleElement]())
-	d.filterEdges = *ecs.NewFilter3[Position, Node, ChildOf](w).With(ecs.C[VisibleElement]())
+	d.filterNodes = ecs.NewFilter2[Position, Node](w).With(ecs.C[VisibleElement]())
+	d.filterEdges = ecs.NewFilter3[Position, Node, ChildOf](w).With(ecs.C[VisibleElement]())
 }
 
 func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {

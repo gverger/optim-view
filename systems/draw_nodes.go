@@ -23,10 +23,10 @@ type DrawNodes struct {
 	shapes       []ShapeDefinition
 	nodeTextures graphics.TextureArray
 
-	filter        ecs.Filter3[Position, Node, VisibleElement]
-	visibleWorld  ecs.Resource[VisibleWorld]
-	camera        ecs.Resource[CameraHandler]
-	selection     ecs.Resource[NodeSelection]
+	filter       *ecs.Filter3[Position, Node, VisibleElement]
+	visibleWorld ecs.Resource[VisibleWorld]
+	camera       ecs.Resource[CameraHandler]
+	selection    ecs.Resource[NodeSelection]
 }
 
 // Close implements System.
@@ -46,12 +46,12 @@ const (
 )
 
 func (d *DrawNodes) Initialize(w *ecs.World) {
-	d.filter = *ecs.NewFilter3[Position, Node, VisibleElement](w)
+	d.filter = ecs.NewFilter3[Position, Node, VisibleElement](w)
 	d.visibleWorld = ecs.NewResource[VisibleWorld](w)
 	d.camera = ecs.NewResource[CameraHandler](w)
 	d.selection = ecs.NewResource[NodeSelection](w)
 
-	shapes := generic.NewResource[[]ShapeDefinition](w)
+	shapes := ecs.NewResource[[]ShapeDefinition](w)
 	d.shapes = *shapes.Get()
 
 	d.nodeTextures = graphics.NewTextureArray(d.nbNodes, NodeTextureSize)
@@ -91,7 +91,7 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 		rl.EndTextureMode()
 	}
 
-	query := d.filter.Query(w)
+	query := d.filter.Query()
 	for query.Next() {
 		_, n, _ := query.Get()
 
@@ -129,7 +129,7 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 
 func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	visible := d.visibleWorld.Get()
-	query := d.filter.Query(w)
+	query := d.filter.Query()
 	selected := ecs.Entity{}
 	hovered := ecs.Entity{}
 	if d.selection.Has() {

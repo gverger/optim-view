@@ -68,8 +68,8 @@ github.com/logrusorgru/aurora v2.0.3+incompatible h1:tOpm7WcpBTn4fjmVfgpQq0EfczG
 github.com/logrusorgru/aurora v2.0.3+incompatible/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb h1:1jlA56KggIWMFWNnaP9msDuPEJ9JPXt6gQlg8v4jNSE=
 github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb/go.mod h1:0wdicLL4EwzWFtOkdIP82qw4Xmc+XW7/3h/d8ClwwJQ=
-github.com/mlange-42/ark v0.3.0 h1:TdOc0Q93Shl1d8xv4Lek9CH87ZSwMNfZ06PXMqFL3JI=
-github.com/mlange-42/ark v0.3.0/go.mod h1:47KXHr5HLftLn4iyL8w04iv7KJUNUoDymEIotD41f3o=
+github.com/mlange-42/ark v0.4.2 h1:C6TvQZ9QbY39XPUK6Zk3YNQYHyvQD8KglwodnGzTh5Q=
+github.com/mlange-42/ark v0.4.2/go.mod h1:47KXHr5HLftLn4iyL8w04iv7KJUNUoDymEIotD41f3o=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=

@@ -14,7 +14,7 @@ func NewMouseSelector() *MouseSelector {
 
 type MouseSelector struct {
 	shapes *ecs.Filter3[Position, Shape, VisibleElement]
-	mapper ecs.Map3[Position, Shape, VisibleElement]
+	mapper *ecs.Map3[Position, Shape, VisibleElement]
 	grid   ecs.Resource[Grid]
 
 	mouse     ecs.Resource[Mouse]

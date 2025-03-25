@@ -93,6 +93,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 	rl.BeginMode2D(*d.camera.Get().Camera)
 
+	toRender := make([]func(), 0)
 	for query.Next() {
 		pos, n, _ := query.Get()
 
@@ -222,8 +223,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 				}
 
 				rl.DrawTexturePro(shapeList.Texture.Texture,
-					rl.NewRectangle(2, 2, float32(shapeList.Texture.Texture.Width - 4), reverseY*float32(shapeList.Texture.Texture.Height - 4)),
-					rl.NewRectangle(offsetX, offsetY, scale*float32(shapeList.Texture.Texture.Width - 4)/tScale, scale*float32(shapeList.Texture.Texture.Height - 4)/tScale),
+					rl.NewRectangle(2, 2, float32(shapeList.Texture.Texture.Width-4), reverseY*float32(shapeList.Texture.Texture.Height-4)),
+					rl.NewRectangle(offsetX, offsetY, scale*float32(shapeList.Texture.Texture.Width-4)/tScale, scale*float32(shapeList.Texture.Texture.Height-4)/tScale),
 					rl.Vector2Zero(), 0, rl.White)
 			} else {
 				offsetX := midX + scale*tr.X + float32(pos.X)
@@ -235,36 +236,45 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			}
 		}
 		if !n.rendered {
-			texture := nodeTextures[nodeTextureIdx(n.idx)]
-			rl.BeginTextureMode(texture)
-			rec := nodeTextureRec(n.idx)
-			for _, tr := range n.ShapeTransforms {
-				shapeList := shapes[tr.Id]
-				x := midX + scale*tr.X + shapeList.MinX*scale
-				y := midY + reverseY*scale*tr.Y + shapeList.MinY*reverseY*scale
-				if reverseY < 0 {
-					y -= scale * float32(shapeList.MaxY-shapeList.MinY)
-				}
-
-				color := rl.White
-				if tr.Highlight {
-					for _, s := range shapeList.Shapes {
-						renderShape(s, tr.Highlight, rec.X+x-scale*shapeList.MinX, rec.Y+y+scale*shapeList.MaxY, scale, reverseY*scale)
+			// We don't want to draw in the texture here since we are in the middle of a Mode2D
+			// We delay the call then
+			toRender = append(toRender, func() {
+				texture := nodeTextures[nodeTextureIdx(n.idx)]
+				rl.BeginTextureMode(texture)
+				rec := nodeTextureRec(n.idx)
+				for _, tr := range n.ShapeTransforms {
+					shapeList := shapes[tr.Id]
+					x := midX + scale*tr.X + shapeList.MinX*scale
+					y := midY + reverseY*scale*tr.Y + shapeList.MinY*reverseY*scale
+					if reverseY < 0 {
+						y -= scale * float32(shapeList.MaxY-shapeList.MinY)
 					}
-				} else {
-					rl.DrawTexturePro(shapeList.Texture.Texture,
-						rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),
 
-						rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
-						rl.Vector2Zero(), 0, color)
+					color := rl.White
+					if tr.Highlight {
+						for _, s := range shapeList.Shapes {
+							renderShape(s, tr.Highlight, rec.X+x-scale*shapeList.MinX, rec.Y+y+scale*shapeList.MaxY, scale, reverseY*scale)
+						}
+					} else {
+						rl.DrawTexturePro(shapeList.Texture.Texture,
+							rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),
+
+							rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
+							rl.Vector2Zero(), 0, color)
+					}
 				}
-			}
-			rl.EndTextureMode()
-			n.rendered = true
+				rl.EndTextureMode()
+				n.rendered = true
+			})
 		}
 	}
 
 	rl.EndMode2D()
+
+	for _, renderNode := range toRender {
+		renderNode()
+	}
+
 }
 
 type ShapeColor struct {

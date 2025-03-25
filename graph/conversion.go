@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/nikolaydubina/go-graph-layout/layout"
+	"github.com/gverger/go-graph-layout/layout"
 	"github.com/phuslu/log"
 )
 

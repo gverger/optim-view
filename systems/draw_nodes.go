@@ -64,6 +64,41 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 		rl.EndTextureMode()
 		nbTextureLines -= LinesPerTexture
 	}
+	shapes := *d.shapes.Get()
+	for i := range *d.shapes.Get() {
+		for j := range shapes[i].Shapes {
+			s := &shapes[i].Shapes[j]
+			if s.Triangles == nil {
+				if err := s.ComputeTriangles(); err != nil || len(s.Triangles) == 0 {
+					log.Warn().Int("item", i).Int("shape index", j).Err(err).Msg("cannot triangulate")
+				}
+			}
+		}
+
+		dimX := shapes[i].MaxX - shapes[i].MinX
+		dimY := shapes[i].MaxY - shapes[i].MinY
+		// 800 seems like a good compromise: the shape is not too pixelated
+		tScale := 800.0 / dimX
+		if dimX < dimY {
+			tScale = 800.0 / dimY
+		}
+
+		// We render shapes with an offset of 2, to be sure they are surrounded by transparent,
+		// They seem to create a thin line at the border otherwise
+		// beware when displaying them, we should offset the draw by 2
+		// We don't do it now since we want an approximation of the drawing and it seems fine
+		shapes[i].Texture = rl.LoadRenderTexture(int32(tScale*dimX)+4, int32(tScale*dimY)+4)
+		shapes[i].rendered = true
+
+		offsetX := -shapes[i].MinX
+		offsetY := -shapes[i].MinY
+		rl.BeginTextureMode(shapes[i].Texture)
+		rl.ClearBackground(rl.Fade(rl.White, 0.0))
+		for _, s := range shapes[i].Shapes {
+			renderShape(s, false, tScale*offsetX+2, float32(shapes[i].Texture.Texture.Height)-tScale*offsetY-2, tScale, -tScale)
+		}
+		rl.EndTextureMode()
+	}
 }
 
 func nodeTextureIdx(node int) int {
@@ -161,13 +196,10 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		dimX := maxX - minX
 		dimY := maxY - minY
 		scale := float32(1)
-		tScale := float32(1)
 		if dimX > dimY {
 			scale = float32(n.SizeX-NodeMinBorderSize) / dimX
-			tScale = 400 / dimX
 		} else {
 			scale = float32(n.SizeY-NodeMinBorderSize) / dimY
-			tScale = 400 / dimY
 		}
 
 		reverseY := float32(-1)
@@ -186,35 +218,6 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		for _, tr := range n.ShapeTransforms {
 			shapeList := shapes[tr.Id]
 
-			for i := range shapeList.Shapes {
-				s := &shapes[tr.Id].Shapes[i]
-				if s.Triangles == nil {
-					if err := s.ComputeTriangles(); err != nil || len(s.Triangles) == 0 {
-						log.Warn().Int("item", tr.Id).Int("shape index", i).Err(err).Msg("cannot triangulate")
-					}
-				}
-			}
-
-			if !shapeList.rendered {
-				// We render shapes with an offset of 2, to be sure they are surrounded by transparent,
-				// They seem to create a thin line at the border otherwise
-				// beware when displaying them, we should offset the draw by 2
-				// We don't do it now since we want an approximation of the drawing and it seems fine
-				shapes[tr.Id].Texture = rl.LoadRenderTexture(
-					int32(math.Ceil(float64(tScale*(shapeList.MaxX-shapeList.MinX))))+4,
-					int32(math.Ceil(float64(tScale*(shapeList.MaxY-shapeList.MinY))))+4)
-				shapes[tr.Id].rendered = true
-
-				offsetX := -shapeList.MinX
-				offsetY := -shapeList.MinY
-				rl.BeginTextureMode(shapes[tr.Id].Texture)
-				rl.ClearBackground(rl.Fade(rl.White, 0.0))
-				for _, s := range shapeList.Shapes {
-					renderShape(s, false, tScale*offsetX+2, float32(shapes[tr.Id].Texture.Texture.Height)-tScale*offsetY-2, tScale, -tScale)
-				}
-				rl.EndTextureMode()
-			}
-
 			if drawFast && !tr.Highlight {
 				offsetX := scale*tr.X + float32(pos.X) + midX + shapeList.MinX*scale
 				offsetY := reverseY*scale*tr.Y + float32(pos.Y) + midY + shapeList.MinY*scale
@@ -224,7 +227,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 				rl.DrawTexturePro(shapeList.Texture.Texture,
 					rl.NewRectangle(2, 2, float32(shapeList.Texture.Texture.Width-4), reverseY*float32(shapeList.Texture.Texture.Height-4)),
-					rl.NewRectangle(offsetX, offsetY, scale*float32(shapeList.Texture.Texture.Width-4)/tScale, scale*float32(shapeList.Texture.Texture.Height-4)/tScale),
+					rl.NewRectangle(offsetX, offsetY, scale*(shapeList.MaxX-shapeList.MinX), -scale*(shapeList.MaxY-shapeList.MinY)),
 					rl.Vector2Zero(), 0, rl.White)
 			} else {
 				offsetX := midX + scale*tr.X + float32(pos.X)
@@ -257,7 +260,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 						}
 					} else {
 						rl.DrawTexturePro(shapeList.Texture.Texture,
-							rl.NewRectangle(0, 0, float32(shapeList.Texture.Texture.Width), reverseY*float32(shapeList.Texture.Texture.Height)),
+							rl.NewRectangle(2, 2, float32(shapeList.Texture.Texture.Width)-4, reverseY*float32(shapeList.Texture.Texture.Height-4)),
 
 							rl.NewRectangle(rec.X+x, rec.Y+y, scale*(shapeList.MaxX-shapeList.MinX), scale*(shapeList.MaxY-shapeList.MinY)),
 							rl.Vector2Zero(), 0, color)

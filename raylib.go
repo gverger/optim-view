@@ -92,15 +92,23 @@ func newApp(trees map[string]systems.SearchTree) app {
 	events := make(chan Event, 1)
 
 	if len(trees) == 0 {
-		file, err := zenity.SelectFile(
+		files, err := zenity.SelectFileMultiple(
 			zenity.Title("Search Tree Explorer"),
 			zenity.Filename(""),
 			zenity.FileFilters{
 				{Name: "Tree file", Patterns: []string{"*.json", "*.json.gz", "*.tar.gz", "*.tgz"}, CaseFold: true},
 			})
-		log.Info().Err(err).Str("file", file).Msg("Importing...")
+		if err != nil {
+			log.Error().Err(err).Msg("opening file")
+		}
 		if err == nil {
-			trees = loadSearchTrees(file)
+			trees = make(map[string]systems.SearchTree)
+			for _, f := range files {
+				filetrees := loadSearchTrees(f)
+				for k, v := range filetrees {
+					trees[k] = v
+				}
+			}
 		}
 	}
 

@@ -152,9 +152,10 @@ type ShapeDesc struct {
 }
 
 type ShapePos struct {
-	Id int
-	X  float32
-	Y  float32
+	Id        int
+	X         float32
+	Y         float32
+	FillColor string
 }
 
 type TNode struct {
@@ -194,7 +195,7 @@ func (t Tree) ToGraph() *GraphView {
 				Id:        p.Id,
 				X:         p.X,
 				Y:         p.Y,
-				Highlight: p.X == n.X && p.Y == n.Y,
+				Highlight: p.FillColor == "green",
 			})
 		}
 		g.AddNode(&DisplayableNode{Id: uint64(i), Text: nodeDetailsText(*n), Transform: shapeTransforms})

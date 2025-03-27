@@ -200,7 +200,7 @@ func runVisu(input Input) {
 				zenity.Title("Search Tree Explorer"),
 				zenity.Filename(""),
 				zenity.FileFilters{
-					{Name: "Search Tree files", Patterns: []string{"*.json", "*.json.gz"}, CaseFold: true},
+					{Name: "Tree file", Patterns: []string{"*.json", "*.json.gz", "*.tar.gz", "*.tgz"}, CaseFold: true},
 				})
 			log.Info().Err(err).Str("file", file).Msg("Importing...")
 			if err == nil {

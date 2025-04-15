@@ -61,25 +61,6 @@ func (a app) loadTree(font rl.Font) sceneType {
 	}
 }
 
-func (a app) loadTreeNoPos(font rl.Font) sceneType {
-	tree := a.trees[a.currentTree]
-	sys := systems.New()
-	sys.Add(systems.NewInitializer(tree))
-	sys.Add(systems.NewViewport())
-	sys.Add(systems.NewMouseSelector())
-	sys.Add(systems.NewTargeter())
-	sys.Add(systems.NewDrawGraph(font, len(tree.Tree.Nodes)))
-	sys.Add(systems.NewNodeDetails(font))
-	sys.Add(systems.NewTreeNavigator())
-	w := ecs.NewWorld()
-	sys.Initialize(&w)
-
-	return sceneType{
-		sys:   sys,
-		world: w,
-	}
-}
-
 type app struct {
 	events      chan Event
 	treeNames   []string
@@ -134,9 +115,6 @@ func runVisu(input Input) {
 
 	editMode := false
 
-	// currentLayer := input.Layers[inputKeys[activeTree]]
-	// currentLayout := input.Layouts[inputKeys[activeTree]]
-
 	// rl.SetConfigFlags(rl.TextureFilterNearestMipLinear)
 
 	rl.SetConfigFlags(rl.FlagWindowResizable | rl.FlagWindowMaximized | rl.FlagMsaa4xHint)
@@ -155,9 +133,6 @@ func runVisu(input Input) {
 	scene := app.loadTree(font)
 
 	rl.SetTargetFPS(60)
-
-	// lastHovered := -1
-	var selectionTexture rl.Texture2D
 
 	allNodes := true
 
@@ -217,7 +192,6 @@ func runVisu(input Input) {
 		if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), strings.Join(app.treeNames, ";"), &app.currentTree, editMode) {
 			log.Info().Int("active", int(app.currentTree)).Msg("DropdownBox")
 			if editMode {
-				// currentLayout = input.Layouts[inputKeys[activeTree]]
 				if at != app.currentTree {
 					scene.sys.Close()
 					scene = app.loadTree(font)
@@ -266,8 +240,6 @@ func runVisu(input Input) {
 
 		rl.EndDrawing()
 	}
-
-	rl.UnloadTexture(selectionTexture)
 }
 
 type Event any

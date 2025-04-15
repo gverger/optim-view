@@ -56,8 +56,8 @@ github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 h1:DACJavvAHhabrF0
 github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGwJL78qG/PmXZO1EjYhfJinVAhrmmHX6Z8B9k=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
-github.com/gverger/go-graph-layout v0.3.0 h1:Yqih+Qj8K2D/CAMPAM3fi0p2eqCs7Rl2T7v09MkHn/A=
-github.com/gverger/go-graph-layout v0.3.0/go.mod h1:hfNK/+vWpKoNCBLsdjEPNd0ZJ9VBnD4Qkh0+P1cWmGQ=
+github.com/gverger/go-graph-layout v0.3.1 h1:QtQCBcdn6HPtUpPOTWlSMoeoMRVaBx8j+aWIH2P2KSU=
+github.com/gverger/go-graph-layout v0.3.1/go.mod h1:hfNK/+vWpKoNCBLsdjEPNd0ZJ9VBnD4Qkh0+P1cWmGQ=
 github.com/josephspurrier/goversioninfo v1.4.1 h1:5LvrkP+n0tg91J9yTkoVnt/QgNnrI1t4uSsWjIonrqY=
 github.com/josephspurrier/goversioninfo v1.4.1/go.mod h1:JWzv5rKQr+MmW+LvM412ToT/IkYDZjaclF2pKDss8IY=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=

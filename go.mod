@@ -6,7 +6,7 @@ require (
 	github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c
 	github.com/gen2brain/raylib-go/raygui v0.0.0-20250109172833-6dbba4f81a9b
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20250109172833-6dbba4f81a9b
-	github.com/gverger/go-graph-layout v0.3.0
+	github.com/gverger/go-graph-layout v0.3.1
 	github.com/json-iterator/go v1.1.12
 	github.com/mlange-42/arche v0.15.3
 	github.com/ncruces/zenity v0.10.14
@@ -53,4 +53,4 @@ require (
 	star-tex.org/x/tex v0.5.0 // indirect
 )
 
-// replace github.com/gverger/go-graph-layout v0.2.0 => ../go-graph-layout
+// replace github.com/gverger/go-graph-layout v0.3.1 => ../go-graph-layout

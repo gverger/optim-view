@@ -18,6 +18,7 @@ var f embed.FS
 type SceneID uint
 
 const (
+	ExitID      SceneID = 0
 	TreeSceneID SceneID = 1
 )
 
@@ -38,12 +39,12 @@ func computePositions(events chan<- Event, tree *GraphView) {
 	events <- MoveNodes{positions: positions}
 }
 
-type sceneType struct {
+type ecosystem struct {
 	sys   *systems.Systems
 	world ecs.World
 }
 
-func (a app) loadTree(font rl.Font) sceneType {
+func (a app) loadTree(font rl.Font) ecosystem {
 	tree := a.trees[a.currentTree]
 	sys := systems.New()
 	sys.Add(systems.NewInitializer(tree))
@@ -59,7 +60,7 @@ func (a app) loadTree(font rl.Font) sceneType {
 
 	go computePositions(a.events, tree.Tree)
 
-	return sceneType{
+	return ecosystem{
 		sys:   sys,
 		world: w,
 	}
@@ -114,12 +115,21 @@ func newApp(trees map[string]systems.SearchTree) app {
 }
 
 type Engine interface {
-	Step() SceneID
+	Step() Scene
+}
+
+type IScene interface {
+	Id() SceneID
+	Update() SceneID
+	Draw()
 }
 
 type Scene struct {
-	ID     SceneID
-	engine Engine
+	ID SceneID
+}
+
+func (s Scene) Id() SceneID {
+	return s.ID
 }
 
 func runVisu(input Input) {
@@ -142,9 +152,13 @@ func runVisu(input Input) {
 
 	rl.SetTargetFPS(60)
 
-	scene := NewTreeScene(app, font)
+	var scene IScene = NewTreeScene(app, font)
 	for !rl.WindowShouldClose() {
-		scene.engine.Step()
+		nextSceneID := scene.Update()
+		if nextSceneID == ExitID {
+			return
+		}
+		scene.Draw()
 	}
 }
 

@@ -12,20 +12,32 @@ import (
 
 type TreeScene struct {
 	Scene
+
+	engine *treeEngine
 }
 
-func NewTreeScene(app app, font rl.Font) TreeScene {
+func (t *TreeScene) Draw() {
+	t.engine.Step()
+}
 
-	return TreeScene{
+func (t *TreeScene) Update() SceneID {
+	if nextId := t.engine.handleEvents(); nextId != t.ID {
+		return nextId
+	}
+	return t.ID
+}
+
+func NewTreeScene(app app, font rl.Font) *TreeScene {
+	return &TreeScene{
 		Scene: Scene{
 			ID: TreeSceneID,
-			engine: &treeEngine{
-				font:     font,
-				app:      app,
-				scene:    app.loadTree(font),
-				allNodes: true,
-				editMode: false,
-			},
+		},
+		engine: &treeEngine{
+			font:      font,
+			app:       app,
+			ecosystem: app.loadTree(font),
+			allNodes:  true,
+			editMode:  false,
 		},
 	}
 }
@@ -34,13 +46,13 @@ type treeEngine struct {
 	font rl.Font
 	app  app
 
-	scene    sceneType
-	allNodes bool
+	ecosystem ecosystem
+	allNodes  bool
 
 	editMode bool
 }
 
-func (e *treeEngine) handleEvents()  {
+func (e *treeEngine) handleEvents() SceneID {
 	found := true
 	for found {
 		select {
@@ -50,14 +62,14 @@ func (e *treeEngine) handleEvents()  {
 			case MoveNodes:
 				for _, node := range e.app.trees[e.app.currentTree].Tree.Nodes {
 					if pos, ok := event.positions[node.Id]; ok {
-						e.scene.sys.MoveNode(&e.scene.world, node.Id, pos.X, pos.Y)
+						e.ecosystem.sys.MoveNode(&e.ecosystem.world, node.Id, pos.X, pos.Y)
 					}
 				}
 			case SwitchSearchTree:
 				close(e.app.events)
 				e.app = newApp(event.graphs)
-				e.scene.sys.Close()
-				e.scene = e.app.loadTree(e.font)
+				e.ecosystem.sys.Close()
+				e.ecosystem = e.app.loadTree(e.font)
 				e.allNodes = true
 			}
 
@@ -65,16 +77,15 @@ func (e *treeEngine) handleEvents()  {
 			found = false
 		}
 	}
+	return TreeSceneID
 }
 
 func (e *treeEngine) Step() SceneID {
-	e.handleEvents()
-
 	rl.BeginDrawing()
 
 	rl.ClearBackground(rl.RayWhite)
 
-	e.scene.sys.Update(&e.scene.world)
+	e.ecosystem.sys.Update(&e.ecosystem.world)
 
 	if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-200), 20, 150, 48), "load file") {
 
@@ -100,8 +111,8 @@ func (e *treeEngine) Step() SceneID {
 		log.Info().Int("active", int(e.app.currentTree)).Msg("DropdownBox")
 		if e.editMode {
 			if at != e.app.currentTree {
-				e.scene.sys.Close()
-				e.scene = e.app.loadTree(e.font)
+				e.ecosystem.sys.Close()
+				e.ecosystem = e.app.loadTree(e.font)
 				e.allNodes = true
 			}
 
@@ -130,11 +141,11 @@ func (e *treeEngine) Step() SceneID {
 				}
 			}
 
-			e.scene.sys.Hide(&e.scene.world, toHide)
+			e.ecosystem.sys.Hide(&e.ecosystem.world, toHide)
 
 			go computePositions(e.app.events, tree.Tree)
 		} else {
-			e.scene.sys.ShowAll(&e.scene.world)
+			e.ecosystem.sys.ShowAll(&e.ecosystem.world)
 
 			go computePositions(e.app.events, currentTree.Tree)
 		}

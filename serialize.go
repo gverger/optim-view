@@ -38,7 +38,7 @@ func loadSearchTree(reader io.Reader) systems.SearchTree {
 			polygon := make([]systems.Position, 0, len(d.Shape))
 			for i, e := range d.Shape {
 				if e.End.X != d.Shape[(i+1)%len(d.Shape)].Start.X {
-					log.Fatal().Interface("shape", d.Shape).Int("index", i).Msg("edges")
+					log.Fatal().Interface("shape", d.Shape).Int("index", i).Msg("shape should be closed")
 				}
 				polygon = append(polygon, systems.Position{X: float64(e.Start.X), Y: float64(e.Start.Y)})
 				minX = min(minX, e.Start.X)
@@ -190,6 +190,8 @@ func (t Tree) ToGraph() *GraphView {
 			continue
 		}
 		shapeTransforms := make([]ShapeTransform, 0, len(n.Plot))
+		minX := float32(math.MaxFloat32)
+		minY := float32(math.MaxFloat32)
 		for _, p := range n.Plot {
 			shapeTransforms = append(shapeTransforms, ShapeTransform{
 				Id:        p.Id,
@@ -197,7 +199,14 @@ func (t Tree) ToGraph() *GraphView {
 				Y:         p.Y,
 				Highlight: p.FillColor == "green",
 			})
+			minX = min(minX, p.X)
+			minY = min(minY, p.Y)
 		}
+		for i := range shapeTransforms {
+			shapeTransforms[i].X -= minX
+			shapeTransforms[i].Y -= minY
+		}
+
 		g.AddNode(&DisplayableNode{Id: uint64(i), Text: nodeDetailsText(*n), Transform: shapeTransforms})
 		mapper[n.Id] = uint64(i)
 	}

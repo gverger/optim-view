@@ -74,13 +74,15 @@ type app struct {
 	currentTree int32
 }
 
+var lastOpenFile = ""
+
 func newApp(trees map[string]systems.SearchTree) app {
 	events := make(chan Event, 1)
 
 	if len(trees) == 0 {
 		files, err := zenity.SelectFileMultiple(
 			zenity.Title("Search Tree Explorer"),
-			zenity.Filename(""),
+			zenity.Filename(lastOpenFile),
 			zenity.FileFilters{
 				{Name: "Tree file", Patterns: []string{"*.json", "*.json.gz", "*.tar.gz", "*.tgz"}, CaseFold: true},
 			})
@@ -90,6 +92,7 @@ func newApp(trees map[string]systems.SearchTree) app {
 		if err == nil {
 			trees = make(map[string]systems.SearchTree)
 			for _, f := range files {
+				lastOpenFile = f
 				filetrees := loadSearchTrees(f)
 				for k, v := range filetrees {
 					trees[k] = v

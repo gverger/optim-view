@@ -87,16 +87,24 @@ func (e *treeEngine) Step() SceneID {
 
 	e.ecosystem.sys.Update(&e.ecosystem.world)
 
+	if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-380), 20, 150, 48), "reload file") {
+		log.Info().Str("file", lastOpenFile).Msg("importing...")
+		go importFile(e.app.events, lastOpenFile)
+	}
+
 	if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-200), 20, 150, 48), "load file") {
 
 		file, err := zenity.SelectFile(
 			zenity.Title("Search Tree Explorer"),
-			zenity.Filename(""),
+			zenity.Filename(lastOpenFile),
 			zenity.FileFilters{
 				{Name: "Tree file", Patterns: []string{"*.json", "*.json.gz", "*.tar.gz", "*.tgz"}, CaseFold: true},
 			})
-		log.Info().Err(err).Str("file", file).Msg("Importing...")
-		if err == nil {
+		if err != nil {
+			log.Info().Err(err).Str("file", file).Msg("importing")
+		} else {
+			log.Info().Str("file", file).Msg("importing...")
+			lastOpenFile = file
 			go importFile(e.app.events, file)
 		}
 	}

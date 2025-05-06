@@ -308,7 +308,15 @@ var shapeColors = map[string]HighlightableShapeColor{
 func renderShape(s DrawableShape, highlight bool, offsetX, offsetY, scaleX, scaleY float32) {
 	col, ok := shapeColors[s.Color]
 	if !ok {
-		log.Fatal().Str("color", s.Color).Msg("Unknown color")
+		color, err := StringToRGBA(s.Color)
+		if err != nil {
+			log.Fatal().Str("color", s.Color).Msg("unknown color")
+		}
+		col = HighlightableShapeColor{
+			normal:      ShapeColor{border: color, fill: color},
+			highlighted: ShapeColor{border: color, fill: color},
+		}
+		shapeColors[s.Color] = col
 	}
 
 	color := col.normal

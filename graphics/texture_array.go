@@ -1,6 +1,11 @@
 package graphics
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"errors"
+	"fmt"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 type TextureArray struct {
 	textureSize         int
@@ -35,6 +40,21 @@ func NewTextureArray(textures int, textureSize int) TextureArray {
 	}
 
 	return array
+}
+
+func (array *TextureArray) Update(textures int, textureSize int) (changed bool, err error) {
+	if textureSize > MaxTextureSize {
+		return false, errors.New("texture size too large")
+	}
+	nodesPerTextureLine := MaxTextureSize / textureSize
+	nbTextureLines := (textures-1)/nodesPerTextureLine + 1
+	nbTextures := (nbTextureLines-1)/nodesPerTextureLine + 1
+	if nbTextures > len(array.Textures) {
+		return false, fmt.Errorf("too many textures: %d textures, %d size", textures, textureSize)
+	}
+	array.textureSize = textureSize
+	array.nodesPerTextureLine = nodesPerTextureLine
+	return true, nil
 }
 
 func (array TextureArray) nodeTextureIdx(node int) int {

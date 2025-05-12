@@ -24,6 +24,9 @@ type DrawNodes struct {
 	shapes       []ShapeDefinition
 	nodeTextures graphics.TextureArray
 
+	prettyTextures graphics.TextureArray
+	nodeSizes      float32
+
 	filter       generic.Filter3[Position, Node, VisibleElement]
 	visibleWorld generic.Resource[VisibleWorld]
 	camera       generic.Resource[CameraHandler]
@@ -33,6 +36,7 @@ type DrawNodes struct {
 // Close implements System.
 func (d *DrawNodes) Close() {
 	d.nodeTextures.Unload()
+	d.prettyTextures.Unload()
 	shapes := d.shapes
 	for i := range shapes {
 		rl.UnloadRenderTexture(shapes[i].Texture)
@@ -54,6 +58,9 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 
 	shapes := generic.NewResource[[]ShapeDefinition](w)
 	d.shapes = *shapes.Get()
+
+	d.prettyTextures = graphics.NewTextureArray(1, graphics.MaxTextureSize)
+	d.nodeSizes = 0
 
 	d.nodeTextures = graphics.NewTextureArray(d.nbNodes, NodeTextureSize)
 
@@ -128,6 +135,11 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	}
 }
 
+type NodeAndPos struct {
+	n *Node
+	p *Position
+}
+
 func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	visible := d.visibleWorld.Get()
 	query := d.filter.Query(w)
@@ -140,10 +152,14 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 	visibleArea := (visible.MaxX - visible.X) * (visible.MaxY - visible.Y)
 
+	// rl.DrawRectangleLines(100, 100, int32(nodeWidth.X-zero.X), int32(nodeWidth.X-zero.X), rl.Green)
+
 	rl.BeginMode2D(*d.camera.Get().Camera)
 
 	toRender := make([]func(), 0)
 	toRenderLater := make([]func(), 0)
+	textured := make([]NodeAndPos, 0)
+	nbVisibleNodes := 0
 	for query.Next() {
 		pos, n, _ := query.Get()
 
@@ -156,6 +172,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			}
 			continue
 		}
+		nbVisibleNodes++
 
 		nodeColor := Palette.Background
 		if hovered == query.Entity() {
@@ -170,7 +187,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		select {
 		case <-ctx.Done():
 			if n.rendered {
-				d.drawOnTexture(n, pos)
+				d.drawNodeTexture(n, pos)
 			} else {
 				rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.LightGray)
 			}
@@ -179,7 +196,8 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		}
 
 		if n.SizeX*n.SizeY < visibleArea/40 && n.rendered {
-			d.drawOnTexture(n, pos)
+			// d.drawNodeTexture(n, pos)
+			textured = append(textured, NodeAndPos{n: n, p: pos})
 			continue
 		}
 
@@ -232,6 +250,52 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		}
 		renderNode()
 	}
+
+	nodeWidth := rl.GetWorldToScreen2D(rl.NewVector2(100, 0), *d.camera.Get().Camera)
+	zero := rl.GetWorldToScreen2D(rl.NewVector2(0, 0), *d.camera.Get().Camera)
+
+	nodeSizes := nodeWidth.X - zero.X
+	if d.nodeSizes != nodeSizes {
+		_, err := d.prettyTextures.Update(nbVisibleNodes, int(nodeSizes))
+		if err != nil {
+			log.Error().Err(err).Msg("pretty texture")
+			return
+		}
+		d.nodeSizes = nodeSizes
+	} else {
+		log.Info().Int("textured", len(textured)).Msg("rendering")
+		texture := d.prettyTextures.At(0)
+		rl.BeginTextureMode(texture)
+		rl.ClearBackground(rl.Brown)
+
+		rl.EndTextureMode()
+
+		indices := make([]int, d.nbNodes)
+		for i := range indices {
+			indices[i] = -1
+		}
+		indiceLookup := make(map[int]int, 0)
+		next := 0
+		for _, n := range textured {
+			if _, ok := indiceLookup[n.n.idx]; !ok {
+				for indices[next] != -1 {
+					next++
+				}
+				indiceLookup[n.n.idx] = next
+				indices[next] = n.n.idx
+				// log.Info().Int("node", n.n.idx).Int("index", next).Msg("render")
+				d.renderNodeInPrettyTexture(n.n, next)
+			}
+		}
+		// rl.DrawTexture(d.prettyTextures.Textures[0].Texture, 0, int32(rl.GetScreenHeight()), rl.White)
+		// rl.BeginMode2D(*d.camera.Get().Camera)
+		for _, n := range textured {
+			pos := rl.GetWorldToScreen2D(rl.NewVector2(float32(n.p.X), float32(n.p.Y)), *d.camera.Get().Camera)
+			d.drawNodePrettyTexture(n.n, indiceLookup[n.n.idx], pos)
+		}
+		// rl.EndMode2D()
+	}
+
 }
 
 func (*DrawNodes) drawShapeFromTexture(scale float32, tr ShapeTransform, pos *Position, midX float32, shapeList ShapeDefinition, reverseY float32, midY float32) {
@@ -247,13 +311,33 @@ func (*DrawNodes) drawShapeFromTexture(scale float32, tr ShapeTransform, pos *Po
 		rl.Vector2Zero(), 0, rl.White)
 }
 
+func (s *DrawNodes) renderNodeInPrettyTexture(n *Node, idx int) {
+	texture := s.prettyTextures.At(idx)
+	rec := s.prettyTextures.NodeTextureRec(idx)
+	scale := n.scale * rec.Width / float32(n.SizeX)
+	rl.BeginTextureMode(texture)
+	for _, tr := range n.ShapeTransforms {
+		shapeList := s.shapes[tr.Id]
+		x := tr.X*scale + n.midX/n.scale*scale
+		y := reverseY*tr.Y*scale + n.midY/n.scale*scale + reverseY*shapeList.MinY*scale
+		if reverseY < 0 {
+			y -= scale * (shapeList.MaxY - shapeList.MinY)
+		}
+
+		for _, s := range shapeList.Shapes {
+			renderShape(s, tr.Highlight, rec.X+x, rec.Y+y+scale*shapeList.MaxY, scale, reverseY*scale)
+		}
+	}
+	rl.EndTextureMode()
+}
+
 func (s *DrawNodes) renderNodeInTexture(n *Node) {
 	texture := s.nodeTextures.At(n.idx)
 	rec := s.nodeTextures.NodeTextureRec(n.idx)
 	rl.BeginTextureMode(texture)
 	for _, tr := range n.ShapeTransforms {
 		shapeList := s.shapes[tr.Id]
-		x := n.midX + n.scale*tr.X + shapeList.MinX*n.scale
+		x := n.midX + n.scale*tr.X
 		y := n.midY + reverseY*n.scale*tr.Y + shapeList.MinY*reverseY*n.scale
 		if reverseY < 0 {
 			y -= n.scale * float32(shapeList.MaxY-shapeList.MinY)
@@ -262,7 +346,7 @@ func (s *DrawNodes) renderNodeInTexture(n *Node) {
 		color := rl.White
 		if tr.Highlight {
 			for _, s := range shapeList.Shapes {
-				renderShape(s, tr.Highlight, rec.X+x-n.scale*shapeList.MinX, rec.Y+y+n.scale*shapeList.MaxY, n.scale, reverseY*n.scale)
+				renderShape(s, tr.Highlight, rec.X+x, rec.Y+y+n.scale*shapeList.MaxY, n.scale, reverseY*n.scale)
 			}
 		} else {
 			rl.DrawTexturePro(shapeList.Texture.Texture,
@@ -276,7 +360,15 @@ func (s *DrawNodes) renderNodeInTexture(n *Node) {
 	n.rendered = true
 }
 
-func (s *DrawNodes) drawOnTexture(n *Node, pos *Position) {
+func (s *DrawNodes) drawNodePrettyTexture(n *Node, idx int, pos rl.Vector2) {
+	rec := s.prettyTextures.NodeTextureRec(idx)
+	texture := s.prettyTextures.At(idx).Texture
+	rec.Y = float32(texture.Height) - rec.Y - rec.Height // texture is upside down...
+	rec.Height = -rec.Height
+	rl.DrawTextureRec(texture, rec, pos, rl.White)
+}
+
+func (s *DrawNodes) drawNodeTexture(n *Node, pos *Position) {
 	rec := s.nodeTextures.NodeTextureRec(n.idx)
 	texture := s.nodeTextures.At(n.idx).Texture
 	rec.Y = float32(texture.Height) - rec.Y - rec.Height // texture is upside down...

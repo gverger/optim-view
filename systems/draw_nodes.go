@@ -6,6 +6,7 @@ import (
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/gverger/optimview/graphics"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
 	"github.com/phuslu/log"
@@ -22,16 +23,14 @@ type DrawNodes struct {
 	filter        generic.Filter3[Position, Node, VisibleElement]
 	visibleWorld  generic.Resource[VisibleWorld]
 	shapes        generic.Resource[[]ShapeDefinition]
-	NodesTextures generic.Resource[[]rl.RenderTexture2D]
+	NodesTextures generic.Resource[graphics.TextureArray]
 	camera        generic.Resource[CameraHandler]
 	selection     generic.Resource[NodeSelection]
 }
 
 // Close implements System.
 func (d *DrawNodes) Close() {
-	for _, t := range *d.NodesTextures.Get() {
-		rl.UnloadRenderTexture(t)
-	}
+	d.NodesTextures.Get().Unload()
 	shapes := *d.shapes.Get()
 	for i := range shapes {
 		rl.UnloadRenderTexture(shapes[i].Texture)
@@ -40,9 +39,7 @@ func (d *DrawNodes) Close() {
 }
 
 const (
-	NodesPerTextureLine = 64
-	LinesPerTexture     = 64
-	NodeTextureSize     = 100 // Nodes are 100x100
+	NodeTextureSize = 100 // Nodes are 100x100
 
 	NodeMinBorderSize = 5
 )
@@ -53,17 +50,10 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.camera = generic.NewResource[CameraHandler](w)
 	d.shapes = generic.NewResource[[]ShapeDefinition](w)
 	d.selection = generic.NewResource[NodeSelection](w)
-	d.NodesTextures = generic.NewResource[[]rl.RenderTexture2D](w)
-	nbTextureLines := (d.nbNodes-1)/NodesPerTextureLine + 1
-	nbTextures := (nbTextureLines-1)/LinesPerTexture + 1
-	textures := d.NodesTextures.Get()
-	for i := 0; i < nbTextures; i++ {
-		*textures = append(*textures, rl.LoadRenderTexture(NodeTextureSize*NodesPerTextureLine, int32(min(LinesPerTexture, nbTextureLines))*NodeTextureSize))
-		rl.BeginTextureMode((*textures)[i])
-		rl.ClearBackground(rl.Fade(rl.White, 0))
-		rl.EndTextureMode()
-		nbTextureLines -= LinesPerTexture
-	}
+
+	d.NodesTextures = generic.NewResource[graphics.TextureArray](w)
+	d.NodesTextures.Add(graphics.NewTextureArray(d.nbNodes, NodeTextureSize))
+
 	shapes := *d.shapes.Get()
 	for i := range *d.shapes.Get() {
 		for j := range shapes[i].Shapes {
@@ -99,17 +89,6 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 		}
 		rl.EndTextureMode()
 	}
-}
-
-func nodeTextureIdx(node int) int {
-	return (node - 1) / (LinesPerTexture * NodesPerTextureLine)
-}
-
-func nodeTextureRec(node int) rl.Rectangle {
-	n := (node - 1) % (LinesPerTexture * NodesPerTextureLine)
-	x := n % NodesPerTextureLine
-	y := n / NodesPerTextureLine
-	return rl.NewRectangle(float32(x*NodeTextureSize), float32(y*NodeTextureSize), NodeTextureSize, NodeTextureSize)
 }
 
 func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
@@ -149,11 +128,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		select {
 		case <-ctx.Done():
 			if n.rendered {
-				rec := nodeTextureRec(n.idx)
-				rec.Height = -rec.Height
-				texture := nodeTextures[nodeTextureIdx(n.idx)].Texture
-				rec.Y = float32(texture.Height) - rec.Y - NodeTextureSize // texture is upside down...
-				rl.DrawTextureRec(texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
+				d.drawOnTexture(n, nodeTextures, pos)
 			} else {
 				rl.DrawRectangleLines(int32(pos.X), int32(pos.Y), int32(n.SizeX), int32(n.SizeY), rl.LightGray)
 			}
@@ -162,11 +137,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		}
 
 		if n.SizeX*n.SizeY < visibleArea/40 && n.rendered {
-			rec := nodeTextureRec(n.idx)
-			rec.Height = -rec.Height
-			texture := nodeTextures[nodeTextureIdx(n.idx)].Texture
-			rec.Y = float32(texture.Height) - rec.Y - NodeTextureSize // texture is upside down...
-			rl.DrawTextureRec(texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
+			d.drawOnTexture(n, nodeTextures, pos)
 			continue
 		}
 
@@ -242,9 +213,9 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 			// We don't want to draw in the texture here since we are in the middle of a Mode2D
 			// We delay the call then
 			toRender = append(toRender, func() {
-				texture := nodeTextures[nodeTextureIdx(n.idx)]
+				texture := nodeTextures.At(n.idx)
 				rl.BeginTextureMode(texture)
-				rec := nodeTextureRec(n.idx)
+				rec := nodeTextures.NodeTextureRec(n.idx)
 				for _, tr := range n.ShapeTransforms {
 					shapeList := shapes[tr.Id]
 					x := midX + scale*tr.X + shapeList.MinX*scale
@@ -278,6 +249,14 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		renderNode()
 	}
 
+}
+
+func (*DrawNodes) drawOnTexture(n *Node, nodeTextures graphics.TextureArray, pos *Position) {
+	rec := nodeTextures.NodeTextureRec(n.idx)
+	texture := nodeTextures.At(n.idx).Texture
+	rec.Y = float32(texture.Height) - rec.Y - rec.Height // texture is upside down...
+	rec.Height = -rec.Height
+	rl.DrawTextureRec(texture, rec, rl.NewVector2(float32(pos.X), float32(pos.Y)), rl.White)
 }
 
 type ShapeColor struct {

@@ -25,6 +25,10 @@ type Node struct {
 	DrawnSizeX float64
 	DrawnSizeY float64
 
+	scale float32
+	midX  float32
+	midY  float32
+
 	color  rl.Color
 	Title  string
 	Text   string
@@ -40,7 +44,7 @@ type Edge struct {
 	To   ecs.Entity
 }
 
-type VisibleElement struct {}
+type VisibleElement struct{}
 
 type Velocity struct {
 	Dx float64

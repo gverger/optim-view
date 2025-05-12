@@ -13,7 +13,7 @@ const (
 	MaxTextureSize = 8192
 )
 
-func NewTextureArray(textures int, textureSize int) *TextureArray {
+func NewTextureArray(textures int, textureSize int) TextureArray {
 	array := TextureArray{
 		textureSize:         textureSize,
 		nodesPerTextureLine: MaxTextureSize / textureSize,
@@ -34,7 +34,7 @@ func NewTextureArray(textures int, textureSize int) *TextureArray {
 		nbTextureLines -= array.nodesPerTextureLine
 	}
 
-	return &array
+	return array
 }
 
 func (array TextureArray) nodeTextureIdx(node int) int {

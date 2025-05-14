@@ -47,6 +47,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 				SizeY:           100,
 				ShapeTransforms: n.Transform,
 				idx:             i + 1,
+				Array:           []int{1, 2, 3, 4},
 			},
 			&VisibleElement{},
 			&Velocity{

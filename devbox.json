@@ -25,6 +25,10 @@
         "cd $INSTALL_DIRECTORY",
         "./optimview.exe"
       ],
+      "debug": [
+        "cd $INSTALL_DIRECTORY",
+        "./optimview.exe --debug"
+      ],
       "test": [
         "echo \"Error: no test specified\" && exit 1"
       ]

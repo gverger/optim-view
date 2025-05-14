@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/gverger/optimview/graph"
 	"github.com/gverger/optimview/systems"
 	"github.com/phuslu/log"
@@ -28,7 +30,22 @@ type InputTree struct {
 	Nodes []Node `json:"nodes"`
 }
 
+type Configuration struct {
+	DebugMode bool
+}
+
+var config = Configuration{
+	DebugMode: false,
+}
+
 func main() {
+
+	for _, o := range os.Args[1:] {
+		if o == "--debug" {
+			config.DebugMode = true
+		}
+	}
+
 	log.DefaultLogger = log.Logger{
 		TimeFormat: "15:04:05",
 		Writer: &log.ConsoleWriter{

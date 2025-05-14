@@ -2,17 +2,18 @@ package systems
 
 import (
 	"context"
-	// "fmt"
+	"fmt"
 	"time"
 
-	// rl "github.com/gen2brain/raylib-go/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/generic"
 	"github.com/phuslu/log"
 )
 
 type Systems struct {
-	systems []System
+	systems   []System
+	debugMode bool
 
 	mappings     generic.Resource[Mappings]
 	mouse        generic.Resource[Mouse]
@@ -32,8 +33,11 @@ type Systems struct {
 	hiddenEdges     *generic.Filter1[Edge]
 }
 
-func New() *Systems {
-	return &Systems{systems: make([]System, 0)}
+func New(debugMode bool) *Systems {
+	return &Systems{
+		systems:   make([]System, 0),
+		debugMode: debugMode,
+	}
 }
 
 func (s *Systems) Initialize(w *ecs.World) {
@@ -70,16 +74,18 @@ func (s *Systems) Add(sys System) {
 func (s Systems) Update(w *ecs.World) {
 	ctx, cancel := context.WithTimeout(context.Background(), 96*time.Millisecond) // Should stop when at speed of 10 FPS
 	defer cancel()
-	// txt := s.debugTxt.Get()
-	// txt.Text = ""
+	txt := s.debugTxt.Get()
+	txt.Text = ""
 	for _, sys := range s.systems {
-		// start := time.Now()
+		start := time.Now()
 		sys.Update(ctx, w)
-		// duration := time.Since(start)
-		// txt.Text += fmt.Sprintf("%T: %dms\n", sys, duration.Milliseconds())
+		duration := time.Since(start)
+		txt.Text += fmt.Sprintf("%T: %dms\n", sys, duration.Milliseconds())
 	}
 
-	// rl.DrawText(txt.Text, 10, 200, 10, rl.Red)
+	if s.debugMode {
+		rl.DrawText(txt.Text, 10, 200, 10, rl.Red)
+	}
 }
 
 func (s Systems) Close() {

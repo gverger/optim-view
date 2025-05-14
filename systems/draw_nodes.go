@@ -2,6 +2,7 @@ package systems
 
 import (
 	"context"
+	"fmt"
 	"image/color"
 	"math"
 
@@ -145,6 +146,9 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	toRenderLater := make([]func(), 0)
 	for query.Next() {
 		pos, n, _ := query.Get()
+		if n.Array[0] != 1 || n.Array[3] != 4 {
+			log.Panic().Msg(fmt.Sprintf("array changed: %+v", n.Array))
+		}
 
 		if pos.X > visible.MaxX || pos.Y > visible.MaxY || pos.X+n.SizeX < visible.X || pos.Y+n.SizeY < visible.Y {
 			// render node texture if there is still time

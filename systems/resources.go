@@ -1,6 +1,7 @@
 package systems
 
 import (
+	"fmt"
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -162,6 +163,10 @@ func NewDebugBoard() *DebugBoard {
 
 func (d *DebugBoard) Write(s string) {
 	d.TextLines = append(d.TextLines, s)
+}
+
+func (d *DebugBoard) Writef(s string, a ...any) {
+	d.TextLines = append(d.TextLines, fmt.Sprintf(s, a))
 }
 
 func (d *DebugBoard) Clean() {

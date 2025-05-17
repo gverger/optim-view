@@ -27,7 +27,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 	nodes := ecs.NewMap6[Position, Node, VisibleElement, Velocity, Shape, Target2](w)
 	// edges := ecs.NewMap2[Edge, VisibleElement](w)
 	// start := ecs.NewMap1[StartOf](w)
-	end := ecs.NewMap1[ChildOf](w)
+	end := ecs.NewMap2[Parent, ChildOf](w)
 
 	nodeLookup := make(map[uint64]ecs.Entity, 0)
 
@@ -78,7 +78,7 @@ func (c *Initializer) Initialize(w *ecs.World) {
 			// 	&VisibleElement{},
 			// )
 
-			end.Add(dst, &ChildOf{}, ecs.Rel[ChildOf](src))
+			end.Add(dst, &Parent{parent: src}, &ChildOf{}, ecs.Rel[ChildOf](src))
 		}
 	}
 

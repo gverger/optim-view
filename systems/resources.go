@@ -151,3 +151,24 @@ func (g *Grid) MoveEntity(e ecs.Entity, oldPos, newPos GridPos) {
 func (g Grid) At(pos GridPos) []ecs.Entity {
 	return g.grid[pos]
 }
+
+type DebugBoard struct {
+	TextLines []string
+}
+
+func NewDebugBoard() *DebugBoard {
+	return &DebugBoard{TextLines: make([]string, 0, 100)}
+}
+
+func (d *DebugBoard) Write(s string) {
+	d.TextLines = append(d.TextLines, s)
+}
+
+func (d *DebugBoard) Clean() {
+	d.TextLines = d.TextLines[:0]
+}
+
+type NoDebugBoard struct {
+}
+
+func (d NoDebugBoard) Write(s string) {}

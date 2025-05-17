@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/ark/ecs"
 	"github.com/phuslu/log"
 )
 
 type Systems struct {
 	systems   []System
+	debug     System
 	debugMode bool
 
+	debugBoard   ecs.Resource[DebugBoard]
 	mappings     ecs.Resource[Mappings]
 	mouse        ecs.Resource[Mouse]
 	visibleWorld ecs.Resource[VisibleWorld]
@@ -58,6 +59,10 @@ func (s *Systems) Initialize(w *ecs.World) {
 	s.grid = ecs.NewResource[Grid](w)
 	s.grid.Add(&Grid{grid: make(map[GridPos][]ecs.Entity)})
 
+	s.debugBoard = ecs.NewResource[DebugBoard](w)
+	s.debugBoard.Add(NewDebugBoard())
+	s.debug.Initialize(w)
+
 	s.debugTxt = ecs.NewResource[DebugText](w)
 	s.debugTxt.Add(&DebugText{})
 
@@ -67,30 +72,41 @@ func (s *Systems) Initialize(w *ecs.World) {
 }
 
 func (s *Systems) Add(sys System) {
-	s.systems = append(s.systems, sys)
+	switch sys.(type) {
+	case *Debug:
+		s.debug = sys
+	default:
+		s.systems = append(s.systems, sys)
+	}
+}
+
+type IDebugBoard interface {
+	Write(s string)
 }
 
 func (s Systems) Update(w *ecs.World) {
 	ctx, cancel := context.WithTimeout(context.Background(), 96*time.Millisecond) // Should stop when at speed of 10 FPS
 	defer cancel()
+	var board IDebugBoard = NoDebugBoard{}
+	if s.debugMode {
+		board = s.debugBoard.Get()
+	}
 	txt := s.debugTxt.Get()
 	txt.Text = ""
 	for _, sys := range s.systems {
 		start := time.Now()
 		sys.Update(ctx, w)
 		duration := time.Since(start)
-		txt.Text += fmt.Sprintf("%T: %dms\n", sys, duration.Milliseconds())
+		board.Write(fmt.Sprintf("%T: %dms", sys, duration.Milliseconds()))
 	}
-
-	if s.debugMode {
-		rl.DrawText(txt.Text, 10, 200, 10, rl.Red)
-	}
+	s.debug.Update(ctx, w)
 }
 
 func (s Systems) Close() {
 	for _, sys := range s.systems {
 		sys.Close()
 	}
+	s.debug.Close()
 }
 
 type System interface {

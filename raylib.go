@@ -47,6 +47,7 @@ type ecosystem struct {
 func (a app) loadTree(font rl.Font) ecosystem {
 	tree := a.trees[a.currentTree]
 	sys := systems.New(config.DebugMode)
+	sys.Add(systems.NewDebug(font, 16))
 	sys.Add(systems.NewInitializer(tree))
 	sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewViewport())

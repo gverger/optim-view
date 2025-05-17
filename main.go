@@ -35,7 +35,7 @@ type Configuration struct {
 }
 
 var config = Configuration{
-	DebugMode: false,
+	DebugMode: true,
 }
 
 func main() {
@@ -47,6 +47,7 @@ func main() {
 	}
 
 	log.DefaultLogger = log.Logger{
+		Level: log.DebugLevel,
 		TimeFormat: "15:04:05",
 		Writer: &log.ConsoleWriter{
 			ColorOutput:    true,

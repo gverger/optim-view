@@ -35,7 +35,7 @@ type Configuration struct {
 }
 
 var config = Configuration{
-	DebugMode: true,
+	DebugMode: false,
 }
 
 func main() {

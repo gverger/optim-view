@@ -49,6 +49,7 @@ func (a app) loadTree(font rl.Font) ecosystem {
 	sys := systems.New(config.DebugMode)
 	sys.Add(systems.NewDebug(font, 16))
 	sys.Add(systems.NewInitializer(tree))
+	sys.Add(systems.NewGeometryCache())
 	sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewViewport())
 	sys.Add(systems.NewMouseSelector())

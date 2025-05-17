@@ -23,10 +23,12 @@ type DrawEdges struct {
 	camera       ecs.Resource[CameraHandler]
 
 	filterNodes    *ecs.Filter2[Position, Node]
-	filterChildren *ecs.Filter3[Position, Node, ChildOf]
+	filterChildren *ecs.Filter4[Position, Node, Parent, ChildOf]
 	filterRoot     *ecs.Filter2[Position, Node]
 
-	debug ecs.Resource[DebugBoard]
+	debug         ecs.Resource[DebugBoard]
+	selected      ecs.Resource[NodeSelection]
+	boundingBoxes ecs.Resource[SubTreeBoundingBoxes]
 }
 
 // Close implements System.
@@ -40,21 +42,18 @@ func (d *DrawEdges) Initialize(w *ecs.World) {
 	d.camera = ecs.NewResource[CameraHandler](w)
 
 	d.filterNodes = ecs.NewFilter2[Position, Node](w).With(ecs.C[VisibleElement]())
-	d.filterChildren = ecs.NewFilter3[Position, Node, ChildOf](w).With(ecs.C[VisibleElement]())
+	d.filterChildren = ecs.NewFilter4[Position, Node, Parent, ChildOf](w).With(ecs.C[VisibleElement]())
 	d.filterRoot = ecs.NewFilter2[Position, Node](w).With(ecs.C[VisibleElement]()).Without(ecs.C[Parent]())
 
 	d.debug = ecs.NewResource[DebugBoard](w)
-}
+	d.selected = ecs.NewResource[NodeSelection](w)
 
-type child struct {
-	e ecs.Entity
-	p *Position
-	n *Node
+	d.boundingBoxes = ecs.NewResource[SubTreeBoundingBoxes](w)
 }
-
-var countDraw = 0
 
 func (d *DrawEdges) drawLevel(ctx context.Context, w *ecs.World, visible VisibleWorld, p1 *Position, from *Node, e ecs.Entity) {
+
+	boundingBoxes := d.boundingBoxes.Get().boundingBoxes
 
 	children := make([]child, 0, 100)
 	children = append(children, child{e: e, p: p1, n: from})
@@ -66,6 +65,11 @@ func (d *DrawEdges) drawLevel(ctx context.Context, w *ecs.World, visible Visible
 		c := children[len(children)-1]
 		children = children[:len(children)-1]
 
+		bb := boundingBoxes[c.e]
+		if bb.X > visible.MaxX || bb.X+bb.Width < visible.X || bb.Y > visible.MaxY || bb.Y+bb.Height < visible.Y {
+			continue
+		}
+
 		p1 := c.p
 		from := c.n
 		e := c.e
@@ -75,7 +79,6 @@ func (d *DrawEdges) drawLevel(ctx context.Context, w *ecs.World, visible Visible
 		if y1 > visible.MaxY {
 			continue
 		}
-		countDraw++
 
 		src := rl.NewVector2(float32(x1), float32(y1))
 
@@ -86,10 +89,9 @@ func (d *DrawEdges) drawLevel(ctx context.Context, w *ecs.World, visible Visible
 		cxRight := visible.X - 1
 		cy := float32(0.0)
 
-		qChildren.Count()
 		// children := make([]child, 0)
 		for qChildren.Next() {
-			p2, to, _ := qChildren.Get()
+			p2, to, _, _ := qChildren.Get()
 
 			x2 := p2.X + to.SizeX/2
 			y2 := p2.Y - 8
@@ -139,16 +141,11 @@ func (d *DrawEdges) Update(ctx context.Context, w *ecs.World) {
 
 	rl.BeginMode2D(*d.camera.Get().Camera)
 
-	countDraw = 0
-
 	rootQ := d.filterRoot.Query()
 	for rootQ.Next() {
 		p, n := rootQ.Get()
-		d.debug.Get().Writef("ROOT = %v", rootQ.Entity())
 		d.drawLevel(ctx, w, *d.visibleWorld.Get(), p, n, rootQ.Entity())
 	}
-
-	d.debug.Get().Writef("Nb draws = %d", countDraw)
 
 	rl.EndMode2D()
 }

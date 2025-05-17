@@ -177,3 +177,28 @@ type NoDebugBoard struct {
 }
 
 func (d NoDebugBoard) Write(s string) {}
+
+type SubTreeBoundingBox struct {
+	rootNode   ecs.Entity
+	parentNode ecs.Entity
+	X          float64
+	Y          float64
+	Width      float64
+	Height     float64
+
+	dirty bool
+}
+
+type SubTreeBoundingBoxes struct {
+	boundingBoxes map[ecs.Entity]*SubTreeBoundingBox
+}
+
+func (boxes *SubTreeBoundingBoxes) NodeMoved(node ecs.Entity) {
+	if _, ok := boxes.boundingBoxes[node]; ok {
+		boxes.boundingBoxes[node].dirty = true
+		for !boxes.boundingBoxes[node].parentNode.IsZero() {
+			node = boxes.boundingBoxes[node].parentNode
+			boxes.boundingBoxes[node].dirty = true
+		}
+	}
+}

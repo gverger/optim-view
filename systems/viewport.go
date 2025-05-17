@@ -47,7 +47,7 @@ func (v *Viewport) Initialize(w *ecs.World) {
 	v.selection.Add(&NodeSelection{})
 
 	v.shape = ecs.NewMap2[Position, Shape](w)
-	v.positions = ecs.NewFilter1[Position](w).With(ecs.C[Node]())
+	v.positions = ecs.NewFilter1[Position](w).With(ecs.C[Node]()).With(ecs.C[VisibleElement]())
 
 	v.move = ecs.NewMap2[Position, Target2](w)
 	v.cameraEntity = v.move.NewEntity(&Position{

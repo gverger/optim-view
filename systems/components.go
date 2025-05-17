@@ -90,6 +90,10 @@ func NewTarget2Empty(duration int) *Target2 {
 	}
 }
 
+type Parent struct {
+	parent ecs.Entity
+}
+
 type ChildOf struct {
 	ecs.RelationMarker
 }

@@ -2,7 +2,6 @@ package systems
 
 import (
 	"context"
-	"fmt"
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -49,8 +48,8 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 		return
 	}
 
-	debug := t.debug.Get()
-	debug.Write(fmt.Sprintf("SELECTED: %v", selection.Selected))
+	// debug := t.debug.Get()
+	// debug.Write(fmt.Sprintf("SELECTED: %v", selection.Selected))
 	children := make([]ecs.Entity, 0)
 
 	childrenQuery := t.children.Query(ecs.Rel[ChildOf](selection.Selected))
@@ -63,7 +62,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	if parentEntity != nil {
 		parent = parentEntity.parent
 	}
-	debug.Writef("children: %d", len(children))
+	// debug.Writef("children: %d", len(children))
 
 	siblings := make([]ecs.Entity, 0)
 	siblingsQuery := t.children.Query(ecs.Rel[ChildOf](parent))

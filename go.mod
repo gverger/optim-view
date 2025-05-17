@@ -34,7 +34,7 @@ require (
 	github.com/kolesa-team/go-webp v1.0.4 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/martinlindhe/imgcat v0.0.0-20160810121042-faa120996cdb // indirect
-	github.com/mlange-42/ark v0.4.2
+	github.com/mlange-42/ark v0.4.3
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

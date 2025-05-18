@@ -19,15 +19,18 @@ type Viewport struct {
 	boundaries   ecs.Resource[Boundaries]
 	navMode      ecs.Resource[NavigationMode]
 
-	selection     ecs.Resource[NodeSelection]
-	shape         *ecs.Map2[Position, Shape]
-	move          *ecs.Map2[Position, Target2]
-	zoom          *ecs.Map2[Size, Target1]
-	positions     *ecs.Filter1[Position]
+	selection ecs.Resource[NodeSelection]
+	shape     *ecs.Map2[Position, Shape]
+	move      *ecs.Map2[Position, Target2]
+	zoom      *ecs.Map2[Size, Target1]
+	positions *ecs.Filter1[Position]
+	root      *ecs.Filter1[Position]
 
 	cameraEntity       ecs.Entity
 	cameraOffsetEntity ecs.Entity
 	cameraZoomEntity   ecs.Entity
+
+	debug ecs.Resource[DebugBoard]
 }
 
 // Close implements System.
@@ -36,6 +39,7 @@ func (v *Viewport) Close() {
 
 // Initialize implements System.
 func (v *Viewport) Initialize(w *ecs.World) {
+	v.debug = ecs.NewResource[DebugBoard](w)
 	v.camera = ecs.NewResource[CameraHandler](w)
 	v.mouse = ecs.NewResource[Mouse](w)
 	v.visibleWorld = ecs.NewResource[VisibleWorld](w)
@@ -48,6 +52,7 @@ func (v *Viewport) Initialize(w *ecs.World) {
 
 	v.shape = ecs.NewMap2[Position, Shape](w)
 	v.positions = ecs.NewFilter1[Position](w).With(ecs.C[Node]()).With(ecs.C[VisibleElement]())
+	v.root = ecs.NewFilter1[Position](w).With(ecs.C[Node]()).With(ecs.C[VisibleElement]()).Without(ecs.C[Parent]())
 
 	v.move = ecs.NewMap2[Position, Target2](w)
 	v.cameraEntity = v.move.NewEntity(&Position{
@@ -130,40 +135,53 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		selection.Selected = selection.Hovered
 	}
 
-	if selection.HasSelected() && (rl.IsKeyPressed(rl.KeySpace)) {
-		pos, shape := v.shape.Get(selection.Selected)
-
-		points := make([]Position, 0, len(shape.Points))
-		for _, p := range shape.Points {
-			points = append(points, Position{pos.X + p.X, pos.Y + p.Y})
+	if rl.IsKeyPressed(rl.KeySpace) {
+		nodeTarget := ecs.Entity{}
+		if selection.HasSelected() {
+			nodeTarget = selection.Selected
+		} else if selection.HasHovered() {
+			nodeTarget = selection.Hovered
+		} else {
+			rootQuery := v.root.Query()
+			for rootQuery.Next() {
+				nodeTarget = rootQuery.Entity()
+			}
 		}
+		if !nodeTarget.IsZero() {
+			pos, shape := v.shape.Get(nodeTarget)
 
-		target.StartX = float64(camera.Target.X)
-		target.StartY = float64(camera.Target.Y)
-		cpos.X = target.StartX
-		cpos.Y = target.StartY
+			points := make([]Position, 0, len(shape.Points))
+			for _, p := range shape.Points {
+				points = append(points, Position{pos.X + p.X, pos.Y + p.Y})
+			}
 
-		targetZoom.StartX = camera.Zoom
-		zoom.Value = camera.Zoom
+			target.StartX = float64(camera.Target.X)
+			target.StartY = float64(camera.Target.Y)
+			cpos.X = target.StartX
+			cpos.Y = target.StartY
 
-		t, z := cameraHandler.FocusOn(points...)
+			targetZoom.StartX = camera.Zoom
+			zoom.Value = camera.Zoom
 
-		target.X = float64(t.X)
-		target.Y = float64(t.Y)
-		target.SinceTick = 0
+			t, z := cameraHandler.FocusOn(points...)
 
-		targetOffset.StartX = float64(camera.Offset.X)
-		targetOffset.StartY = float64(camera.Offset.Y)
-		offsetpos.X = targetOffset.StartX
-		offsetpos.Y = targetOffset.StartY
+			target.X = float64(t.X)
+			target.Y = float64(t.Y)
+			target.SinceTick = 0
 
-		targetOffset.X = float64(rl.GetScreenWidth()) / 2
-		targetOffset.Y = float64(rl.GetScreenHeight()) / 2
-		targetOffset.SinceTick = 0
+			targetOffset.StartX = float64(camera.Offset.X)
+			targetOffset.StartY = float64(camera.Offset.Y)
+			offsetpos.X = targetOffset.StartX
+			offsetpos.Y = targetOffset.StartY
 
-		if target.X == target.StartX && target.Y == target.StartY {
-			targetZoom.X = z
-			targetZoom.SinceTick = 0
+			targetOffset.X = float64(rl.GetScreenWidth()) / 2
+			targetOffset.Y = float64(rl.GetScreenHeight()) / 2
+			targetOffset.SinceTick = 0
+
+			if target.X == target.StartX && target.Y == target.StartY {
+				targetZoom.X = z
+				targetZoom.SinceTick = 0
+			}
 		}
 	}
 

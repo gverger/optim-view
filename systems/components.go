@@ -35,7 +35,6 @@ type Node struct {
 	hidden bool
 
 	ShapeTransforms []ShapeTransform
-	Array           []int
 	rendered        bool
 	idx             int
 }

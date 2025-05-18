@@ -151,11 +151,11 @@ func (e *treeEngine) Step() SceneID {
 
 			e.ecosystem.sys.Hide(&e.ecosystem.world, toHide)
 
-			go computePositions(e.app.events, tree.Tree)
+			go computePositionsAsync(e.app.events, tree.Tree)
 		} else {
 			e.ecosystem.sys.ShowAll(&e.ecosystem.world)
 
-			go computePositions(e.app.events, currentTree.Tree)
+			go computePositionsAsync(e.app.events, currentTree.Tree)
 		}
 
 		e.allNodes = !e.allNodes

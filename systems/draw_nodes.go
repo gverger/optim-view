@@ -2,7 +2,6 @@ package systems
 
 import (
 	"context"
-	"fmt"
 	"image/color"
 	"math"
 
@@ -28,6 +27,8 @@ type DrawNodes struct {
 	visibleWorld ecs.Resource[VisibleWorld]
 	camera       ecs.Resource[CameraHandler]
 	selection    ecs.Resource[NodeSelection]
+
+	debug         ecs.Resource[DebugBoard]
 }
 
 // Close implements System.
@@ -51,6 +52,7 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	d.visibleWorld = ecs.NewResource[VisibleWorld](w)
 	d.camera = ecs.NewResource[CameraHandler](w)
 	d.selection = ecs.NewResource[NodeSelection](w)
+	d.debug = ecs.NewResource[DebugBoard](w)
 
 	shapes := ecs.NewResource[[]ShapeDefinition](w)
 	d.shapes = *shapes.Get()
@@ -146,9 +148,6 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	toRenderLater := make([]func(), 0)
 	for query.Next() {
 		pos, n, _ := query.Get()
-		if n.Array[0] != 1 || n.Array[3] != 4 {
-			log.Panic().Msg(fmt.Sprintf("array changed: %+v", n.Array))
-		}
 
 		if pos.X > visible.MaxX || pos.Y > visible.MaxY || pos.X+n.SizeX < visible.X || pos.Y+n.SizeY < visible.Y {
 			// render node texture if there is still time

@@ -166,7 +166,7 @@ func (d *DebugBoard) Write(s string) {
 }
 
 func (d *DebugBoard) Writef(s string, a ...any) {
-	d.TextLines = append(d.TextLines, fmt.Sprintf(s, a))
+	d.TextLines = append(d.TextLines, fmt.Sprintf(s, a...))
 }
 
 func (d *DebugBoard) Clean() {

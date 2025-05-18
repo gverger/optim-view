@@ -27,7 +27,11 @@ func importFile(events chan<- Event, filename string) {
 	events <- SwitchSearchTree{graphs: graphs}
 }
 
-func computePositions(events chan<- Event, tree *GraphView) {
+func computePositionsAsync(events chan<- Event, tree *GraphView) {
+	events <- MoveNodes{positions: computePositions(tree)}
+}
+
+func computePositions(tree *GraphView) map[uint64]graph.Position {
 	positions := graph.ComputeLayeredCoordinates(*tree)
 	offset := graph.Position{X: positions[0].X - rl.GetScreenWidth()/2, Y: positions[0].Y - rl.GetScreenHeight()/4}
 	for i, p := range positions {
@@ -36,7 +40,7 @@ func computePositions(events chan<- Event, tree *GraphView) {
 			Y: p.Y - offset.Y,
 		}
 	}
-	events <- MoveNodes{positions: positions}
+	return positions
 }
 
 type ecosystem struct {
@@ -46,9 +50,11 @@ type ecosystem struct {
 
 func (a app) loadTree(font rl.Font) ecosystem {
 	tree := a.trees[a.currentTree]
+	positions := computePositions(tree.Tree)
+
 	sys := systems.New(config.DebugMode)
 	sys.Add(systems.NewDebug(font, 16))
-	sys.Add(systems.NewInitializer(tree))
+	sys.Add(systems.NewInitializer(tree, positions))
 	sys.Add(systems.NewGeometryCache())
 	sys.Add(systems.NewTargeter())
 	sys.Add(systems.NewViewport())
@@ -59,8 +65,6 @@ func (a app) loadTree(font rl.Font) ecosystem {
 	sys.Add(systems.NewTreeNavigator())
 	w := ecs.NewWorld()
 	sys.Initialize(&w)
-
-	go computePositions(a.events, tree.Tree)
 
 	return ecosystem{
 		sys:   sys,

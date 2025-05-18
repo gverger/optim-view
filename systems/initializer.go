@@ -5,15 +5,17 @@ import (
 	"fmt"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/gverger/optimview/graph"
 	"github.com/mlange-42/ark/ecs"
 )
 
-func NewInitializer(tree SearchTree) *Initializer {
-	return &Initializer{tree: tree}
+func NewInitializer(tree SearchTree, initialPositions map[uint64]graph.Position) *Initializer {
+	return &Initializer{tree: tree, initialPositions: initialPositions}
 }
 
 type Initializer struct {
-	tree SearchTree
+	tree             SearchTree
+	initialPositions map[uint64]graph.Position
 }
 
 // Close implements System.
@@ -34,8 +36,11 @@ func (c *Initializer) Initialize(w *ecs.World) {
 	graph := c.tree.Tree
 
 	for i, n := range graph.Nodes {
+		pos := c.initialPositions[graph.NodeID(n)]
 		e := nodes.NewEntity(
 			&Position{
+				X: float64(pos.X),
+				Y: float64(pos.Y),
 				// X: float64(n.XY[0]),
 				// Y: float64(n.XY[1]),
 			},
@@ -47,7 +52,6 @@ func (c *Initializer) Initialize(w *ecs.World) {
 				SizeY:           100,
 				ShapeTransforms: n.Transform,
 				idx:             i + 1,
-				Array:           []int{1, 2, 3, 4},
 			},
 			&VisibleElement{},
 			&Velocity{
@@ -62,10 +66,13 @@ func (c *Initializer) Initialize(w *ecs.World) {
 					{0, 100},
 				},
 			},
-			&Target2{},
+			&Target2{
+				X: float64(pos.X),
+				Y: float64(pos.Y),
+				Done: true},
 		)
 		nodeLookup[n.Id] = e
-		grid.AddEntity(e, GridPos{})
+		grid.AddEntity(e, GridCoords(pos.X, pos.Y))
 	}
 
 	for i, e := range graph.Edges {

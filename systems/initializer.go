@@ -26,7 +26,7 @@ func (c *Initializer) Close() {
 func (c *Initializer) Initialize(w *ecs.World) {
 	gridResource := ecs.NewResource[Grid](w)
 	grid := gridResource.Get()
-	nodes := ecs.NewMap6[Position, Node, VisibleElement, Velocity, Shape, Target2](w)
+	nodes := ecs.NewMap5[Position, Node, VisibleElement, Velocity, Shape](w)
 	// edges := ecs.NewMap2[Edge, VisibleElement](w)
 	// start := ecs.NewMap1[StartOf](w)
 	end := ecs.NewMap2[Parent, ChildOf](w)
@@ -66,10 +66,6 @@ func (c *Initializer) Initialize(w *ecs.World) {
 					{0, 100},
 				},
 			},
-			&Target2{
-				X: float64(pos.X),
-				Y: float64(pos.Y),
-				Done: true},
 		)
 		nodeLookup[n.Id] = e
 		grid.AddEntity(e, GridCoords(pos.X, pos.Y))

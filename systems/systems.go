@@ -20,7 +20,6 @@ type Systems struct {
 	visibleWorld ecs.Resource[VisibleWorld]
 	boundaries   ecs.Resource[Boundaries]
 	camera       ecs.Resource[CameraHandler]
-	debugTxt     ecs.Resource[DebugText]
 	grid         ecs.Resource[Grid]
 
 	targetBuilder *ecs.Map1[Target2]
@@ -63,9 +62,6 @@ func (s *Systems) Initialize(w *ecs.World) {
 	s.debugBoard.Add(NewDebugBoard())
 	s.debug.Initialize(w)
 
-	s.debugTxt = ecs.NewResource[DebugText](w)
-	s.debugTxt.Add(&DebugText{})
-
 	for _, s := range s.systems {
 		s.Initialize(w)
 	}
@@ -91,8 +87,6 @@ func (s Systems) Update(w *ecs.World) {
 	if s.debugMode {
 		board = s.debugBoard.Get()
 	}
-	txt := s.debugTxt.Get()
-	txt.Text = ""
 	for _, sys := range s.systems {
 		start := time.Now()
 		sys.Update(ctx, w)

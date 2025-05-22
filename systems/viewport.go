@@ -19,12 +19,13 @@ type Viewport struct {
 	boundaries   ecs.Resource[Boundaries]
 	navMode      ecs.Resource[NavigationMode]
 
-	selection ecs.Resource[NodeSelection]
-	shape     *ecs.Map2[Position, Shape]
-	move      *ecs.Map2[Position, Target2]
-	zoom      *ecs.Map2[Size, Target1]
-	positions *ecs.Filter1[Position]
-	root      *ecs.Filter1[Position]
+	selection     ecs.Resource[NodeSelection]
+	shape         *ecs.Map2[Position, Shape]
+	move          *ecs.Map2[Position, Target2]
+	zoom          *ecs.Map2[Size, Target1]
+	positions     *ecs.Filter1[Position]
+	root          *ecs.Filter1[Position]
+	boundingBoxes ecs.Resource[SubTreeBoundingBoxes]
 
 	cameraEntity       ecs.Entity
 	cameraOffsetEntity ecs.Entity
@@ -53,6 +54,7 @@ func (v *Viewport) Initialize(w *ecs.World) {
 	v.shape = ecs.NewMap2[Position, Shape](w)
 	v.positions = ecs.NewFilter1[Position](w).With(ecs.C[Node]()).With(ecs.C[VisibleElement]())
 	v.root = ecs.NewFilter1[Position](w).With(ecs.C[Node]()).With(ecs.C[VisibleElement]()).Without(ecs.C[Parent]())
+	v.boundingBoxes = ecs.NewResource[SubTreeBoundingBoxes](w)
 
 	v.move = ecs.NewMap2[Position, Target2](w)
 	v.cameraEntity = v.move.NewEntity(&Position{
@@ -207,44 +209,30 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
 	}
 
-	nodes := v.positions.Query()
-	if nodes.Next() {
-		p := nodes.Get()
-		minPos := Position{p.X, p.Y}
-		maxPos := Position{p.X + 100, p.Y + 100}
-		for nodes.Next() {
-			p := nodes.Get()
-			if p.X < minPos.X {
-				minPos.X = p.X
+	rootQuery := v.root.Query()
+	if rootQuery.Next() {
+		bb := v.boundingBoxes.Get().boundingBoxes[rootQuery.Entity()]
+		rootQuery.Close()
+		if !bb.dirty {
+
+			minWin := rl.GetWorldToScreen2D(rl.NewVector2(float32(bb.X), float32(bb.Y)), *camera)
+			maxWin := rl.GetWorldToScreen2D(rl.NewVector2(float32(bb.X+bb.Width), float32(bb.Y+bb.Height)), *camera)
+
+			if minWin.X > float32(rl.GetScreenWidth())/2 {
+				camera.Offset.X += float32(rl.GetScreenWidth())/2 - minWin.X
 			}
-			if p.X+100 > maxPos.X {
-				maxPos.X = p.X + 100
+
+			if maxWin.X < float32(rl.GetScreenWidth())/2 {
+				camera.Offset.X += float32(rl.GetScreenWidth())/2 - maxWin.X
 			}
-			if p.Y < minPos.Y {
-				minPos.Y = p.Y
+
+			if minWin.Y > float32(rl.GetScreenHeight())/2 {
+				camera.Offset.Y += float32(rl.GetScreenHeight())/2 - minWin.Y
 			}
-			if p.Y+100 > maxPos.Y {
-				maxPos.Y = p.Y + 100
+
+			if maxWin.Y < float32(rl.GetScreenHeight())/2 {
+				camera.Offset.Y += float32(rl.GetScreenHeight())/2 - maxWin.Y
 			}
-		}
-
-		minWin := rl.GetWorldToScreen2D(rl.NewVector2(float32(minPos.X), float32(minPos.Y)), *camera)
-		maxWin := rl.GetWorldToScreen2D(rl.NewVector2(float32(maxPos.X), float32(maxPos.Y)), *camera)
-
-		if minWin.X > float32(rl.GetScreenWidth())/2 {
-			camera.Offset.X += float32(rl.GetScreenWidth())/2 - minWin.X
-		}
-
-		if maxWin.X < float32(rl.GetScreenWidth())/2 {
-			camera.Offset.X += float32(rl.GetScreenWidth())/2 - maxWin.X
-		}
-
-		if minWin.Y > float32(rl.GetScreenHeight())/2 {
-			camera.Offset.Y += float32(rl.GetScreenHeight())/2 - minWin.Y
-		}
-
-		if maxWin.Y < float32(rl.GetScreenHeight())/2 {
-			camera.Offset.Y += float32(rl.GetScreenHeight())/2 - maxWin.Y
 		}
 	}
 

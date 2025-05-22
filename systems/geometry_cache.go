@@ -76,65 +76,39 @@ type child struct {
 	parent *Parent
 }
 
-func (s *GeometryCache) updateCache(ctx context.Context, w *ecs.World, p *Position, n *Node, e ecs.Entity) {
+func (s *GeometryCache) recUpdateCache(ctx context.Context, w *ecs.World, p *Position, n *Node, e ecs.Entity, boundingBoxes map[ecs.Entity]*SubTreeBoundingBox) {
+	if !boundingBoxes[e].dirty {
+		return
+	}
+	if ctx.Err() != nil {
+		return
+	}
+	parentBB := boundingBoxes[e]
+	parentBB.X = p.X
+	parentBB.Y = p.Y
+	parentBB.Width = n.SizeX
+	parentBB.Height = n.SizeY
 
-	boundingBoxes := s.boundingBoxes.Get().boundingBoxes
-
-	nodesInOrder := make([]child, 0)
-
-	children := make([]child, 0, 100)
-
-	children = append(children, child{e: e, p: p, n: n})
-	for len(children) > 0 {
-		countCache++
-		if ctx.Err() != nil {
+	qChildren := s.filterChildren.Query(ecs.Rel[ChildOf](e))
+	for qChildren.Next() {
+		c := qChildren.Entity()
+		cP, cN, _, _ := qChildren.Get()
+		s.recUpdateCache(ctx, w, cP, cN, c, boundingBoxes)
+		childBB := boundingBoxes[c]
+		if childBB.dirty {
+			qChildren.Close()
 			return
 		}
 
-		c := children[len(children)-1]
-		children = children[:len(children)-1]
-		nodesInOrder = append(nodesInOrder, c)
-		e := c.e
-		p := c.p
-		n := c.n
+		x2 := max(parentBB.X+parentBB.Width, childBB.X+childBB.Width)
+		y2 := max(parentBB.Y+parentBB.Height, childBB.Y+childBB.Height)
 
-		bb := boundingBoxes[e]
-
-		if !bb.dirty {
-			continue
-		}
-		bb.dirty = false
-		bb.X = p.X
-		bb.Y = p.Y
-		bb.Width = n.SizeX
-		bb.Height = n.SizeY
-
-		qChildren := s.filterChildren.Query(ecs.Rel[ChildOf](e))
-		for qChildren.Next() {
-			c := qChildren.Entity()
-
-			p2, to, pa, _ := qChildren.Get()
-
-			children = append(children, child{e: c, p: p2, n: to, parent: pa})
-		}
+		parentBB.X = min(parentBB.X, childBB.X)
+		parentBB.Y = min(parentBB.Y, childBB.Y)
+		parentBB.Width = x2 - parentBB.X
+		parentBB.Height = y2 - parentBB.Y
 	}
-
-	for j := range nodesInOrder[1:] {
-		i := len(nodesInOrder) - j - 1
-		node := nodesInOrder[i]
-
-		parent := node.parent.parent
-		c := node.e
-
-		newX2 := max(boundingBoxes[parent].X+boundingBoxes[parent].Width, boundingBoxes[c].X+boundingBoxes[c].Width)
-		newY2 := max(boundingBoxes[parent].Y+boundingBoxes[parent].Height, boundingBoxes[c].Y+boundingBoxes[c].Height)
-
-		boundingBoxes[parent].X = min(boundingBoxes[parent].X, boundingBoxes[c].X)
-		boundingBoxes[parent].Y = min(boundingBoxes[parent].Y, boundingBoxes[c].Y)
-		boundingBoxes[parent].Width = newX2 - boundingBoxes[parent].X
-		boundingBoxes[parent].Height = newY2 - boundingBoxes[parent].Y
-	}
-
+	parentBB.dirty = false
 }
 
 var countCache = 0
@@ -144,7 +118,7 @@ func (s *GeometryCache) Update(ctx context.Context, w *ecs.World) {
 	countCache = 0
 	for rootQuery.Next() {
 		p, n := rootQuery.Get()
-		s.updateCache(ctx, w, p, n, rootQuery.Entity())
+		s.recUpdateCache(ctx, w, p, n, rootQuery.Entity(), s.boundingBoxes.Get().boundingBoxes)
 	}
 }
 

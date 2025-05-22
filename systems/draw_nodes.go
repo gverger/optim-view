@@ -28,7 +28,7 @@ type DrawNodes struct {
 	camera       ecs.Resource[CameraHandler]
 	selection    ecs.Resource[NodeSelection]
 
-	debug         ecs.Resource[DebugBoard]
+	debug ecs.Resource[DebugBoard]
 }
 
 // Close implements System.
@@ -151,7 +151,7 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 
 		if pos.X > visible.MaxX || pos.Y > visible.MaxY || pos.X+n.SizeX < visible.X || pos.Y+n.SizeY < visible.Y {
 			// render node texture if there is still time
-			if !n.rendered && len(toRenderLater) < 100 {
+			if !n.rendered {
 				toRenderLater = append(toRenderLater, func() {
 					d.renderNodeInTexture(n)
 				})
@@ -228,11 +228,15 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 		renderNode()
 	}
 
-	for _, renderNode := range toRenderLater {
-		if ctx.Err() != nil {
-			break
+	if len(toRenderLater) > 0 {
+		textSize := rl.MeasureTextEx(d.font, "pre-rendering nodes...", 16, 0)
+		rl.DrawTextEx(d.font, "prerendering nodes...", rl.NewVector2(float32(rl.GetScreenWidth())-textSize.X, float32(rl.GetScreenHeight())-textSize.Y), 16, 0, rl.Gray)
+		for _, renderNode := range toRenderLater {
+			if ctx.Err() != nil {
+				break
+			}
+			renderNode()
 		}
-		renderNode()
 	}
 }
 

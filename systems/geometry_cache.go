@@ -90,13 +90,21 @@ func (s *GeometryCache) recUpdateCache(ctx context.Context, w *ecs.World, p *Pos
 	parentBB.Height = n.SizeY
 
 	qChildren := s.filterChildren.Query(ecs.Rel[ChildOf](e))
+	children := make([]child, 0, 16)
 	for qChildren.Next() {
 		c := qChildren.Entity()
 		cP, cN, _, _ := qChildren.Get()
-		s.recUpdateCache(ctx, w, cP, cN, c, boundingBoxes)
-		childBB := boundingBoxes[c]
+		children = append(children, child{
+			e: c,
+			p: cP,
+			n: cN,
+		})
+	}
+
+	for _, c := range children {
+		s.recUpdateCache(ctx, w, c.p, c.n, c.e, boundingBoxes)
+		childBB := boundingBoxes[c.e]
 		if childBB.dirty {
-			qChildren.Close()
 			return
 		}
 

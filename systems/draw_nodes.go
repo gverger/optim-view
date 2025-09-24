@@ -2,6 +2,7 @@ package systems
 
 import (
 	"context"
+	"fmt"
 	"image/color"
 	"math"
 
@@ -229,8 +230,12 @@ func (d *DrawNodes) Update(ctx context.Context, w *ecs.World) {
 	}
 
 	if len(toRenderLater) > 0 {
-		textSize := rl.MeasureTextEx(d.font, "pre-rendering nodes...", 16, 0)
-		rl.DrawTextEx(d.font, "prerendering nodes...", rl.NewVector2(float32(rl.GetScreenWidth())-textSize.X, float32(rl.GetScreenHeight())-textSize.Y), 16, 0, rl.Gray)
+		msg := fmt.Sprintf("pre-rendering %dk nodes...", len(toRenderLater)/1000)
+		if len(toRenderLater) <= 1000 {
+			msg = fmt.Sprintf("pre-rendering %d nodes...", len(toRenderLater))
+		}
+		textSize := rl.MeasureTextEx(d.font, msg, 16, 0)
+		rl.DrawTextEx(d.font, msg, rl.NewVector2(float32(rl.GetScreenWidth())-textSize.X, float32(rl.GetScreenHeight())-textSize.Y), 16, 0, rl.Gray)
 		for _, renderNode := range toRenderLater {
 			if ctx.Err() != nil {
 				break

@@ -30,6 +30,7 @@ require (
 	github.com/go-latex/latex v0.0.0-20240709081214-31cef3c7570e // indirect
 	github.com/go-text/typesetting v0.2.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/iancoleman/orderedmap v0.3.0
 	github.com/josephspurrier/goversioninfo v1.4.1 // indirect
 	github.com/kolesa-team/go-webp v1.0.4 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect

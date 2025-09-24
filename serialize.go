@@ -17,6 +17,7 @@ import (
 	"github.com/gverger/optimview/systems"
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/iancoleman/orderedmap"
 	"github.com/phuslu/log"
 )
 
@@ -117,18 +118,10 @@ type ShapePos struct {
 }
 
 type TNode struct {
-	Id                 uint64
-	GuideArea          float32
-	ItemArea           float32
-	ItemConvexHullArea float32
-	NumberOfBins       uint32
-	NumberOfItems      uint32
-	ParentId           int64
-	Profit             float32
-	TrapezoidSetId     int
-	X                  float32
-	Y                  float32
-	Plot               []ShapePos
+	Id       uint64
+	ParentId int64
+	Plot     []ShapePos
+	Data     orderedmap.OrderedMap
 }
 
 type Tree struct {
@@ -229,5 +222,15 @@ func (t Tree) Shapes() []systems.ShapeDefinition {
 }
 
 func nodeDetailsText(n TNode) string {
-	return fmt.Sprintf("Profit    : %v\nItem Area : %v\nGuide Area: %v", n.Profit, n.ItemArea, n.GuideArea)
+	sep := ""
+	sb := strings.Builder{}
+	for _, key := range n.Data.Keys() {
+		value, ok := n.Data.Get(key)
+		if ok {
+			sb.WriteString(fmt.Sprintf("%s%v: %v", sep, key, value))
+			sep = "\n"
+		}
+	}
+
+	return fmt.Sprintf(sb.String())
 }

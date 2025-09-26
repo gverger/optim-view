@@ -41,7 +41,6 @@ func NewTreeScene(app app, font rl.Font) *TreeScene {
 			editMode:      false,
 			nodeToFind:    "",
 			findMode:      false,
-			graphTexture:  rl.LoadRenderTexture(int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight())),
 			uiTexture:     rl.LoadRenderTexture(int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight())),
 			mouseCaptured: false,
 		},
@@ -60,7 +59,6 @@ type treeEngine struct {
 	nodeToFind string
 	findMode   bool
 
-	graphTexture  rl.RenderTexture2D
 	uiTexture     rl.RenderTexture2D
 	mouseCaptured bool
 }
@@ -214,19 +212,20 @@ func (e *treeEngine) drawUI() {
 func (e *treeEngine) Step() SceneID {
 	e.drawUI()
 
-	if !e.mouseCaptured {
-		rl.BeginTextureMode(e.graphTexture)
-		rl.ClearBackground(rl.RayWhite)
-		e.ecosystem.sys.Update(&e.ecosystem.world)
-		rl.EndTextureMode()
-	}
-	rl.BeginDrawing()
-	rl.DrawTextureRec(e.graphTexture.Texture, rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), -float32(rl.GetScreenHeight())), rl.Vector2Zero(), rl.White)
 	if e.mouseCaptured {
-		rl.DrawRectangle(0, 0, int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight()), rl.Fade(rl.Black, 0.1))
+		e.ecosystem.sys.CaptureInput()
+	} else {
+		e.ecosystem.sys.ReleaseInput()
 	}
+
+	rl.BeginDrawing()
+	rl.ClearBackground(rl.RayWhite)
+
+	e.ecosystem.sys.Update(&e.ecosystem.world)
+
 	rl.DrawTextureRec(e.uiTexture.Texture, rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), -float32(rl.GetScreenHeight())), rl.Vector2Zero(), rl.White)
 
 	rl.EndDrawing()
+
 	return TreeSceneID
 }

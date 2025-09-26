@@ -16,7 +16,7 @@ type NodeDetails struct {
 	font rl.Font
 
 	nodes  *ecs.Map3[Position, Node, VisibleElement]
-	mouse  ecs.Resource[Mouse]
+	input  ecs.Resource[Input]
 	camera ecs.Resource[CameraHandler]
 
 	selection ecs.Resource[NodeSelection]
@@ -29,7 +29,7 @@ func (n *NodeDetails) Close() {
 // Initialize implements System.
 func (n *NodeDetails) Initialize(w *ecs.World) {
 	n.nodes = ecs.NewMap3[Position, Node, VisibleElement](w)
-	n.mouse = ecs.NewResource[Mouse](w)
+	n.input = ecs.NewResource[Input](w)
 	n.camera = ecs.NewResource[CameraHandler](w)
 	n.selection = ecs.NewResource[NodeSelection](w)
 }
@@ -40,14 +40,14 @@ func (n *NodeDetails) Update(ctx context.Context, w *ecs.World) {
 	if selection.HasHovered() {
 		pos, node, _ := n.nodes.Get(selection.Hovered)
 		n.displayDetails(node, pos)
-
 	}
 }
 
 func (n *NodeDetails) displayDetails(hoveredNode *Node, pos *Position) {
 	txtDims := rl.MeasureTextEx(n.font, hoveredNode.Text, 32, 0)
 
-	mousePosition := rl.GetMousePosition()
+	mouse := n.input.Get().Mouse.OnScreen
+	mousePosition := rl.Vector2{X: float32(mouse.X), Y: float32(mouse.Y)}
 
 	distX := float32(50)
 

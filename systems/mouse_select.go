@@ -17,7 +17,7 @@ type MouseSelector struct {
 	mapper *ecs.Map3[Position, Shape, VisibleElement]
 	grid   ecs.Resource[Grid]
 
-	mouse     ecs.Resource[Mouse]
+	input     ecs.Resource[Input]
 	selection ecs.Resource[NodeSelection]
 }
 
@@ -28,16 +28,24 @@ func (m *MouseSelector) Close() {
 func (m *MouseSelector) Initialize(w *ecs.World) {
 	m.shapes = ecs.NewFilter3[Position, Shape, VisibleElement](w)
 	m.mapper = ecs.NewMap3[Position, Shape, VisibleElement](w)
-	m.mouse = ecs.NewResource[Mouse](w)
+	m.input = ecs.NewResource[Input](w)
 	m.selection = ecs.NewResource[NodeSelection](w)
 	m.grid = ecs.NewResource[Grid](w)
 }
 
 func (m *MouseSelector) Update(ctx context.Context, w *ecs.World) {
-	mWorld := m.mouse.Get().InWorld
+	selection := m.selection.Get()
+
+	input := m.input.Get()
+
+	if !input.Active {
+		selection.Hovered = ecs.Entity{}
+		return
+	}
+
+	mWorld := input.Mouse.InWorld
 	mouse := rl.NewVector2(float32(mWorld.X), float32(mWorld.Y))
 
-	selection := m.selection.Get()
 	if selection.HasHovered() {
 		if m.mapper.HasAll(selection.Hovered) {
 			pos, shape, _ := m.mapper.Get(selection.Hovered)

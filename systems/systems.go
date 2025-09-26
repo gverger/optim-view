@@ -16,7 +16,7 @@ type Systems struct {
 
 	debugBoard   ecs.Resource[DebugBoard]
 	mappings     ecs.Resource[Mappings]
-	mouse        ecs.Resource[Mouse]
+	input        ecs.Resource[Input]
 	visibleWorld ecs.Resource[VisibleWorld]
 	boundaries   ecs.Resource[Boundaries]
 	camera       ecs.Resource[CameraHandler]
@@ -42,8 +42,8 @@ func New(debugMode bool) *Systems {
 
 func (s *Systems) Initialize(w *ecs.World) {
 	s.mappings = ecs.NewResource[Mappings](w)
-	s.mouse = ecs.NewResource[Mouse](w)
-	s.mouse.Add(&Mouse{})
+	s.input = ecs.NewResource[Input](w)
+	s.input.Add(&Input{})
 
 	s.visibleWorld = ecs.NewResource[VisibleWorld](w)
 	s.visibleWorld.Add(&VisibleWorld{})
@@ -194,6 +194,14 @@ func (s Systems) GoToNode(nodeId uint64) {
 			break
 		}
 	}
+}
+
+func (s Systems) CaptureInput() {
+	s.input.Get().Active = false
+}
+
+func (s Systems) ReleaseInput() {
+	s.input.Get().Active = true
 }
 
 func (s Systems) SamePositions(nodeId uint64, oldSystems Systems) {

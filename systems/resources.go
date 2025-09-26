@@ -12,9 +12,36 @@ type Mappings struct {
 	edgeLookup map[[2]uint64]ecs.Entity
 }
 
+type Input struct {
+	Active bool
+
+	Mouse  Mouse
+
+	KeyPressed Keyboard
+}
+
+type Keyboard struct {
+	Down  bool
+	Up    bool
+	Right bool
+	Left  bool
+	Space bool
+}
+
 type Mouse struct {
-	OnScreen Position
-	InWorld  Position
+	OnScreen         Position
+	InWorld          Position
+	Delta            Position
+	VerticalScroll   float32
+	HorizontalScroll float32
+
+	LeftButton  MouseButton
+	RightButton MouseButton
+}
+
+type MouseButton struct {
+	Pressed bool
+	Down    bool
 }
 
 // Boundaries of the graph

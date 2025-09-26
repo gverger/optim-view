@@ -4,7 +4,6 @@ import (
 	"context"
 	"math"
 
-	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -21,6 +20,7 @@ type TreeNavigator struct {
 	nodes    *ecs.Map1[Position]
 	visible  *ecs.Map1[VisibleElement]
 
+	input ecs.Resource[Input]
 	debug ecs.Resource[DebugBoard]
 }
 
@@ -34,6 +34,7 @@ func (t *TreeNavigator) Initialize(w *ecs.World) {
 	t.nodes = ecs.NewMap1[Position](w)
 	t.visible = ecs.NewMap1[VisibleElement](w)
 
+	t.input = ecs.NewResource[Input](w)
 	t.debug = ecs.NewResource[DebugBoard](w)
 }
 
@@ -47,6 +48,8 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 	if selection == nil || !selection.HasSelected() {
 		return
 	}
+
+	input := t.input.Get()
 
 	// debug := t.debug.Get()
 	// debug.Write(fmt.Sprintf("SELECTED: %v", selection.Selected))
@@ -72,7 +75,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 
 	bestNode := ecs.Entity{}
 
-	if isPressed(rl.KeyJ) || isPressed(rl.KeyDown) {
+	if input.KeyPressed.Down {
 		minX := math.MaxFloat64
 		for _, c := range children {
 			if t.visible.Get(c) == nil {
@@ -87,11 +90,11 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 		}
 	}
 
-	if isPressed(rl.KeyK) || isPressed(rl.KeyUp) {
+	if input.KeyPressed.Up {
 		bestNode = parent
 	}
 
-	if isPressed(rl.KeyH) || isPressed(rl.KeyLeft) {
+	if input.KeyPressed.Left {
 		me := t.nodes.Get(selection.Selected)
 		maxX := -math.MaxFloat64
 		for _, s := range siblings {
@@ -103,7 +106,7 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 		}
 	}
 
-	if isPressed(rl.KeyL) || isPressed(rl.KeyRight) {
+	if input.KeyPressed.Right {
 		me := t.nodes.Get(selection.Selected)
 		minX := math.MaxFloat64
 		for _, s := range siblings {
@@ -119,10 +122,6 @@ func (t *TreeNavigator) Update(ctx context.Context, w *ecs.World) {
 		selection.Selected = bestNode
 	}
 
-}
-
-func isPressed(key int32) bool {
-	return rl.IsKeyPressed(key) || (rl.IsKeyDown(rl.KeyLeftShift) && rl.IsKeyDown(key))
 }
 
 // Close implements System.

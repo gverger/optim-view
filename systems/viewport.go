@@ -14,7 +14,7 @@ func NewViewport() *Viewport {
 
 type Viewport struct {
 	camera       ecs.Resource[CameraHandler]
-	mouse        ecs.Resource[Mouse]
+	input        ecs.Resource[Input]
 	visibleWorld ecs.Resource[VisibleWorld]
 	boundaries   ecs.Resource[Boundaries]
 	navMode      ecs.Resource[NavigationMode]
@@ -42,7 +42,7 @@ func (v *Viewport) Close() {
 func (v *Viewport) Initialize(w *ecs.World) {
 	v.debug = ecs.NewResource[DebugBoard](w)
 	v.camera = ecs.NewResource[CameraHandler](w)
-	v.mouse = ecs.NewResource[Mouse](w)
+	v.input = ecs.NewResource[Input](w)
 	v.visibleWorld = ecs.NewResource[VisibleWorld](w)
 	cameraHandler := v.camera.Get()
 	v.navMode = ecs.NewResource[NavigationMode](w)
@@ -146,6 +146,8 @@ func (v *Viewport) MoveTo(nodeTarget ecs.Entity) {
 // Update implements System.
 func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
+	input := v.input.Get()
+
 	selection := v.selection.Get()
 
 	cameraHandler := v.camera.Get()
@@ -166,8 +168,8 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		camera.Zoom = zoom.Value
 	}
 
-	if rl.IsMouseButtonDown(rl.MouseButtonLeft) {
-		delta := rl.GetMouseDelta()
+	if input.Mouse.LeftButton.Down {
+		delta := rl.NewVector2(float32(input.Mouse.Delta.X), float32(input.Mouse.Delta.Y))
 		delta = rl.Vector2Scale(delta, -1.0/camera.Zoom)
 		camera.Target = rl.Vector2Add(camera.Target, delta)
 		target.Done = true
@@ -175,11 +177,11 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		targetZoom.Done = true
 	}
 
-	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) && selection.HasHovered() {
+	if input.Mouse.LeftButton.Pressed && selection.HasHovered() {
 		selection.Selected = selection.Hovered
 	}
 
-	if rl.IsKeyPressed(rl.KeySpace) {
+	if input.KeyPressed.Space {
 		nodeTarget := ecs.Entity{}
 		if selection.HasSelected() {
 			nodeTarget = selection.Selected
@@ -196,17 +198,16 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 		}
 	}
 
-	wheel := rl.GetMouseWheelMove()
+	wheel := input.Mouse.VerticalScroll
 	if wheel != 0 {
-		// Get the world point that is under the mouse
-		mouseWorldPos := rl.GetScreenToWorld2D(rl.GetMousePosition(), *camera)
-
 		// Set the offset to where the mouse is
-		camera.Offset = rl.GetMousePosition()
+		camera.Offset.X = float32(input.Mouse.OnScreen.X)
+		camera.Offset.Y = float32(input.Mouse.OnScreen.Y)
 
 		// Set the target to match, so that the camera maps the world space point
 		// under the cursor to the screen space point under the cursor at any zoom
-		camera.Target = mouseWorldPos
+		camera.Target.X = float32(input.Mouse.InWorld.X)
+		camera.Target.Y = float32(input.Mouse.InWorld.Y)
 
 		// Zoom increment
 		scaleFactor := float32(1.0 + (0.25 * math.Abs(float64(wheel))))
@@ -244,14 +245,6 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 			}
 		}
 	}
-
-	mousePos := rl.GetMousePosition()
-	worldMousePos := rl.GetScreenToWorld2D(mousePos, *camera)
-
-	// rl.DrawText(fmt.Sprintf("M: %d, %d", int32(worldMousePos.X), int32(worldMousePos.Y)), int32(mousePos.X)+4, int32(mousePos.Y)+4, 32, rl.Red)
-
-	v.mouse.Get().InWorld = Position{float64(worldMousePos.X), float64(worldMousePos.Y)}
-	v.mouse.Get().OnScreen = Position{float64(mousePos.X), float64(mousePos.Y)}
 
 	topLeft := rl.GetScreenToWorld2D(rl.Vector2Zero(), *camera)
 	botRight := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), *camera)

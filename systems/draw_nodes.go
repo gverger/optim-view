@@ -63,7 +63,7 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	for i := range d.shapes {
 		for j := range d.shapes[i].Shapes {
 			s := &d.shapes[i].Shapes[j]
-			if s.Triangles == nil {
+			if !s.Open && s.Triangles == nil {
 				if err := s.ComputeTriangles(); err != nil || len(s.Triangles) == 0 {
 					log.Warn().Int("item", i).Int("shape index", j).Err(err).Msg("cannot triangulate")
 				}
@@ -344,21 +344,23 @@ func renderShape(s DrawableShape, highlight bool, offsetX, offsetY, scaleX, scal
 	}
 
 	// if s.Color != "" {
-	for _, t := range s.Triangles {
-		// need to be counter clockwise: depends on scaleY
-		if scaleX*scaleY > 0 {
-			rl.DrawTriangle(scaled(t.C.X, t.C.Y), scaled(t.B.X, t.B.Y), scaled(t.A.X, t.A.Y), color.fill)
-		} else {
-			rl.DrawTriangle(scaled(t.A.X, t.A.Y), scaled(t.B.X, t.B.Y), scaled(t.C.X, t.C.Y), color.fill)
+	if !s.Open {
+		for _, t := range s.Triangles {
+			// need to be counter clockwise: depends on scaleY
+			if scaleX*scaleY > 0 {
+				rl.DrawTriangle(scaled(t.C.X, t.C.Y), scaled(t.B.X, t.B.Y), scaled(t.A.X, t.A.Y), color.fill)
+			} else {
+				rl.DrawTriangle(scaled(t.A.X, t.A.Y), scaled(t.B.X, t.B.Y), scaled(t.C.X, t.C.Y), color.fill)
+			}
+			// Fill the holes between adjacent triangles
+			rl.DrawLineStrip(
+				[]rl.Vector2{
+					scaled(t.A.X, t.A.Y),
+					scaled(t.B.X, t.B.Y),
+					scaled(t.C.X, t.C.Y),
+					scaled(t.A.X, t.A.Y),
+				}, color.fill)
 		}
-		// Fill the holes between adjacent triangles
-		rl.DrawLineStrip(
-			[]rl.Vector2{
-				scaled(t.A.X, t.A.Y),
-				scaled(t.B.X, t.B.Y),
-				scaled(t.C.X, t.C.Y),
-				scaled(t.A.X, t.A.Y),
-			}, color.fill)
 	}
 	// }
 	points := make([]rl.Vector2, 0, len(s.Points))

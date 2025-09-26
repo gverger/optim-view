@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c
 	github.com/gen2brain/raylib-go/raygui v0.0.0-20250109172833-6dbba4f81a9b
-	github.com/gen2brain/raylib-go/raylib v0.0.0-20250109172833-6dbba4f81a9b
+	github.com/gen2brain/raylib-go/raylib v0.55.1
 	github.com/gverger/go-graph-layout v0.3.1
 	github.com/json-iterator/go v1.1.12
 	github.com/ncruces/zenity v0.10.14
@@ -24,7 +24,7 @@ require (
 	github.com/benoitkugler/textprocessing v0.0.3 // indirect
 	github.com/dchest/jsmin v0.0.0-20220218165748-59f39799265f // indirect
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0 // indirect
-	github.com/ebitengine/purego v0.8.1 // indirect
+	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/go-fonts/latin-modern v0.3.3 // indirect
 	github.com/go-latex/latex v0.0.0-20240709081214-31cef3c7570e // indirect
@@ -44,10 +44,10 @@ require (
 	github.com/tdewolff/minify/v2 v2.21.2 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.2 // indirect
-	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
+	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
 	golang.org/x/image v0.22.0 // indirect
 	golang.org/x/net v0.31.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 	gonum.org/v1/plot v0.15.0 // indirect

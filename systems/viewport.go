@@ -101,6 +101,48 @@ func (h *CameraHandler) FocusOn(points ...Position) (rl.Vector2, float32) {
 	return h.Camera.Target, h.Camera.Zoom
 }
 
+func (v *Viewport) MoveTo(nodeTarget ecs.Entity) {
+	cameraHandler := v.camera.Get()
+	camera := cameraHandler.Camera
+	cpos, target := v.move.Get(v.cameraEntity)
+	pos, shape := v.shape.Get(nodeTarget)
+	offsetpos, targetOffset := v.move.Get(v.cameraOffsetEntity)
+	zoom, targetZoom := v.zoom.Get(v.cameraZoomEntity)
+
+	points := make([]Position, 0, len(shape.Points))
+	for _, p := range shape.Points {
+		points = append(points, Position{pos.X + p.X, pos.Y + p.Y})
+	}
+
+	target.StartX = float64(camera.Target.X)
+	target.StartY = float64(camera.Target.Y)
+	cpos.X = target.StartX
+	cpos.Y = target.StartY
+
+	targetZoom.StartX = camera.Zoom
+	zoom.Value = camera.Zoom
+
+	t, z := cameraHandler.FocusOn(points...)
+
+	target.X = float64(t.X)
+	target.Y = float64(t.Y)
+	target.SinceTick = 0
+
+	targetOffset.StartX = float64(camera.Offset.X)
+	targetOffset.StartY = float64(camera.Offset.Y)
+	offsetpos.X = targetOffset.StartX
+	offsetpos.Y = targetOffset.StartY
+
+	targetOffset.X = float64(rl.GetScreenWidth()) / 2
+	targetOffset.Y = float64(rl.GetScreenHeight()) / 2
+	targetOffset.SinceTick = 0
+
+	if target.X == target.StartX && target.Y == target.StartY {
+		targetZoom.X = z
+		targetZoom.SinceTick = 0
+	}
+}
+
 // Update implements System.
 func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 
@@ -150,40 +192,7 @@ func (v *Viewport) Update(ctx context.Context, w *ecs.World) {
 			}
 		}
 		if !nodeTarget.IsZero() {
-			pos, shape := v.shape.Get(nodeTarget)
-
-			points := make([]Position, 0, len(shape.Points))
-			for _, p := range shape.Points {
-				points = append(points, Position{pos.X + p.X, pos.Y + p.Y})
-			}
-
-			target.StartX = float64(camera.Target.X)
-			target.StartY = float64(camera.Target.Y)
-			cpos.X = target.StartX
-			cpos.Y = target.StartY
-
-			targetZoom.StartX = camera.Zoom
-			zoom.Value = camera.Zoom
-
-			t, z := cameraHandler.FocusOn(points...)
-
-			target.X = float64(t.X)
-			target.Y = float64(t.Y)
-			target.SinceTick = 0
-
-			targetOffset.StartX = float64(camera.Offset.X)
-			targetOffset.StartY = float64(camera.Offset.Y)
-			offsetpos.X = targetOffset.StartX
-			offsetpos.Y = targetOffset.StartY
-
-			targetOffset.X = float64(rl.GetScreenWidth()) / 2
-			targetOffset.Y = float64(rl.GetScreenHeight()) / 2
-			targetOffset.SinceTick = 0
-
-			if target.X == target.StartX && target.Y == target.StartY {
-				targetZoom.X = z
-				targetZoom.SinceTick = 0
-			}
+			v.MoveTo(nodeTarget)
 		}
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 
 	gui "github.com/gen2brain/raylib-go/raygui"
@@ -33,11 +34,16 @@ func NewTreeScene(app app, font rl.Font) *TreeScene {
 			ID: TreeSceneID,
 		},
 		engine: &treeEngine{
-			font:      font,
-			app:       app,
-			ecosystem: app.loadTree(font),
-			allNodes:  true,
-			editMode:  false,
+			font:          font,
+			app:           app,
+			ecosystem:     app.loadTree(font),
+			allNodes:      true,
+			editMode:      false,
+			nodeToFind:    "",
+			findMode:      false,
+			graphTexture:  rl.LoadRenderTexture(int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight())),
+			uiTexture:     rl.LoadRenderTexture(int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight())),
+			mouseCaptured: false,
 		},
 	}
 }
@@ -50,6 +56,13 @@ type treeEngine struct {
 	allNodes  bool
 
 	editMode bool
+
+	nodeToFind string
+	findMode   bool
+
+	graphTexture  rl.RenderTexture2D
+	uiTexture     rl.RenderTexture2D
+	mouseCaptured bool
 }
 
 func (e *treeEngine) handleEvents() SceneID {
@@ -80,19 +93,19 @@ func (e *treeEngine) handleEvents() SceneID {
 	return TreeSceneID
 }
 
-func (e *treeEngine) Step() SceneID {
-	rl.BeginDrawing()
+// Return true if mouse captured
+func (e *treeEngine) drawUI() {
+	rl.BeginTextureMode(e.uiTexture)
+	rl.ClearBackground(rl.Fade(rl.White, 0.0))
 
-	rl.ClearBackground(rl.RayWhite)
-
-	e.ecosystem.sys.Update(&e.ecosystem.world)
-
-	if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-380), 20, 150, 48), "reload file") {
+	reloadButtonRec := rl.NewRectangle(float32(rl.GetScreenWidth()-380), 20, 150, 48)
+	if gui.Button(reloadButtonRec, "reload file") {
 		log.Info().Str("file", lastOpenFile).Msg("importing...")
 		go importFile(e.app.events, lastOpenFile)
 	}
 
-	if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-200), 20, 150, 48), "load file") {
+	loadFileRec := rl.NewRectangle(float32(rl.GetScreenWidth()-200), 20, 150, 48)
+	if gui.Button(loadFileRec, "load file") {
 
 		file, err := zenity.SelectFile(
 			zenity.Title("Search Tree Explorer"),
@@ -115,7 +128,8 @@ func (e *treeEngine) Step() SceneID {
 
 	at := e.app.currentTree
 
-	if gui.DropdownBox(rl.NewRectangle(10, 10, 200, 30), strings.Join(e.app.treeNames, ";"), &e.app.currentTree, e.editMode) {
+	dropDownRec := rl.NewRectangle(10, 10, 200, 30)
+	if gui.DropdownBox(dropDownRec, strings.Join(e.app.treeNames, ";"), &e.app.currentTree, e.editMode) {
 		log.Info().Int("active", int(e.app.currentTree)).Msg("DropdownBox")
 		if e.editMode {
 			if at != e.app.currentTree {
@@ -133,7 +147,8 @@ func (e *treeEngine) Step() SceneID {
 	if e.allNodes {
 		showAllTxt = "Nodes with children"
 	}
-	if gui.Button(rl.NewRectangle(float32(rl.GetScreenWidth()-200), 98, 150, 48), showAllTxt) {
+	allChildrenRec := rl.NewRectangle(float32(rl.GetScreenWidth()-200), 98, 150, 48)
+	if gui.Button(allChildrenRec, showAllTxt) {
 
 		currentTree := e.app.trees[e.app.currentTree]
 		if e.allNodes {
@@ -161,8 +176,56 @@ func (e *treeEngine) Step() SceneID {
 		e.allNodes = !e.allNodes
 	}
 
+	findButtonRec := rl.NewRectangle(float32(rl.GetScreenWidth())-250, 98, 30, 48)
+	if gui.Button(findButtonRec, gui.IconText(gui.ICON_LENS_BIG, "")) || (e.findMode && rl.IsKeyPressed(rl.KeyEnter)) {
+		log.Info().Str("node to find", e.nodeToFind).Msg("FIND: ")
+		id, err := strconv.Atoi(e.nodeToFind)
+		if err == nil {
+			e.ecosystem.sys.GoToNode(uint64(id))
+			e.nodeToFind = ""
+		}
+	}
+
+	findRec := rl.NewRectangle(float32(rl.GetScreenWidth())-400, 98, 150, 48)
+	rl.DrawRectangleRec(findRec, rl.LightGray)
+	if gui.TextBox(findRec, &e.nodeToFind, 10, e.findMode) {
+		e.findMode = !e.findMode
+	}
+
+	if e.nodeToFind != "" {
+		nodeId, err := strconv.Atoi(e.nodeToFind)
+		if err != nil || !e.ecosystem.sys.HasNode(uint64(nodeId)) {
+			rl.DrawRectangleLinesEx(findRec, 3, rl.Red)
+		}
+	}
+
 	gui.Unlock()
 	rl.DrawFPS(10, int32(rl.GetScreenHeight())-20)
+
+	rl.EndTextureMode()
+
+	e.mouseCaptured = e.findMode ||
+		// rl.CheckCollisionPointRec(rl.GetMousePosition(), findRec) ||
+		rl.CheckCollisionPointRec(rl.GetMousePosition(), allChildrenRec) ||
+		rl.CheckCollisionPointRec(rl.GetMousePosition(), loadFileRec) ||
+		rl.CheckCollisionPointRec(rl.GetMousePosition(), reloadButtonRec)
+}
+
+func (e *treeEngine) Step() SceneID {
+	e.drawUI()
+
+	if !e.mouseCaptured {
+		rl.BeginTextureMode(e.graphTexture)
+		rl.ClearBackground(rl.RayWhite)
+		e.ecosystem.sys.Update(&e.ecosystem.world)
+		rl.EndTextureMode()
+	}
+	rl.BeginDrawing()
+	rl.DrawTextureRec(e.graphTexture.Texture, rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), -float32(rl.GetScreenHeight())), rl.Vector2Zero(), rl.White)
+	if e.mouseCaptured {
+		rl.DrawRectangle(0, 0, int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight()), rl.Fade(rl.Black, 0.1))
+	}
+	rl.DrawTextureRec(e.uiTexture.Texture, rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), -float32(rl.GetScreenHeight())), rl.Vector2Zero(), rl.White)
 
 	rl.EndDrawing()
 	return TreeSceneID

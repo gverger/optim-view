@@ -27,6 +27,7 @@ type Systems struct {
 	positions       *ecs.Map1[Position]
 	edges           *ecs.Filter1[Edge]
 	nodes           *ecs.Filter1[Node]
+	selected        ecs.Resource[NodeSelection]
 	visibleElements *ecs.Map1[VisibleElement]
 	hiddenNodes     *ecs.Filter1[Node]
 	hiddenEdges     *ecs.Filter1[Edge]
@@ -52,6 +53,7 @@ func (s *Systems) Initialize(w *ecs.World) {
 	s.positions = ecs.NewMap1[Position](w)
 	s.edges = ecs.NewFilter1[Edge](w)
 	s.nodes = ecs.NewFilter1[Node](w)
+	s.selected = ecs.NewResource[NodeSelection](w)
 	s.visibleElements = ecs.NewMap1[VisibleElement](w)
 	s.hiddenNodes = ecs.NewFilter1[Node](w).Without(ecs.C[VisibleElement]())
 	s.hiddenEdges = ecs.NewFilter1[Edge](w).Without(ecs.C[VisibleElement]())
@@ -162,6 +164,36 @@ func (s *Systems) Delete(w *ecs.World, nodeId uint64) {
 		}
 	}
 
+}
+
+func (s Systems) HasNode(nodeId uint64) bool {
+	e, ok := s.mappings.Get().nodeLookup[nodeId]
+	if !ok {
+		return false
+	}
+	if s.visibleElements.Get(e) == nil {
+		return false
+	}
+	return true
+}
+
+func (s Systems) GoToNode(nodeId uint64) {
+	e, ok := s.mappings.Get().nodeLookup[nodeId]
+	if !ok {
+		return
+	}
+	if s.visibleElements.Get(e) == nil {
+		return
+	}
+
+	s.selected.Get().Selected = e
+	for _, s := range s.systems {
+		switch sys := s.(type) {
+		case *Viewport:
+			sys.MoveTo(e)
+			break
+		}
+	}
 }
 
 func (s Systems) SamePositions(nodeId uint64, oldSystems Systems) {

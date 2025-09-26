@@ -26,6 +26,7 @@ type DisplayableNode struct {
 
 type DrawableShape struct {
 	Color  string
+	Open   bool
 	Points []Position
 	Holes  [][]Position
 
@@ -33,6 +34,9 @@ type DrawableShape struct {
 }
 
 func (s *DrawableShape) computeTrianglesWithTriangolatte() error {
+	if s.Open {
+		return nil
+	}
 	points := make([]triangolatte.Point, 0, len(s.Points))
 	for _, p := range s.Points {
 		points = append(points, triangolatte.Point{X: p.X, Y: p.Y})
@@ -55,6 +59,9 @@ func (s *DrawableShape) computeTrianglesWithTriangolatte() error {
 }
 
 func (s *DrawableShape) ComputeTriangles() error {
+	if s.Open {
+		return nil
+	}
 	if err := s.computeTrianglesWithTriangolatte(); err == nil {
 		return nil
 	}

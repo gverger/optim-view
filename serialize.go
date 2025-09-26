@@ -178,26 +178,44 @@ func (t Tree) ToGraph() *GraphView {
 
 func (t Tree) Shapes() []systems.ShapeDefinition {
 	shapes := make([]systems.ShapeDefinition, 0, len(t.Init))
-	for _, s := range t.Init {
+	for iInit, s := range t.Init {
 		polygons := make([]systems.DrawableShape, 0)
 		minX := float32(math.MaxFloat32)
 		minY := float32(math.MaxFloat32)
 		maxX := float32(-math.MaxFloat32)
 		maxY := float32(-math.MaxFloat32)
-		for _, d := range s {
-			polygon := make([]systems.Position, 0, len(d.Shape))
-			for i, e := range d.Shape {
-				if e.End.X != d.Shape[(i+1)%len(d.Shape)].Start.X {
-					log.Fatal().Interface("shape", d.Shape).Int("index", i).Msg("shape should be closed")
-				}
+		for iShape, d := range s {
+			polygon := make([]systems.Position, 0, len(d.Shape)+1)
+			open := true
+			if len(d.Shape) == 0 {
+				log.Fatal().Int("object index", iInit).Int("shape index", iShape).Msg("shape has no edge")
+			} else {
+				e := d.Shape[0]
 				polygon = append(polygon, systems.Position{X: float64(e.Start.X), Y: float64(e.Start.Y)})
 				minX = min(minX, e.Start.X)
 				minY = min(minY, e.Start.Y)
 				maxX = max(maxX, e.Start.X)
 				maxY = max(maxY, e.Start.Y)
+
+				shape := d.Shape
+				if shape[0].Start == shape[len(shape)-1].End {
+					shape = shape[:len(shape)-1]
+					open = false
+				}
+
+				for i, e := range shape {
+					if i < len(shape)-1 && e.End != shape[(i+1)%len(shape)].Start {
+						log.Fatal().Interface("shape", shape).Int("index", i).Msg("shape should be closed")
+					}
+					polygon = append(polygon, systems.Position{X: float64(e.End.X), Y: float64(e.End.Y)})
+					minX = min(minX, e.End.X)
+					minY = min(minY, e.End.Y)
+					maxX = max(maxX, e.End.X)
+					maxY = max(maxY, e.End.Y)
+				}
 			}
 
-			shape := systems.DrawableShape{Points: polygon, Color: d.FillColor}
+			shape := systems.DrawableShape{Open: open, Points: polygon, Color: d.FillColor}
 			for _, edges := range d.Holes {
 				hole := make([]systems.Position, 0, len(edges))
 				for i, e := range edges {

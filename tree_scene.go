@@ -203,7 +203,7 @@ func (e *treeEngine) drawUI() {
 	rl.EndTextureMode()
 
 	e.mouseCaptured = e.findMode ||
-		// rl.CheckCollisionPointRec(rl.GetMousePosition(), findRec) ||
+		rl.CheckCollisionPointRec(rl.GetMousePosition(), findRec) ||
 		rl.CheckCollisionPointRec(rl.GetMousePosition(), allChildrenRec) ||
 		rl.CheckCollisionPointRec(rl.GetMousePosition(), loadFileRec) ||
 		rl.CheckCollisionPointRec(rl.GetMousePosition(), reloadButtonRec)

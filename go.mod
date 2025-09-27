@@ -1,6 +1,8 @@
 module github.com/gverger/optimview
 
-go 1.24.0
+go 1.24.2
+
+toolchain go1.24.5
 
 require (
 	github.com/gen2brain/raylib-go/easings v0.0.0-20241207114308-a9ad86d5018c
@@ -14,6 +16,8 @@ require (
 	github.com/tchayen/triangolatte v0.0.0-20210804113255-8b66c3824e73
 	github.com/tdewolff/canvas v0.0.0-20241202004848-95f003d9bc50
 )
+
+require github.com/stretchr/testify v1.11.1 // indirect
 
 require (
 	github.com/ByteArena/poly2tri-go v0.0.0-20170716161910-d102ad91854f // indirect
@@ -44,7 +48,7 @@ require (
 	github.com/tdewolff/minify/v2 v2.21.2 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.2 // indirect
-	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/image v0.22.0 // indirect
 	golang.org/x/net v0.31.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

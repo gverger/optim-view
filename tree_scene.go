@@ -7,6 +7,7 @@ import (
 	gui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/gverger/optimview/systems"
+
 	"github.com/ncruces/zenity"
 	"github.com/phuslu/log"
 )
@@ -91,20 +92,34 @@ func (e *treeEngine) handleEvents() SceneID {
 	return TreeSceneID
 }
 
+func navButton(text string) rl.Vector2 {
+	size := rl.MeasureTextEx(rl.GetFontDefault(), text, 10, 1)
+	size.X += 20 // padding 10 left and right
+	return size
+}
+
 // Return true if mouse captured
 func (e *treeEngine) drawUI() {
+	if e.uiTexture.Texture.Width != int32(rl.GetScreenWidth()) || e.uiTexture.Texture.Height != int32(rl.GetScreenHeight()) {
+		rl.UnloadTexture(e.uiTexture.Texture)
+		e.uiTexture = rl.LoadRenderTexture(int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight()))
+	}
 	rl.BeginTextureMode(e.uiTexture)
 	rl.ClearBackground(rl.Fade(rl.White, 0.0))
 
-	reloadButtonRec := rl.NewRectangle(float32(rl.GetScreenWidth()-380), 20, 150, 48)
-	if gui.Button(reloadButtonRec, "reload file") {
-		log.Info().Str("file", lastOpenFile).Msg("importing...")
-		go importFile(e.app.events, lastOpenFile)
-	}
+	navRec := rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), 40)
+	rl.DrawRectangleRec(navRec, rl.NewColor(246, 248, 250, 255))
+	rl.DrawLineEx(
+		rl.NewVector2(navRec.X, navRec.Y+navRec.Height),
+		rl.NewVector2(navRec.X+navRec.Width, navRec.Y+navRec.Height),
+		1, rl.NewColor(209, 217, 224, 255))
 
-	loadFileRec := rl.NewRectangle(float32(rl.GetScreenWidth()-200), 20, 150, 48)
-	if gui.Button(loadFileRec, "load file") {
+	offsetX := 10.0
 
+	// load file
+	loadFileSize := navButton("Load File")
+	loadFileRec := rl.NewRectangle(float32(offsetX), 2, loadFileSize.X, navRec.Height-4)
+	if gui.Button(loadFileRec, "Load File") {
 		file, err := zenity.SelectFile(
 			zenity.Title("Search Tree Explorer"),
 			zenity.Filename(lastOpenFile),
@@ -120,32 +135,51 @@ func (e *treeEngine) drawUI() {
 		}
 	}
 
+	offsetX += float64(loadFileRec.Width) + 10
+
+	// Reload
+	reloadButtonSize := navButton("Reload File")
+	reloadButtonRec := rl.NewRectangle(float32(offsetX), 2, reloadButtonSize.X, navRec.Height-4)
+	if gui.Button(reloadButtonRec, "Reload File") {
+		log.Info().Str("file", lastOpenFile).Msg("importing...")
+		go importFile(e.app.events, lastOpenFile)
+	}
+	offsetX += float64(reloadButtonRec.Width) + 10
+
 	if e.editMode {
 		gui.Lock()
 	}
 
+	// Drop down
 	at := e.app.currentTree
 
-	dropDownRec := rl.NewRectangle(10, 10, 200, 30)
+	dropDownSize := navButton(e.app.treeNames[0])
+	for _, name := range e.app.treeNames[1:] {
+		size := navButton(name)
+		if size.X > dropDownSize.X {
+			dropDownSize = size
+		}
+	}
+	dropDownSize.X += 20 // some room for the arrow on the right
+	dropDownRec := rl.NewRectangle(float32(offsetX), 2, dropDownSize.X, navRec.Height-4)
 	if gui.DropdownBox(dropDownRec, strings.Join(e.app.treeNames, ";"), &e.app.currentTree, e.editMode) {
-		log.Info().Int("active", int(e.app.currentTree)).Msg("DropdownBox")
 		if e.editMode {
 			if at != e.app.currentTree {
 				e.ecosystem.sys.Close()
 				e.ecosystem = e.app.loadTree(e.font)
 				e.allNodes = true
 			}
-
-			// lastHovered = -1
 		}
 		e.editMode = !e.editMode
 	}
+	offsetX += float64(dropDownRec.Width) + 10
 
 	showAllTxt := "Show all Nodes"
 	if e.allNodes {
 		showAllTxt = "Nodes with children"
 	}
-	allChildrenRec := rl.NewRectangle(float32(rl.GetScreenWidth()-200), 98, 150, 48)
+	allChildrenSize := navButton(showAllTxt)
+	allChildrenRec := rl.NewRectangle(float32(offsetX), 2, allChildrenSize.X, navRec.Height-4)
 	if gui.Button(allChildrenRec, showAllTxt) {
 
 		currentTree := e.app.trees[e.app.currentTree]
@@ -174,7 +208,10 @@ func (e *treeEngine) drawUI() {
 		e.allNodes = !e.allNodes
 	}
 
-	findButtonRec := rl.NewRectangle(float32(rl.GetScreenWidth())-250, 98, 30, 48)
+	rightOffsetX := float32(rl.GetScreenWidth())
+	findButtonSize := float32(36.0)
+	rightOffsetX -= float32(findButtonSize) + 10
+	findButtonRec := rl.NewRectangle(rightOffsetX, 2, findButtonSize, 36)
 	if gui.Button(findButtonRec, gui.IconText(gui.ICON_LENS_BIG, "")) || (e.findMode && rl.IsKeyPressed(rl.KeyEnter)) {
 		log.Info().Str("node to find", e.nodeToFind).Msg("FIND: ")
 		id, err := strconv.Atoi(e.nodeToFind)
@@ -184,11 +221,18 @@ func (e *treeEngine) drawUI() {
 		}
 	}
 
-	findRec := rl.NewRectangle(float32(rl.GetScreenWidth())-400, 98, 150, 48)
+	findSize := float32(100.0)
+	rightOffsetX -= findSize - 1
+	findRec := rl.NewRectangle(rightOffsetX, 2, findSize, 36)
 	rl.DrawRectangleRec(findRec, rl.LightGray)
 	if gui.TextBox(findRec, &e.nodeToFind, 10, e.findMode) {
 		e.findMode = !e.findMode
 	}
+
+	findLabelSize := navButton("Find Node ID")
+	rightOffsetX -= findLabelSize.X + 5
+	findLabelRec := rl.NewRectangle(rightOffsetX, 2, findLabelSize.X, 36)
+	gui.Label(findLabelRec, "Find Node ID")
 
 	if e.nodeToFind != "" {
 		nodeId, err := strconv.Atoi(e.nodeToFind)
@@ -219,7 +263,7 @@ func (e *treeEngine) Step() SceneID {
 	}
 
 	rl.BeginDrawing()
-	rl.ClearBackground(rl.RayWhite)
+	rl.ClearBackground(rl.White)
 
 	e.ecosystem.sys.Update(&e.ecosystem.world)
 

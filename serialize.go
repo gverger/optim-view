@@ -133,12 +133,10 @@ type Tree struct {
 func (t Tree) ToGraph() *GraphView {
 	g := graph.NewGraph[*DisplayableNode, uint64](func(n *DisplayableNode) uint64 { return n.Id })
 
-	mapper := make(map[uint64]uint64)
 	var index uint64
 	for _, n := range t.Nodes {
 		if n == nil && index == 0 {
 			g.AddNode(&DisplayableNode{Id: 0, Text: "root"})
-			mapper[0] = 0
 			index++
 			continue
 		}
@@ -164,7 +162,6 @@ func (t Tree) ToGraph() *GraphView {
 		}
 
 		g.AddNode(&DisplayableNode{Id: n.Id, Text: nodeDetailsText(*n), Transform: shapeTransforms})
-		mapper[n.Id] = index
 		index++
 	}
 
@@ -176,7 +173,7 @@ func (t Tree) ToGraph() *GraphView {
 		if n.ParentId == -1 {
 			parent = 0
 		}
-		g.AddEdgeId(mapper[parent], mapper[n.Id])
+		g.AddEdgeId(parent, n.Id)
 	}
 
 	return g

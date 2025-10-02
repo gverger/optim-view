@@ -134,10 +134,15 @@ func (t Tree) ToGraph() *GraphView {
 	g := graph.NewGraph[*DisplayableNode, uint64](func(n *DisplayableNode) uint64 { return n.Id })
 
 	mapper := make(map[uint64]uint64)
-	for i, n := range t.Nodes {
-		if n == nil && i == 0 {
-			g.AddNode(&DisplayableNode{Id: uint64(i), Text: "root"})
-			mapper[0] = uint64(i)
+	var index uint64
+	for _, n := range t.Nodes {
+		if n == nil && index == 0 {
+			g.AddNode(&DisplayableNode{Id: 0, Text: "root"})
+			mapper[0] = 0
+			index++
+			continue
+		}
+		if n == nil {
 			continue
 		}
 		shapeTransforms := make([]ShapeTransform, 0, len(n.Plot))
@@ -158,8 +163,9 @@ func (t Tree) ToGraph() *GraphView {
 			shapeTransforms[i].Y -= minY
 		}
 
-		g.AddNode(&DisplayableNode{Id: uint64(i), Text: nodeDetailsText(*n), Transform: shapeTransforms})
-		mapper[n.Id] = uint64(i)
+		g.AddNode(&DisplayableNode{Id: n.Id, Text: nodeDetailsText(*n), Transform: shapeTransforms})
+		mapper[n.Id] = index
+		index++
 	}
 
 	for _, n := range t.Nodes {

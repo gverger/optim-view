@@ -58,9 +58,56 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 	shapes := ecs.NewResource[[]ShapeDefinition](w)
 	d.shapes = *shapes.Get()
 
+	used := make([]bool, len(d.shapes))
+
+	query := d.filter.Query()
+	for query.Next() {
+		_, n, _ := query.Get()
+
+		minX := float32(math.MaxFloat32)
+		minY := float32(math.MaxFloat32)
+		maxX := float32(-math.MaxFloat32)
+		maxY := float32(-math.MaxFloat32)
+		for _, tr := range n.ShapeTransforms {
+			used[tr.Id] = true
+			shapeDef := d.shapes[tr.Id]
+			minX = min(minX, tr.X+shapeDef.MinX)
+			minY = min(minY, tr.Y+shapeDef.MinY)
+			maxX = max(maxX, shapeDef.MaxX+tr.X)
+			maxY = max(maxY, shapeDef.MaxY+tr.Y)
+		}
+
+		dimX := maxX - minX
+		dimY := maxY - minY
+		scale := float32(1)
+		if dimX > dimY {
+			scale = float32(n.SizeX-NodeMinBorderSize) / dimX
+		} else {
+			scale = float32(n.SizeY-NodeMinBorderSize) / dimY
+		}
+
+		if n.DrawnSizeX == 0 && n.DrawnSizeY == 0 {
+			n.DrawnSizeX = float64(scale * dimX)
+			n.DrawnSizeY = float64(scale * dimY)
+		}
+
+		n.scale = scale
+		n.midX = (float32(n.SizeX)-scale*dimX)/2 - scale*minX
+		n.midY = (float32(n.SizeY)-reverseY*scale*dimY)/2 - reverseY*scale*minY
+	}
+
 	d.nodeTextures = graphics.NewTextureArray(d.nbNodes, NodeTextureSize)
 
+	// Workaround: the first defined shape is usually a container
+	if d.shapes[0].Shapes[0].Color == "" {
+		d.shapes[0].Shapes[0].Color = "white"
+	}
+
 	for i := range d.shapes {
+		if !used[i] {
+			log.Debug().Int("shape", i).Msg("not used")
+			continue
+		}
 		for j := range d.shapes[i].Shapes {
 			s := &d.shapes[i].Shapes[j]
 			if !s.Open && s.Triangles == nil {
@@ -93,41 +140,6 @@ func (d *DrawNodes) Initialize(w *ecs.World) {
 			renderShape(s, false, tScale*offsetX+2, float32(d.shapes[i].Texture.Texture.Height)-tScale*offsetY-2, tScale, -tScale)
 		}
 		rl.EndTextureMode()
-	}
-
-	query := d.filter.Query()
-	for query.Next() {
-		_, n, _ := query.Get()
-
-		minX := float32(math.MaxFloat32)
-		minY := float32(math.MaxFloat32)
-		maxX := float32(-math.MaxFloat32)
-		maxY := float32(-math.MaxFloat32)
-		for _, tr := range n.ShapeTransforms {
-			shapeList := d.shapes[tr.Id]
-			minX = min(minX, tr.X+shapeList.MinX)
-			minY = min(minY, tr.Y+shapeList.MinY)
-			maxX = max(maxX, shapeList.MaxX+tr.X)
-			maxY = max(maxY, shapeList.MaxY+tr.Y)
-		}
-
-		dimX := maxX - minX
-		dimY := maxY - minY
-		scale := float32(1)
-		if dimX > dimY {
-			scale = float32(n.SizeX-NodeMinBorderSize) / dimX
-		} else {
-			scale = float32(n.SizeY-NodeMinBorderSize) / dimY
-		}
-
-		if n.DrawnSizeX == 0 && n.DrawnSizeY == 0 {
-			n.DrawnSizeX = float64(scale * dimX)
-			n.DrawnSizeY = float64(scale * dimY)
-		}
-
-		n.scale = scale
-		n.midX = (float32(n.SizeX)-scale*dimX)/2 - scale*minX
-		n.midY = (float32(n.SizeY)-reverseY*scale*dimY)/2 - reverseY*scale*minY
 	}
 }
 
@@ -306,21 +318,29 @@ type HighlightableShapeColor struct {
 }
 
 var shapeColors = map[string]HighlightableShapeColor{
-	"blue": HighlightableShapeColor{
+	"blue": {
 		normal:      ShapeColor{border: rl.Blue, fill: rl.SkyBlue},
 		highlighted: ShapeColor{border: rl.DarkGreen, fill: rl.Green},
 	},
-	"red": HighlightableShapeColor{
+	"red": {
 		normal:      ShapeColor{border: rl.Maroon, fill: rl.Red},
 		highlighted: ShapeColor{border: rl.DarkPurple, fill: rl.Purple},
 	},
-	"": HighlightableShapeColor{
-		normal:      ShapeColor{border: rl.Black, fill: rl.RayWhite},
-		highlighted: ShapeColor{border: rl.Black, fill: rl.RayWhite},
+	"white": {
+		normal:      ShapeColor{border: rl.Black, fill: rl.White},
+		highlighted: ShapeColor{border: rl.Black, fill: rl.White},
+	},
+	"": {
+		normal:      ShapeColor{border: rl.Black, fill: rl.White},
+		highlighted: ShapeColor{border: rl.Black, fill: rl.White},
 	},
 }
 
 func renderShape(s DrawableShape, highlight bool, offsetX, offsetY, scaleX, scaleY float32) {
+	scaled := func(x float64, y float64) rl.Vector2 {
+		return rl.NewVector2(scaleX*float32(x)+offsetX, scaleY*float32(y)+offsetY)
+	}
+
 	col, ok := shapeColors[s.Color]
 	if !ok {
 		color, err := StringToRGBA(s.Color)
@@ -339,12 +359,7 @@ func renderShape(s DrawableShape, highlight bool, offsetX, offsetY, scaleX, scal
 		color = col.highlighted
 	}
 
-	scaled := func(x float64, y float64) rl.Vector2 {
-		return rl.NewVector2(scaleX*float32(x)+offsetX, scaleY*float32(y)+offsetY)
-	}
-
-	// if s.Color != "" {
-	if !s.Open {
+	if s.Color != "" && !s.Open {
 		for _, t := range s.Triangles {
 			// need to be counter clockwise: depends on scaleY
 			if scaleX*scaleY > 0 {
@@ -362,7 +377,6 @@ func renderShape(s DrawableShape, highlight bool, offsetX, offsetY, scaleX, scal
 				}, color.fill)
 		}
 	}
-	// }
 	points := make([]rl.Vector2, 0, len(s.Points))
 	for _, p := range s.Points {
 		points = append(points, scaled(p.X, p.Y))
